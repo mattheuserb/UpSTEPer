@@ -58,6 +58,10 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial string SelectionInfo { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets a value indicating whether model edges are shown in the 3D view.</summary>
+    [ObservableProperty]
+    public partial bool ShowEdges { get; set; } = true;
+
     /// <summary>Gets or sets the colour applied by the colour commands.</summary>
     [ObservableProperty]
     public partial PaletteEntry SelectedPaletteEntry { get; set; }
@@ -81,7 +85,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
                 try
                 {
                     var mesh = loaded.Tessellate(TessellationOptions.Default);
-                    return (loaded, SceneData.Create(mesh, loaded.GetFaceColor));
+                    var edges = loaded.TessellateEdges(TessellationOptions.Default);
+                    return (loaded, SceneData.Create(mesh, loaded.GetFaceColor, edges));
                 }
                 catch
                 {

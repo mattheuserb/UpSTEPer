@@ -222,6 +222,31 @@ UPS_API ups_status ups_document_tessellate(
 
 UPS_API void ups_mesh_free(ups_mesh* mesh);
 
+/* ----------------------------------------------------------------- lines -- */
+
+typedef struct ups_lines ups_lines;
+
+/**
+ * Discretises the model's B-Rep edges into line segments for display (within deflection, mm).
+ * Seam edges (e.g. the artificial seam of a cylinder) and degenerated edges are skipped.
+ * Each segment carries the 0-based id of its edge.
+ */
+UPS_API ups_status ups_document_tessellate_edges(ups_document* document, double deflection, ups_lines** out_lines);
+
+UPS_API void ups_lines_free(ups_lines* lines);
+
+UPS_API ups_status ups_lines_get_info(const ups_lines* lines, int32_t* out_vertex_count, int32_t* out_segment_count);
+
+/**
+ * Copies line data. Capacities (elements): positions 3 * vertex_count, indices 2 * segment_count
+ * (vertex index pairs, for GL_LINES), segment_edges segment_count. Any pointer may be NULL.
+ */
+UPS_API ups_status ups_lines_copy(
+    const ups_lines* lines,
+    float* positions, int64_t positions_capacity,
+    uint32_t* indices, int64_t indices_capacity,
+    int32_t* segment_edges, int64_t segment_edges_capacity);
+
 UPS_API ups_status ups_mesh_get_info(const ups_mesh* mesh, ups_mesh_info* out_info);
 
 /**

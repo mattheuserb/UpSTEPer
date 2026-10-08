@@ -28,7 +28,7 @@ Linux and macOS from CI-built binaries.
 - [x] Renderer: orbit/pan/zoom, fit (double-click)
 - [x] Face selection by click: CPU ray casting (`MeshPicker`, Möller–Trumbore) instead of a GPU
   ID buffer — testable and independent of GPU quirks; highlight + face/colour in the status bar
-- [ ] Edges overlay (B-Rep edges as lines)
+- [x] Edges overlay: B-Rep edges as lines (seams skipped), polygon offset against z-fighting, toggle in the toolbar
 - [ ] Standard views (front, top, right, iso) and view cube / toolbar
 - [ ] Model tree (assemblies, parts, bodies) from XDE labels; body selection
 - [ ] Display quality presets (re-mesh with `BRepTools::Clean`)

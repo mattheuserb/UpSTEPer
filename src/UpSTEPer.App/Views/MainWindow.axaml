@@ -41,7 +41,8 @@
         <Button Content="Colour body" Command="{Binding ColorBodyCommand}" Margin="0,0,6,0" />
         <Button Content="Remove face colour" Command="{Binding ClearFaceColorCommand}" Margin="0,0,16,0" />
         <Button Content="Undo" Command="{Binding UndoCommand}" ToolTip.Tip="Ctrl+Z" Margin="0,0,6,0" />
-        <Button Content="Redo" Command="{Binding RedoCommand}" ToolTip.Tip="Ctrl+Y" />
+        <Button Content="Redo" Command="{Binding RedoCommand}" ToolTip.Tip="Ctrl+Y" Margin="0,0,16,0" />
+        <CheckBox Content="Edges" IsChecked="{Binding ShowEdges}" VerticalAlignment="Center" />
       </WrapPanel>
     </Border>
     <Border DockPanel.Dock="Bottom" Padding="8,4" BorderThickness="0,1,0,0" BorderBrush="#D0D4D9">
@@ -54,6 +55,6 @@
       <TextBlock Foreground="#5F6368" FontSize="11"
                  Text="Click: select face   Left drag: rotate   Right/middle drag: pan   Wheel: zoom   Double-click: fit" />
     </Border>
-    <controls:ModelView x:Name="ModelViewControl" Scene="{Binding Scene}" SelectedFace="{Binding SelectedFace}" />
+    <controls:ModelView x:Name="ModelViewControl" Scene="{Binding Scene}" SelectedFace="{Binding SelectedFace}" ShowEdges="{Binding ShowEdges}" />
   </DockPanel>
 </Window>

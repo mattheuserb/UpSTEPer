@@ -58,6 +58,12 @@ public interface IStepDocument : IDisposable
     /// <exception cref="GeometryOperationException">Hidden-line removal failed.</exception>
     Drawing.ProjectedView Project(Drawing.ViewDirection direction, Drawing.ProjectionOptions options);
 
+    /// <summary>Discretises the model's edges into display lines (seams excluded).</summary>
+    /// <param name="options">Uses <see cref="TessellationOptions.LinearDeflection"/> as chord tolerance.</param>
+    /// <returns>The lines.</returns>
+    /// <exception cref="GeometryOperationException">Discretisation failed.</exception>
+    EdgeData TessellateEdges(TessellationOptions options);
+
     /// <summary>Triangulates the model for display.</summary>
     /// <param name="options">Tessellation quality.</param>
     /// <returns>The mesh.</returns>

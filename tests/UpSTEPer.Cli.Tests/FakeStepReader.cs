@@ -59,6 +59,8 @@ internal sealed class FakeStepDocument : IStepDocument
     public UpSTEPer.Core.Drawing.ProjectedView Project(UpSTEPer.Core.Drawing.ViewDirection direction, UpSTEPer.Core.Drawing.ProjectionOptions options) =>
         new(direction, []);
 
+    public EdgeData TessellateEdges(TessellationOptions options) => EdgeData.Empty;
+
     public MeshData Tessellate(TessellationOptions options)
     {
         LastOptions = options;

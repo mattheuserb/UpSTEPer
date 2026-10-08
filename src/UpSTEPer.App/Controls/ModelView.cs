@@ -36,6 +36,10 @@ internal sealed class ModelView : OpenGlControlBase
     public static readonly StyledProperty<FaceId?> SelectedFaceProperty =
         AvaloniaProperty.Register<ModelView, FaceId?>(nameof(SelectedFace), defaultBindingMode: BindingMode.TwoWay);
 
+    /// <summary>Defines the <see cref="ShowEdges"/> property.</summary>
+    public static readonly StyledProperty<bool> ShowEdgesProperty =
+        AvaloniaProperty.Register<ModelView, bool>(nameof(ShowEdges), defaultValue: true);
+
     // A press and release closer than this (in DIPs) is a click, not a drag.
     private const double ClickTolerance = 4;
 
@@ -67,6 +71,13 @@ internal sealed class ModelView : OpenGlControlBase
     {
         get => GetValue(SelectedFaceProperty);
         set => SetValue(SelectedFaceProperty, value);
+    }
+
+    /// <summary>Gets or sets a value indicating whether model edges are drawn on top of the faces.</summary>
+    public bool ShowEdges
+    {
+        get => GetValue(ShowEdgesProperty);
+        set => SetValue(ShowEdgesProperty, value);
     }
 
     /// <summary>
@@ -111,6 +122,10 @@ internal sealed class ModelView : OpenGlControlBase
         else if (change.Property == SelectedFaceProperty)
         {
             _colorsDirty = true;
+            RequestNextFrameRendering();
+        }
+        else if (change.Property == ShowEdgesProperty)
+        {
             RequestNextFrameRendering();
         }
     }
@@ -169,6 +184,7 @@ internal sealed class ModelView : OpenGlControlBase
             if (Scene is { } scene)
             {
                 _renderer.Upload(scene.Mesh, scene.GetVertexColors(SelectedFace).Span);
+                _renderer.UploadEdges(scene.Edges);
             }
 
             _sceneDirty = false;
@@ -184,6 +200,7 @@ internal sealed class ModelView : OpenGlControlBase
             _colorsDirty = false;
         }
 
+        _renderer.ShowEdges = ShowEdges;
         _renderer.Render(_camera, width, height);
 
         if (ScreenshotPath is { } path && Scene is not null && width > 0 && height > 0)

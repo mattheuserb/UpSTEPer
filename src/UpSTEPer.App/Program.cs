@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Logging;
 
 namespace UpSTEPer.App;
 
+[ExcludeFromCodeCoverage(Justification = "UI wiring; exercised by the viewer screenshot smoke test in CI.")]
 internal static class Program
 {
     [STAThread]

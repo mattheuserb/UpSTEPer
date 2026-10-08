@@ -105,6 +105,33 @@ public class OrbitCameraTests
         Assert.Equal(pitch, camera.Pitch);
     }
 
+    [Fact]
+    public void CreateRay_ThroughViewportCenter_PointsAtTarget()
+    {
+        var camera = new OrbitCamera();
+        camera.FitTo(_box);
+        camera.Orbit(25, 10);
+
+        var ray = camera.CreateRay(400, 300, 800, 600);
+
+        Assert.Equal(1f, ray.Direction.Length(), 4);
+        Assert.Equal(1f, Vector3.Dot(ray.Direction, camera.Forward), 3);
+        var closest = ray.PointAt(Vector3.Dot(camera.Target - ray.Origin, ray.Direction));
+        Assert.True(Vector3.Distance(closest, camera.Target) < 1e-2f * camera.Distance);
+    }
+
+    [Fact]
+    public void CreateRay_RightOfCenter_PointsRight()
+    {
+        var camera = new OrbitCamera();
+        camera.FitTo(_box);
+        var right = Vector3.Normalize(Vector3.Cross(camera.Forward, Vector3.UnitZ));
+
+        var ray = camera.CreateRay(700, 300, 800, 600);
+
+        Assert.True(Vector3.Dot(ray.Direction, right) > 0);
+    }
+
     private static IEnumerable<Vector3> Corners(BoundingBox box)
     {
         foreach (var x in new[] { box.Min.X, box.Max.X })

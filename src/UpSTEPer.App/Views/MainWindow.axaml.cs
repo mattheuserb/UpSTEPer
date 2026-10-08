@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
@@ -7,6 +8,7 @@ using UpSTEPer.App.ViewModels;
 namespace UpSTEPer.App.Views;
 
 /// <summary>The main window: toolbar, 3D view and status line.</summary>
+[ExcludeFromCodeCoverage(Justification = "UI wiring; exercised by the viewer screenshot smoke test in CI.")]
 internal sealed partial class MainWindow : Window
 {
     private static readonly FilePickerFileType _stepFileType = new("STEP files")

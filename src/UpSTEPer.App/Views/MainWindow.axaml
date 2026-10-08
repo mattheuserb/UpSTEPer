@@ -16,9 +16,12 @@
       </StackPanel>
     </Border>
     <Border DockPanel.Dock="Bottom" Padding="8,4">
-      <TextBlock Foreground="#5F6368" FontSize="12"
-                 Text="Left drag: rotate   Right/middle drag: pan   Wheel: zoom   Double-click: fit" />
+      <DockPanel>
+        <TextBlock DockPanel.Dock="Right" FontSize="12" Text="{Binding SelectionInfo}" />
+        <TextBlock Foreground="#5F6368" FontSize="12"
+                   Text="Click: select face   Left drag: rotate   Right/middle drag: pan   Wheel: zoom   Double-click: fit" />
+      </DockPanel>
     </Border>
-    <controls:ModelView x:Name="ModelViewControl" Scene="{Binding Scene}" />
+    <controls:ModelView x:Name="ModelViewControl" Scene="{Binding Scene}" SelectedFace="{Binding SelectedFace}" />
   </DockPanel>
 </Window>

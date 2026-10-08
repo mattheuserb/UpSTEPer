@@ -3,12 +3,14 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
 using Avalonia.Threading;
 using Silk.NET.OpenGL;
+using UpSTEPer.Core;
 using UpSTEPer.Rendering;
 using AvaloniaPixelFormat = Avalonia.Platform.PixelFormat;
 using GlPixelFormat = Silk.NET.OpenGL.PixelFormat;
@@ -19,6 +21,7 @@ namespace UpSTEPer.App.Controls;
 /// Interactive 3D view of a <see cref="SceneData"/>: left drag rotates, right or middle drag pans,
 /// the wheel zooms, double-click fits the model.
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "Needs a GPU context; exercised by the viewer screenshot smoke test in CI.")]
 [SuppressMessage(
     "Reliability",
     "CA1001:Types that own disposable fields should be disposable",
@@ -29,11 +32,20 @@ internal sealed class ModelView : OpenGlControlBase
     public static readonly StyledProperty<SceneData?> SceneProperty =
         AvaloniaProperty.Register<ModelView, SceneData?>(nameof(Scene));
 
+    /// <summary>Defines the <see cref="SelectedFace"/> property (two-way by default).</summary>
+    public static readonly StyledProperty<FaceId?> SelectedFaceProperty =
+        AvaloniaProperty.Register<ModelView, FaceId?>(nameof(SelectedFace), defaultBindingMode: BindingMode.TwoWay);
+
+    // A press and release closer than this (in DIPs) is a click, not a drag.
+    private const double ClickTolerance = 4;
+
     private readonly OrbitCamera _camera = new();
     private GL? _gl;
     private MeshRenderer? _renderer;
     private bool _sceneDirty;
+    private bool _colorsDirty;
     private Point _lastPointer;
+    private Point _pressPosition;
     private bool _isOrbiting;
     private bool _isPanning;
 
@@ -50,10 +62,25 @@ internal sealed class ModelView : OpenGlControlBase
         set => SetValue(SceneProperty, value);
     }
 
+    /// <summary>Gets or sets the selected face (highlighted); set by clicking on the model.</summary>
+    public FaceId? SelectedFace
+    {
+        get => GetValue(SelectedFaceProperty);
+        set => SetValue(SelectedFaceProperty, value);
+    }
+
     /// <summary>
     /// Gets or sets a PNG path. When set, the first frame showing a scene is saved there once.
     /// </summary>
-    public string? ScreenshotPath { get; set; }
+    public string? ScreenshotPath
+    {
+        get;
+        set
+        {
+            field = value;
+            RequestNextFrameRendering();
+        }
+    }
 
     /// <inheritdoc />
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -69,6 +96,11 @@ internal sealed class ModelView : OpenGlControlBase
             }
 
             _sceneDirty = true;
+            RequestNextFrameRendering();
+        }
+        else if (change.Property == SelectedFaceProperty)
+        {
+            _colorsDirty = true;
             RequestNextFrameRendering();
         }
     }
@@ -126,10 +158,20 @@ internal sealed class ModelView : OpenGlControlBase
         {
             if (Scene is { } scene)
             {
-                _renderer.Upload(scene.Mesh, scene.VertexColors.Span);
+                _renderer.Upload(scene.Mesh, scene.GetVertexColors(SelectedFace).Span);
             }
 
             _sceneDirty = false;
+            _colorsDirty = false;
+        }
+        else if (_colorsDirty)
+        {
+            if (Scene is { } scene)
+            {
+                _renderer.UpdateColors(scene.GetVertexColors(SelectedFace).Span);
+            }
+
+            _colorsDirty = false;
         }
 
         _renderer.Render(_camera, width, height);
@@ -159,6 +201,7 @@ internal sealed class ModelView : OpenGlControlBase
         _isOrbiting = properties.IsLeftButtonPressed;
         _isPanning = properties.IsRightButtonPressed || properties.IsMiddleButtonPressed;
         _lastPointer = e.GetPosition(this);
+        _pressPosition = _lastPointer;
         e.Pointer.Capture(this);
     }
 
@@ -193,9 +236,31 @@ internal sealed class ModelView : OpenGlControlBase
     {
         ArgumentNullException.ThrowIfNull(e);
         base.OnPointerReleased(e);
+
+        var position = e.GetPosition(this);
+        var moved = position - _pressPosition;
+        var isClick = _isOrbiting && Math.Abs(moved.X) < ClickTolerance && Math.Abs(moved.Y) < ClickTolerance;
+
         _isOrbiting = false;
         _isPanning = false;
         e.Pointer.Capture(null);
+
+        if (isClick)
+        {
+            SelectFaceAt(position);
+        }
+    }
+
+    /// <summary>Selects the face under <paramref name="position"/>; clicking the background clears the selection.</summary>
+    private void SelectFaceAt(Point position)
+    {
+        if (Scene is not { } scene)
+        {
+            return;
+        }
+
+        var ray = _camera.CreateRay((float)position.X, (float)position.Y, (float)Bounds.Width, (float)Bounds.Height);
+        SelectedFace = MeshPicker.Pick(scene.Mesh, ray)?.Face;
     }
 
     /// <inheritdoc />

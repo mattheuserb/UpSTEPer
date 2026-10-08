@@ -1,15 +1,18 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using UpSTEPer.App.ViewModels;
 using UpSTEPer.App.Views;
+using UpSTEPer.Core;
 using UpSTEPer.Occt;
 
 namespace UpSTEPer.App;
 
 /// <summary>The Avalonia application. Composition root of the desktop app.</summary>
+[ExcludeFromCodeCoverage(Justification = "UI wiring; exercised by the viewer screenshot smoke test in CI.")]
 internal sealed partial class DesktopApplication : Application
 {
     private const int ScreenshotTimeoutExitCode = 2;
@@ -40,11 +43,11 @@ internal sealed partial class DesktopApplication : Application
             var window = new MainWindow { DataContext = viewModel };
             desktop.MainWindow = window;
 
-            if (_options.ScreenshotPath is { } screenshotPath)
+            if (_options.ScreenshotPath is not null)
             {
-                // Automation mode: make GL diagnostics visible on stderr.
+                // Automation mode: make GL diagnostics visible on stderr. The screenshot itself is
+                // requested after loading and selection (below), so the frame reflects both.
                 Trace.Listeners.Add(new ConsoleTraceListener(useErrorStream: true));
-                window.ModelView.ScreenshotPath = screenshotPath;
                 window.ModelView.ScreenshotSaved += (_, _) => desktop.Shutdown(0);
                 window.ModelView.RenderingFailed += (_, _) => desktop.Shutdown(RenderingFailedExitCode);
 
@@ -60,7 +63,15 @@ internal sealed partial class DesktopApplication : Application
                     if (!loaded && _options.ScreenshotPath is not null)
                     {
                         desktop.Shutdown(1);
+                        return;
                     }
+
+                    if (loaded && _options.SelectFace is { } face)
+                    {
+                        viewModel.SelectedFace = new FaceId(face);
+                    }
+
+                    window.ModelView.ScreenshotPath = _options.ScreenshotPath;
                 };
             }
         }

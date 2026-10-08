@@ -1,0 +1,45 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 24, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "installDir": "${sourceDir}/../artifacts/native/${presetName}",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "win-x64",
+      "inherits": "base",
+      "generator": "Ninja",
+      "cacheVariables": { "VCPKG_TARGET_TRIPLET": "x64-windows" },
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    },
+    {
+      "name": "linux-x64",
+      "inherits": "base",
+      "generator": "Ninja",
+      "cacheVariables": { "VCPKG_TARGET_TRIPLET": "x64-linux-dynamic" },
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" }
+    },
+    {
+      "name": "osx-arm64",
+      "inherits": "base",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "arm64-osx-dynamic",
+        "CMAKE_OSX_ARCHITECTURES": "arm64"
+      },
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "win-x64", "configurePreset": "win-x64" },
+    { "name": "linux-x64", "configurePreset": "linux-x64" },
+    { "name": "osx-arm64", "configurePreset": "osx-arm64" }
+  ]
+}

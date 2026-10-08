@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <Description>Headless command line for UpSTEPer: every feature of the app is scriptable here.</Description>
+    <AssemblyName>upsteper</AssemblyName>
+    <RootNamespace>UpSTEPer.Cli</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\UpSTEPer.Core\UpSTEPer.Core.csproj" />
+    <ProjectReference Include="..\UpSTEPer.Occt\UpSTEPer.Occt.csproj" />
+  </ItemGroup>
+
+</Project>

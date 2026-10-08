@@ -1,0 +1,26 @@
+# .NET
+bin/
+obj/
+artifacts/
+*.user
+*.suo
+.vs/
+TestResults/
+
+# Native / CMake / vcpkg
+native/build/
+native/out/
+vcpkg_installed/
+CMakeUserPresets.json
+
+# IDEs
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local scratch output (never commit generated or modified STEP/DXF files)
+/out/

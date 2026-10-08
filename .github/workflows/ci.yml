@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.preset }}
+    runs-on: ${{ matrix.os }}
+    # The first run builds OCCT from source (~45-90 min). Later runs restore it from cache.
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            preset: win-x64
+          - os: ubuntu-24.04
+            preset: linux-x64
+          - os: macos-15
+            preset: osx-arm64
+
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg-cache,readwrite
+      UPS_REQUIRE_NATIVE: "1"
+      DOTNET_NOLOGO: "1"
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Install build tools (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build pkg-config autoconf autoconf-archive automake libtool bison \
+            libgl1-mesa-dev libx11-dev libxext-dev libxi-dev libxrandr-dev libxinerama-dev libxcursor-dev
+
+      - name: Install build tools (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ninja autoconf autoconf-archive automake libtool
+
+      - name: Set up MSVC environment (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Set up vcpkg (pinned to the manifest baseline)
+        shell: bash
+        run: |
+          baseline=$(grep -oE '"builtin-baseline": *"[0-9a-f]+"' native/vcpkg.json | grep -oE '[0-9a-f]{40}')
+          git clone --filter=blob:none https://github.com/microsoft/vcpkg "$VCPKG_ROOT"
+          git -C "$VCPKG_ROOT" checkout "$baseline"
+          if [ "$RUNNER_OS" = "Windows" ]; then "$VCPKG_ROOT/bootstrap-vcpkg.bat" -disableMetrics; else "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics; fi
+          mkdir -p "${{ github.workspace }}/vcpkg-cache"
+
+      - name: Restore vcpkg binary cache
+        id: vcpkg-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: vcpkg-cache
+          key: vcpkg-${{ matrix.preset }}-${{ hashFiles('native/vcpkg.json') }}
+          restore-keys: vcpkg-${{ matrix.preset }}-
+
+      - name: Configure native library
+        working-directory: native
+        run: cmake --preset ${{ matrix.preset }}
+
+      # Save right after dependencies are built so a later failure does not lose hours of OCCT build.
+      - name: Save vcpkg binary cache
+        if: always() && steps.vcpkg-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: vcpkg-cache
+          key: vcpkg-${{ matrix.preset }}-${{ hashFiles('native/vcpkg.json') }}
+
+      - name: Build and install native library
+        working-directory: native
+        run: |
+          cmake --build --preset ${{ matrix.preset }}
+          cmake --install build/${{ matrix.preset }}
+
+      - name: Build .NET
+        run: dotnet build UpSTEPer.slnx -c Release -p:UpsNativeRid=${{ matrix.preset }}
+
+      - name: Test
+        run: dotnet test --solution UpSTEPer.slnx -c Release --no-build
+
+      - name: CLI smoke test
+        shell: bash
+        run: |
+          dotnet run --project src/UpSTEPer.Cli -c Release --no-build -- runtime
+          dotnet run --project src/UpSTEPer.Cli -c Release --no-build -- info "examples/ESKV 12 RAL 7035 10066410.stp"
+
+      - name: Upload native binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.preset }}
+          path: artifacts/native/${{ matrix.preset }}
+          if-no-files-found: error

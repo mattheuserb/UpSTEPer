@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Implementation of the UpSTEPer.Core abstractions on top of Open CASCADE via the upsteper_native C ABI.</Description>
+    <RootNamespace>UpSTEPer.Occt</RootNamespace>
+    <!-- Required by the LibraryImport source generator. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\UpSTEPer.Core\UpSTEPer.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="UpSTEPer.Occt.Tests" />
+  </ItemGroup>
+
+  <!--
+    Native binaries: the CMake install step (see docs/development.md) places upsteper_native
+    plus OCCT into artifacts/native/<rid>/. They are copied next to every assembly
+    that references this project. Override the folder with the MSBuild property UpsNativeDir.
+  -->
+  <PropertyGroup>
+    <UpsNativeRid Condition="'$(UpsNativeRid)' == ''">$([System.Runtime.InteropServices.RuntimeInformation]::RuntimeIdentifier)</UpsNativeRid>
+    <UpsNativeDir Condition="'$(UpsNativeDir)' == ''">$(NativeArtifactsDir)$(UpsNativeRid)/</UpsNativeDir>
+  </PropertyGroup>
+
+  <ItemGroup Condition="Exists('$(UpsNativeDir)')">
+    <None Include="$(UpsNativeDir)*.dll;$(UpsNativeDir)*.so*;$(UpsNativeDir)*.dylib"
+          Link="%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest"
+          Visible="false" />
+  </ItemGroup>
+
+</Project>

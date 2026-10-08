@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>UpSTEPer domain model and abstractions. Has no dependency on OCCT or any UI framework.</Description>
+    <RootNamespace>UpSTEPer.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="UpSTEPer.Core.Tests" />
+  </ItemGroup>
+
+</Project>

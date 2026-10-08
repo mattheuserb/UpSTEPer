@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\UpSTEPer.Occt\UpSTEPer.Occt.csproj" />
+  </ItemGroup>
+
+</Project>

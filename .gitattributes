@@ -1,0 +1,11 @@
+* text=auto eol=lf
+*.cs     text eol=lf
+*.sln    text eol=crlf
+*.bat    text eol=crlf
+*.cmd    text eol=crlf
+*.ps1    text eol=crlf
+# CAD files are byte-exact test data; never normalise line endings.
+*.stp    -text
+*.step   -text
+*.dxf    -text
+*.png    binary

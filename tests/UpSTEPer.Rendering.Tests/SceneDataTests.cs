@@ -61,6 +61,18 @@ public class SceneDataTests
     }
 
     [Fact]
+    public void Edges_DefaultToEmpty_AndSurviveColourChanges()
+    {
+        var edges = new EdgeData(new float[6], [0, 1], [3]);
+
+        var withoutEdges = SceneData.Create(_mesh, _ => null);
+        var withEdges = SceneData.Create(_mesh, _ => null, edges);
+
+        Assert.Same(EdgeData.Empty, withoutEdges.Edges);
+        Assert.Same(edges, withEdges.WithFaceColors(_ => ColorRgb.FromHex("#00FF00")).Edges);
+    }
+
+    [Fact]
     public void Build_QueriesEachFaceOnlyOnce()
     {
         var calls = 0;

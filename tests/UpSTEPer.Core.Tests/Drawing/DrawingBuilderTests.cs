@@ -64,6 +64,8 @@ public class DrawingBuilderTests
 
         public void SaveStep(string path) => throw new NotSupportedException();
 
+        public EdgeData TessellateEdges(TessellationOptions options) => EdgeData.Empty;
+
         public MeshData Tessellate(TessellationOptions options) => MeshData.Empty;
 
         public void Dispose()

@@ -71,6 +71,25 @@ internal static partial class NativeMethods
     internal static unsafe partial NativeStatus DrawingCopy(
         DrawingSafeHandle drawing, NativeDrawingCurve* curves, long curvesCapacity, double* points, long pointsCapacity);
 
+    [LibraryImport(LibraryName, EntryPoint = "ups_document_tessellate_edges")]
+    internal static partial NativeStatus DocumentTessellateEdges(DocumentSafeHandle document, double deflection, out LinesSafeHandle lines);
+
+    [LibraryImport(LibraryName, EntryPoint = "ups_lines_free")]
+    internal static partial void LinesFree(nint lines);
+
+    [LibraryImport(LibraryName, EntryPoint = "ups_lines_get_info")]
+    internal static partial NativeStatus LinesGetInfo(LinesSafeHandle lines, out int vertexCount, out int segmentCount);
+
+    [LibraryImport(LibraryName, EntryPoint = "ups_lines_copy")]
+    internal static unsafe partial NativeStatus LinesCopy(
+        LinesSafeHandle lines,
+        float* positions,
+        long positionsCapacity,
+        uint* indices,
+        long indicesCapacity,
+        int* segmentEdges,
+        long segmentEdgesCapacity);
+
     [LibraryImport(LibraryName, EntryPoint = "ups_document_tessellate")]
     internal static partial NativeStatus DocumentTessellate(
         DocumentSafeHandle document, in NativeTessellationParams parameters, out MeshSafeHandle mesh);

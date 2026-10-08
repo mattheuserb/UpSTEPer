@@ -125,6 +125,35 @@ internal sealed class OcctStepDocument : IStepDocument
         }
     }
 
+    public EdgeData TessellateEdges(TessellationOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        ThrowIfDisposed();
+
+        NativeError.ThrowIfFailed(
+            NativeMethods.DocumentTessellateEdges(_handle, options.LinearDeflection, out var lines), "Discretising edges");
+        using (lines)
+        {
+            NativeError.ThrowIfFailed(NativeMethods.LinesGetInfo(lines, out var vertexCount, out var segmentCount), "Reading line info");
+            var positions = new float[vertexCount * 3];
+            var indices = new uint[segmentCount * 2];
+            var edges = new int[segmentCount];
+            unsafe
+            {
+                fixed (float* positionsPtr = positions)
+                fixed (uint* indicesPtr = indices)
+                fixed (int* edgesPtr = edges)
+                {
+                    NativeError.ThrowIfFailed(
+                        NativeMethods.LinesCopy(lines, positionsPtr, positions.Length, indicesPtr, indices.Length, edgesPtr, edges.Length),
+                        "Copying lines");
+                }
+            }
+
+            return new EdgeData(positions, indices, edges);
+        }
+    }
+
     public MeshData Tessellate(TessellationOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);

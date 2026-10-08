@@ -46,6 +46,24 @@ public sealed class MeshRenderer : IDisposable
         }
         """;
 
+    private const string LineVertexShaderBody = """
+        in vec3 aPosition;
+        uniform mat4 uMvp;
+        void main()
+        {
+            gl_Position = uMvp * vec4(aPosition, 1.0);
+        }
+        """;
+
+    private const string LineFragmentShaderBody = """
+        uniform vec3 uColor;
+        out vec4 fragColor;
+        void main()
+        {
+            fragColor = vec4(uColor, 1.0);
+        }
+        """;
+
     private readonly GL _gl;
     private readonly string _shaderHeader;
     private uint _program;
@@ -58,6 +76,14 @@ public sealed class MeshRenderer : IDisposable
     private readonly int _lightLocation;
     private uint _indexCount;
 
+    private readonly uint _lineProgram;
+    private readonly uint _lineVertexArray;
+    private readonly uint _linePositionBuffer;
+    private readonly uint _lineIndexBuffer;
+    private readonly int _lineMvpLocation;
+    private readonly int _lineColorLocation;
+    private uint _lineIndexCount;
+
     /// <summary>Initializes a new instance of the <see cref="MeshRenderer"/> class and creates GL resources.</summary>
     /// <param name="gl">The OpenGL API bound to the current context.</param>
     /// <param name="isOpenGlEs">Whether the context is OpenGL ES (selects the GLSL dialect).</param>
@@ -66,7 +92,7 @@ public sealed class MeshRenderer : IDisposable
         _gl = gl ?? throw new ArgumentNullException(nameof(gl));
         _shaderHeader = isOpenGlEs ? "#version 300 es\nprecision highp float;\n" : "#version 330 core\n";
 
-        _program = CreateProgram();
+        _program = CreateProgram(VertexShaderBody, FragmentShaderBody, withNormalAndColor: true);
         _mvpLocation = _gl.GetUniformLocation(_program, "uMvp");
         _lightLocation = _gl.GetUniformLocation(_program, "uLightDirection");
 
@@ -75,10 +101,37 @@ public sealed class MeshRenderer : IDisposable
         _normalBuffer = _gl.GenBuffer();
         _colorBuffer = _gl.GenBuffer();
         _indexBuffer = _gl.GenBuffer();
+
+        _lineProgram = CreateProgram(LineVertexShaderBody, LineFragmentShaderBody, withNormalAndColor: false);
+        _lineMvpLocation = _gl.GetUniformLocation(_lineProgram, "uMvp");
+        _lineColorLocation = _gl.GetUniformLocation(_lineProgram, "uColor");
+        _lineVertexArray = _gl.GenVertexArray();
+        _linePositionBuffer = _gl.GenBuffer();
+        _lineIndexBuffer = _gl.GenBuffer();
     }
 
     /// <summary>Gets or sets the background colour.</summary>
     public ColorRgb Background { get; set; } = ColorRgb.FromHex("#E9ECEF");
+
+    /// <summary>Gets or sets the colour of edge lines.</summary>
+    public ColorRgb EdgeColor { get; set; } = ColorRgb.FromHex("#2B2E33");
+
+    /// <summary>Gets or sets a value indicating whether edge lines are drawn.</summary>
+    public bool ShowEdges { get; set; } = true;
+
+    /// <summary>Uploads edge lines, replacing previous ones.</summary>
+    /// <param name="edges">The lines; <see cref="EdgeData.Empty"/> removes them.</param>
+    public unsafe void UploadEdges(EdgeData edges)
+    {
+        ArgumentNullException.ThrowIfNull(edges);
+
+        _gl.BindVertexArray(_lineVertexArray);
+        UploadAttribute(_linePositionBuffer, PositionLocation, edges.Positions.Span);
+        _gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, _lineIndexBuffer);
+        _gl.BufferData(BufferTargetARB.ElementArrayBuffer, edges.Indices.Span, BufferUsageARB.StaticDraw);
+        _lineIndexCount = (uint)edges.Indices.Length;
+        _gl.BindVertexArray(0);
+    }
 
     /// <summary>Uploads geometry and colours, replacing any previous mesh.</summary>
     /// <param name="mesh">The mesh.</param>
@@ -127,7 +180,7 @@ public sealed class MeshRenderer : IDisposable
         }
 
         _gl.Enable(EnableCap.DepthTest);
-        _gl.DepthFunc(DepthFunction.Less);
+        _gl.DepthFunc(DepthFunction.Lequal);
         _gl.UseProgram(_program);
 
         var mvp = camera.GetViewProjection(width / (float)Math.Max(height, 1));
@@ -135,8 +188,22 @@ public sealed class MeshRenderer : IDisposable
         var light = -camera.Forward;
         _gl.Uniform3(_lightLocation, light.X, light.Y, light.Z);
 
+        // Push faces slightly back so edges lying exactly on them win the depth test (no z-fighting).
+        _gl.Enable(EnableCap.PolygonOffsetFill);
+        _gl.PolygonOffset(1f, 1f);
         _gl.BindVertexArray(_vertexArray);
         _gl.DrawElements(PrimitiveType.Triangles, _indexCount, DrawElementsType.UnsignedInt, null);
+        _gl.Disable(EnableCap.PolygonOffsetFill);
+
+        if (ShowEdges && _lineIndexCount > 0)
+        {
+            _gl.UseProgram(_lineProgram);
+            _gl.UniformMatrix4(_lineMvpLocation, 1, false, (float*)&mvp);
+            _gl.Uniform3(_lineColorLocation, EdgeColor.R, EdgeColor.G, EdgeColor.B);
+            _gl.BindVertexArray(_lineVertexArray);
+            _gl.DrawElements(PrimitiveType.Lines, _lineIndexCount, DrawElementsType.UnsignedInt, null);
+        }
+
         _gl.BindVertexArray(0);
         _gl.UseProgram(0);
     }
@@ -155,6 +222,10 @@ public sealed class MeshRenderer : IDisposable
         _gl.DeleteBuffer(_indexBuffer);
         _gl.DeleteVertexArray(_vertexArray);
         _gl.DeleteProgram(_program);
+        _gl.DeleteBuffer(_linePositionBuffer);
+        _gl.DeleteBuffer(_lineIndexBuffer);
+        _gl.DeleteVertexArray(_lineVertexArray);
+        _gl.DeleteProgram(_lineProgram);
         _program = 0;
     }
 
@@ -166,17 +237,21 @@ public sealed class MeshRenderer : IDisposable
         _gl.EnableVertexAttribArray(location);
     }
 
-    private uint CreateProgram()
+    private uint CreateProgram(string vertexBody, string fragmentBody, bool withNormalAndColor)
     {
-        var vertexShader = CompileShader(ShaderType.VertexShader, VertexShaderBody);
-        var fragmentShader = CompileShader(ShaderType.FragmentShader, FragmentShaderBody);
+        var vertexShader = CompileShader(ShaderType.VertexShader, vertexBody);
+        var fragmentShader = CompileShader(ShaderType.FragmentShader, fragmentBody);
 
         var program = _gl.CreateProgram();
         _gl.AttachShader(program, vertexShader);
         _gl.AttachShader(program, fragmentShader);
         _gl.BindAttribLocation(program, PositionLocation, "aPosition");
-        _gl.BindAttribLocation(program, NormalLocation, "aNormal");
-        _gl.BindAttribLocation(program, ColorLocation, "aColor");
+        if (withNormalAndColor)
+        {
+            _gl.BindAttribLocation(program, NormalLocation, "aNormal");
+            _gl.BindAttribLocation(program, ColorLocation, "aColor");
+        }
+
         _gl.LinkProgram(program);
         _gl.DeleteShader(vertexShader);
         _gl.DeleteShader(fragmentShader);

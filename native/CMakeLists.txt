@@ -20,6 +20,7 @@ add_library(upsteper_native SHARED
     src/step_export.cpp
     src/messages.cpp
     src/drawing.cpp
+    src/edges.cpp
     src/version.cpp
 )
 

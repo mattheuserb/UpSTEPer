@@ -8,13 +8,17 @@ public sealed class SceneData
     private readonly ColorRgb?[] _faceColors;
     private readonly ReadOnlyMemory<float> _vertexColors;
 
-    private SceneData(MeshData mesh, ColorRgb?[] faceColors, BoundingBox bounds)
+    private SceneData(MeshData mesh, ColorRgb?[] faceColors, BoundingBox bounds, EdgeData edges)
     {
         Mesh = mesh;
         _faceColors = faceColors;
         _vertexColors = VertexColors.Build(mesh, GetFaceColor);
         Bounds = bounds;
+        Edges = edges;
     }
+
+    /// <summary>Gets the edge lines drawn on top of the mesh (may be empty).</summary>
+    public EdgeData Edges { get; }
 
     /// <summary>Gets the colour used to highlight the selected face.</summary>
     public static ColorRgb HighlightColor { get; } = ColorRgb.FromHex("#FF8C1A");
@@ -28,12 +32,13 @@ public sealed class SceneData
     /// <summary>Creates scene data from a mesh and a per-face colour lookup.</summary>
     /// <param name="mesh">The display mesh.</param>
     /// <param name="faceColor">Colour per face; <see langword="null"/> uses <see cref="VertexColors.Default"/>.</param>
+    /// <param name="edges">Edge lines to draw on top, or <see langword="null"/> for none.</param>
     /// <returns>The scene data.</returns>
-    public static SceneData Create(MeshData mesh, Func<FaceId, ColorRgb?> faceColor)
+    public static SceneData Create(MeshData mesh, Func<FaceId, ColorRgb?> faceColor, EdgeData? edges = null)
     {
         ArgumentNullException.ThrowIfNull(mesh);
         ArgumentNullException.ThrowIfNull(faceColor);
-        return new SceneData(mesh, ReadFaceColors(mesh, faceColor), BoundingBox.FromPositions(mesh.Positions.Span));
+        return new SceneData(mesh, ReadFaceColors(mesh, faceColor), BoundingBox.FromPositions(mesh.Positions.Span), edges ?? EdgeData.Empty);
     }
 
     /// <summary>
@@ -45,7 +50,7 @@ public sealed class SceneData
     public SceneData WithFaceColors(Func<FaceId, ColorRgb?> faceColor)
     {
         ArgumentNullException.ThrowIfNull(faceColor);
-        return new SceneData(Mesh, ReadFaceColors(Mesh, faceColor), Bounds);
+        return new SceneData(Mesh, ReadFaceColors(Mesh, faceColor), Bounds, Edges);
     }
 
     /// <summary>Gets the colour assigned to a face in the model.</summary>

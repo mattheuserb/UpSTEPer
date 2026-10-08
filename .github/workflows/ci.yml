@@ -187,6 +187,31 @@ jobs:
           dotnet run --project src/UpSTEPer.Cli -c Release --no-build -- runtime
           dotnet run --project src/UpSTEPer.Cli -c Release --no-build -- info "examples/ESKV 12 RAL 7035 10066410.stp"
 
+      # Renders the example in the real app and saves the first frame. Covers the GPU code that
+      # unit tests cannot (MeshRenderer, ModelView) on every platform's GL flavour: ANGLE/GLES on
+      # Windows, Mesa (software, under Xvfb) on Linux, Apple OpenGL on macOS.
+      - name: Viewer screenshot smoke test
+        shell: bash
+        run: |
+          shot="artifacts/screenshots/viewer-${{ matrix.preset }}.png"
+          mkdir -p artifacts/screenshots
+          args=(--project src/UpSTEPer.App -c Release --no-build -- "examples/ESKV 12 RAL 7035 10066410.stp" --screenshot "$shot")
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sudo apt-get install -y --no-install-recommends xvfb libgl1-mesa-dri libice6 libsm6 libfontconfig1
+            xvfb-run -a -s "-screen 0 1600x1000x24" dotnet run "${args[@]}"
+          else
+            dotnet run "${args[@]}"
+          fi
+          test -s "$shot"
+
+      - name: Upload viewer screenshot
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshot-${{ matrix.preset }}
+          path: artifacts/screenshots
+          if-no-files-found: warn
+
       - name: Upload native binaries
         uses: actions/upload-artifact@v7
         with:

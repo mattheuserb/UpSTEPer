@@ -20,7 +20,7 @@ dotnet test --project tests/UpSTEPer.Core.Tests          # one project
 dotnet run --project src/UpSTEPer.Cli -- runtime         # is the native library loadable?
 dotnet run --project src/UpSTEPer.Cli -- info <file.stp> # load + stats + colours + mesh
 dotnet run --project src/UpSTEPer.App -- <file.stp>       # desktop viewer
-dotnet run --project src/UpSTEPer.App -- <file.stp> --screenshot out.png   # render 1 frame to PNG and exit (verify rendering without a display)
+dotnet run --project src/UpSTEPer.App -- <file.stp> --screenshot out.png [--select-face N]   # render 1 frame (optionally with face N highlighted) to PNG and exit
 
 # Native bridge (needs C++ toolchain, CMake >= 3.24, Ninja, VCPKG_ROOT) — see docs/development.md
 powershell -File scripts/build-native.ps1 -VcpkgRoot C:\vcpkg   # Windows: sets up MSVC env itself

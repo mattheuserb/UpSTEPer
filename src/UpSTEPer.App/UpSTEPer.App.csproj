@@ -23,4 +23,8 @@
     <ProjectReference Include="..\UpSTEPer.Rendering\UpSTEPer.Rendering.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="UpSTEPer.App.Tests" />
+  </ItemGroup>
+
 </Project>

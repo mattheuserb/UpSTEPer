@@ -30,6 +30,14 @@ internal sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsBusy { get; set; }
 
+    /// <summary>Gets or sets the face selected in the 3D view.</summary>
+    [ObservableProperty]
+    public partial FaceId? SelectedFace { get; set; }
+
+    /// <summary>Gets or sets the description of the selection shown in the status bar.</summary>
+    [ObservableProperty]
+    public partial string SelectionInfo { get; set; } = string.Empty;
+
     /// <summary>Loads a STEP file in the background and shows it.</summary>
     /// <param name="path">The file path.</param>
     /// <returns><see langword="true"/> when the model was loaded.</returns>
@@ -48,6 +56,7 @@ internal sealed partial class MainViewModel : ObservableObject
                 return (SceneData.Create(mesh, document.GetFaceColor), document.Statistics);
             }).ConfigureAwait(true);
 
+            SelectedFace = null;
             Scene = scene;
             Title = $"{fileName} - UpSTEPer";
             Status = string.Create(
@@ -65,4 +74,9 @@ internal sealed partial class MainViewModel : ObservableObject
             IsBusy = false;
         }
     }
+
+    partial void OnSelectedFaceChanged(FaceId? value) =>
+        SelectionInfo = value is { } face
+            ? $"Selected: face {face.Value}, colour {Scene?.GetFaceColor(face)?.ToHex() ?? "none (default grey)"}"
+            : string.Empty;
 }

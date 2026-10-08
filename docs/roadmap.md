@@ -24,12 +24,16 @@ Linux and macOS from CI-built binaries.
 
 ## M1 — Viewer
 
-- Avalonia app (MVVM, CommunityToolkit.Mvvm, Microsoft.Extensions.DependencyInjection/Logging)
-- Renderer (Silk.NET OpenGL 3.3 core): orbit/pan/zoom, fit-all, standard views, edges overlay
-- Picking via ID buffer (triangle → `FaceId`), hover highlight, selection
-- Model tree (assemblies, parts, bodies) from XDE labels
-- Display quality presets (re-mesh with `BRepTools::Clean`)
-- Background loading with progress and cancellation
+- [x] Avalonia app (MVVM, CommunityToolkit.Mvvm); background loading
+- [x] Renderer: orbit/pan/zoom, fit (double-click)
+- [x] Face selection by click: CPU ray casting (`MeshPicker`, Möller–Trumbore) instead of a GPU
+  ID buffer — testable and independent of GPU quirks; highlight + face/colour in the status bar
+- [ ] Edges overlay (B-Rep edges as lines)
+- [ ] Standard views (front, top, right, iso) and view cube / toolbar
+- [ ] Model tree (assemblies, parts, bodies) from XDE labels; body selection
+- [ ] Display quality presets (re-mesh with `BRepTools::Clean`)
+- [ ] Progress and cancellation for long loads; DI/logging (Microsoft.Extensions)
+- [ ] Hover highlight (needs a BVH for picking performance)
 
 ## M2 — Colouring
 

@@ -2,18 +2,43 @@ name: CI
 
 on:
   push:
-    branches: [main]
   pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# One run per branch: a pull request run cancels the push run of the same branch.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
+env:
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
 jobs:
+  # Fast gate (~2 min, no native code needed): formatting and analyzers.
+  quality:
+    name: format + analyzers
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore tools
+        run: dotnet tool restore
+
+      - name: Verify formatting (dotnet format)
+        run: dotnet format UpSTEPer.slnx --verify-no-changes
+
+      - name: Build with all analyzers (warnings are errors)
+        run: dotnet build UpSTEPer.slnx -c Release
+
   build:
     name: ${{ matrix.preset }}
     runs-on: ${{ matrix.os }}
@@ -30,10 +55,10 @@ jobs:
             os: ubuntu-24.04
           - preset: osx-arm64
             os: macos-15
-        # macOS minutes are billed 10x on private repositories: skip it for pull requests;
-        # it still runs on every push to main and on manual runs.
+        # macOS minutes are billed 10x on private repositories: run it only for pushes to main
+        # and manual runs, not for feature branches or pull requests.
         exclude:
-          - preset: ${{ github.event_name == 'pull_request' && 'osx-arm64' || 'none' }}
+          - preset: ${{ (github.ref != 'refs/heads/main' && github.event_name != 'workflow_dispatch') && 'osx-arm64' || 'none' }}
 
     env:
       # Our pinned vcpkg checkout. VCPKG_ROOT itself is exported in the setup step, because
@@ -41,8 +66,8 @@ jobs:
       UPS_VCPKG_DIR: ${{ github.workspace }}/vcpkg
       VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg-cache,readwrite
       UPS_REQUIRE_NATIVE: "1"
-      DOTNET_NOLOGO: "1"
-      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      # Coverage is collected on one platform only (all tests incl. native run there).
+      UPS_COVERAGE: ${{ matrix.preset == 'linux-x64' && '1' || '0' }}
 
     steps:
       - uses: actions/checkout@v7
@@ -137,7 +162,33 @@ jobs:
         run: dotnet build UpSTEPer.slnx -c Release -p:UpsNativeRid=${{ matrix.preset }}
 
       - name: Test
+        if: env.UPS_COVERAGE != '1'
         run: dotnet test --solution UpSTEPer.slnx -c Release --no-build
+
+      - name: Test with coverage
+        if: env.UPS_COVERAGE == '1'
+        run: >-
+          dotnet test --solution UpSTEPer.slnx -c Release --no-build
+          --coverage --coverage-output-format cobertura
+          --results-directory ${{ github.workspace }}/artifacts/coverage
+
+      # Reports only; a minimum threshold will be added once a baseline is established
+      # (see CONTRIBUTING.md, "Code quality").
+      - name: Coverage report
+        if: env.UPS_COVERAGE == '1'
+        run: |
+          dotnet tool restore
+          dotnet reportgenerator "-reports:artifacts/coverage/*.cobertura.xml" "-targetdir:artifacts/coverage/report" \
+            "-reporttypes:Html;MarkdownSummaryGithub" "-assemblyfilters:-*.Tests" -verbosity:Warning
+          cat artifacts/coverage/report/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: env.UPS_COVERAGE == '1'
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: artifacts/coverage
+          if-no-files-found: error
 
       - name: CLI smoke test
         shell: bash

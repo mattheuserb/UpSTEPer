@@ -5,8 +5,8 @@
 [![CI](https://github.com/mattheuserb/UpSTEPer/actions/workflows/ci.yml/badge.svg)](https://github.com/mattheuserb/UpSTEPer/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **Status: pre-alpha (milestone M0).** The geometry kernel bridge and a headless CLI exist;
-> the desktop viewer does not yet. See the [roadmap](docs/roadmap.md).
+> **Status: pre-alpha (milestone M0).** The geometry kernel bridge, a headless CLI and a first
+> 3D viewer (open, rotate, pan, zoom) exist. See the [roadmap](docs/roadmap.md).
 
 ## Goals
 

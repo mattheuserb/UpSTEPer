@@ -29,3 +29,19 @@ and per-face picking.
 - − Navigation, edge display, transparency and selection highlighting must be implemented (estimate 2–4 weeks).
 - − OpenGL on macOS is deprecated but works (up to 4.1). If Apple removes it, the backend can be
   swapped (e.g. Vulkan via MoltenVK); the renderer only consumes `MeshData`.
+
+## Addendum (2026-10-08, M0 spike, Avalonia 12.1)
+
+- Avalonia 12 composes with **Metal** on macOS by default (`[Metal, OpenGl, Software]`, despite the
+  API docs saying OpenGL). `OpenGlControlBase` then gets no GL context. The app forces
+  `AvaloniaNativeRenderingMode.OpenGl` first. A future Metal backend for the renderer would remove
+  this constraint.
+- On Linux, Avalonia blocklists the `llvmpipe` (Mesa software) and `SVGA3D` (VMware) GL renderers and
+  falls back to software composition without GL. The app clears that list so the 3D view also works
+  in VMs and without GPU drivers (slower, but usable).
+- Windows uses ANGLE (OpenGL ES 3.0 on Direct3D 11); the renderer selects GLSL ES 3.00 or GLSL 3.30
+  core from the context type.
+- Verified by the CI viewer screenshot test on Windows and Linux. **macOS is open:** on the hosted
+  runner `OpenGlControlBase` reports "Compositor backend doesn't support GPU interop" even with the
+  OpenGL compositor forced; a test on real Mac hardware is pending (docs/roadmap.md, M0). Status
+  stays *Proposed* until macOS is verified.

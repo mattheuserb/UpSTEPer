@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>OpenGL renderer for UpSTEPer meshes (Silk.NET). Independent of any UI framework.</Description>
+    <RootNamespace>UpSTEPer.Rendering</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Silk.NET.OpenGL" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\UpSTEPer.Core\UpSTEPer.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="UpSTEPer.Rendering.Tests" />
+  </ItemGroup>
+
+</Project>

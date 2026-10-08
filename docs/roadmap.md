@@ -12,9 +12,15 @@ Goal: prove that the native bridge builds and runs on all three platforms.
 - [x] CLI: `runtime`, `info`
 - [x] Unit and integration tests; CI matrix (Windows, Linux, macOS)
 - [x] Native build and all tests green locally on Windows (OCCT 8.0.1, MSVC 14.51)
-- [ ] **CI green on all three platforms** (first run builds OCCT; fix packaging issues)
+- [x] CI green on all three platforms (native build, tests, CLI smoke test)
 - [ ] Redirect OCCT console diagnostics (`Message::DefaultMessenger`) into our error reporting
-- [ ] Spike: Avalonia window with OpenGL control rendering `MeshData` on all three platforms
+- [x] Spike: Avalonia window with OpenGL control rendering `MeshData` (verified locally on Windows/ANGLE)
+- [x] Viewer screenshot smoke test green in CI on Windows (ANGLE) and Linux (Mesa llvmpipe, Xvfb)
+- [ ] **macOS 3D view unverified.** On the GitHub-hosted macOS runner Avalonia 12 reports
+  "Compositor backend doesn't support GPU interop", also with the OpenGL compositor forced. Unknown
+  whether this is the GPU-less runner VM or Avalonia 12 on macOS in general. Next step: run
+  `UpSTEPer --screenshot` on a real Mac; if it fails there too, evaluate a Metal backend or an
+  offscreen GL context (ADR 0004). The CI step is non-blocking on macOS until then.
 
 Exit criterion: `upsteper info` and an Avalonia window showing the example file work on Windows,
 Linux and macOS from CI-built binaries.

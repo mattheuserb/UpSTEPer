@@ -19,6 +19,8 @@ dotnet test                        # Microsoft Testing Platform (configured in g
 dotnet test --project tests/UpSTEPer.Core.Tests          # one project
 dotnet run --project src/UpSTEPer.Cli -- runtime         # is the native library loadable?
 dotnet run --project src/UpSTEPer.Cli -- info <file.stp> # load + stats + colours + mesh
+dotnet run --project src/UpSTEPer.App -- <file.stp>       # desktop viewer
+dotnet run --project src/UpSTEPer.App -- <file.stp> --screenshot out.png   # render 1 frame to PNG and exit (verify rendering without a display)
 
 # Native bridge (needs C++ toolchain, CMake >= 3.24, Ninja, VCPKG_ROOT) — see docs/development.md
 powershell -File scripts/build-native.ps1 -VcpkgRoot C:\vcpkg   # Windows: sets up MSVC env itself
@@ -35,6 +37,8 @@ rather than claiming those tests pass; CI (`.github/workflows/ci.yml`) is the so
 |---|---|---|
 | `src/UpSTEPer.Core` | Domain types (`ColorRgb`, `FaceId`, `MeshData`, ...) and interfaces (`IStepReader`, `IStepDocument`) | BCL only |
 | `src/UpSTEPer.Occt` | Implements Core via P/Invoke (`Native/`) | Core |
+| `src/UpSTEPer.Rendering` | OpenGL renderer (Silk.NET), `OrbitCamera`, `SceneData`; no UI framework | Core |
+| `src/UpSTEPer.App` | Avalonia desktop app (MVVM), `ModelView` hosts the renderer | Core, Occt, Rendering |
 | `src/UpSTEPer.Cli` | Composition root + commands | Core, Occt |
 | `native/` | C++ facade over OCCT, public header `native/include/upsteper/upsteper.h` | OCCT |
 | `tests/*` | xUnit v3 tests, one project per production project | project under test |

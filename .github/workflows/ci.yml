@@ -190,7 +190,11 @@ jobs:
       # Renders the example in the real app and saves the first frame. Covers the GPU code that
       # unit tests cannot (MeshRenderer, ModelView) on every platform's GL flavour: ANGLE/GLES on
       # Windows, Mesa (software, under Xvfb) on Linux, Apple OpenGL on macOS.
+      # macOS is not blocking yet: on the hosted runner Avalonia reports "Compositor backend doesn't
+      # support GPU interop" (see docs/roadmap.md, M0). A failure there emits a warning instead.
       - name: Viewer screenshot smoke test
+        id: screenshot
+        continue-on-error: ${{ runner.os == 'macOS' }}
         shell: bash
         run: |
           shot="artifacts/screenshots/viewer-${{ matrix.preset }}.png"
@@ -203,6 +207,10 @@ jobs:
             dotnet run "${args[@]}"
           fi
           test -s "$shot"
+
+      - name: Report unverified macOS rendering
+        if: steps.screenshot.outcome == 'failure' && runner.os == 'macOS'
+        run: echo "::warning title=macOS 3D view unverified::Viewer screenshot failed on macOS (known issue, docs/roadmap.md M0)."
 
       - name: Upload viewer screenshot
         if: always()

@@ -41,4 +41,7 @@ and per-face picking.
   in VMs and without GPU drivers (slower, but usable).
 - Windows uses ANGLE (OpenGL ES 3.0 on Direct3D 11); the renderer selects GLSL ES 3.00 or GLSL 3.30
   core from the context type.
-- Verified by the CI viewer screenshot test on all three platforms.
+- Verified by the CI viewer screenshot test on Windows and Linux. **macOS is open:** on the hosted
+  runner `OpenGlControlBase` reports "Compositor backend doesn't support GPU interop" even with the
+  OpenGL compositor forced; a test on real Mac hardware is pending (docs/roadmap.md, M0). Status
+  stays *Proposed* until macOS is verified.

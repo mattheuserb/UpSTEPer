@@ -33,6 +33,9 @@ dotnet run --project src/UpSTEPer.Cli -- info "examples/ESKV 12 RAL 7035 1006641
 
 Without step 1 everything still builds; tests that need the geometry kernel are skipped.
 
+Before pushing, run the same quality gate as CI (format, analyzers, tests, coverage):
+`./scripts/check.ps1` — rules in [CONTRIBUTING.md](CONTRIBUTING.md#code-quality).
+
 ## Architecture in one picture
 
 ```

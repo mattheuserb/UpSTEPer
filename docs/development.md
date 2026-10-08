@@ -79,8 +79,18 @@ UPS_REQUIRE_NATIVE=1 dotnet test              # fail instead of skip when native
 
 ## CI
 
-`.github/workflows/ci.yml` builds and tests on Windows, Linux and macOS. Two cache layers keep
-runs short:
+`.github/workflows/ci.yml` runs on every push and pull request:
+
+| Job | Runs | Fails on |
+|---|---|---|
+| `format + analyzers` | Ubuntu, ~2 min, no native build | `dotnet format` differences, any analyzer/compiler warning |
+| `win-x64`, `linux-x64` | always | build, native or .NET test failures |
+| `osx-arm64` | pushes to `main`, manual runs | same |
+
+`linux-x64` also collects code coverage: summary on the run page, HTML report as artifact
+`coverage-report`. Locally: `./scripts/check.ps1` (see CONTRIBUTING.md).
+
+Two cache layers keep runs short:
 
 | Cache | Key | Effect |
 |---|---|---|
@@ -92,8 +102,8 @@ compiler update changes vcpkg's ABI hash, or when GitHub evicts the cache (7 day
 per repository). The vcpkg cache is saved right after configure, so a later failure does not
 lose that work. All triplets are release-only (`native/triplets/` overlays for Linux/macOS).
 
-macOS runs on pushes to `main` and manual runs, not on pull requests (10× minute billing on
-private repositories). Native binaries per platform are uploaded as artifacts (`native-<rid>`).
+macOS runs only on pushes to `main` and manual runs (10× minute billing on private
+repositories). Native binaries per platform are uploaded as artifacts (`native-<rid>`).
 
 ## Updating OCCT / vcpkg
 

@@ -29,7 +29,8 @@ All checks run locally with one command, exactly as in CI:
 ```
 
 (Windows PowerShell 5.1 or PowerShell 7 on any OS. Without the native library, kernel tests are
-skipped; set `UPS_REQUIRE_NATIVE=1` to make them mandatory as in CI.)
+skipped and the coverage minimum is only reported, not enforced; set `UPS_REQUIRE_NATIVE=1` to
+make kernel tests mandatory as in CI.)
 
 ### Rules
 
@@ -42,7 +43,7 @@ skipped; set `UPS_REQUIRE_NATIVE=1` to make them mandatory as in CI.)
 | Nullability | Nullable reference types enabled everywhere | `Directory.Build.props` |
 | Docs | XML documentation on all public API (CS1591), not required in tests | `GenerateDocumentationFile` |
 | Tests | All tests green on Windows, Linux and macOS; native tests mandatory in CI | `.github/workflows/ci.yml` |
-| Coverage | Reported on every CI run (job summary + `coverage-report` artifact); no threshold yet | `scripts/check.ps1`, CI |
+| Coverage | Minimum **90 % line / 70 % branch** (generated code excluded); report on every CI run (job summary + `coverage-report` artifact). Thresholds only go up; lowering one needs a reason in the commit message | `scripts/coverage-report.ps1` |
 
 ### When a rule does not fit
 

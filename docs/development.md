@@ -87,7 +87,8 @@ UPS_REQUIRE_NATIVE=1 dotnet test              # fail instead of skip when native
 | `win-x64`, `linux-x64` | always | build, native or .NET test failures |
 | `osx-arm64` | pushes to `main`, manual runs | same |
 
-`linux-x64` also collects code coverage: summary on the run page, HTML report as artifact
+`linux-x64` also collects code coverage and fails below the minimum (90 % line, 70 % branch;
+`scripts/coverage-report.ps1`): summary on the run page, HTML report as artifact
 `coverage-report`. Locally: `./scripts/check.ps1` (see CONTRIBUTING.md).
 
 Two cache layers keep runs short:

@@ -37,10 +37,14 @@ Linux and macOS from CI-built binaries.
 
 ## M2 — Colouring
 
-- Colour bodies and faces; undo/redo (command pattern)
-- Save STEP (AP214/AP242) with colours via `STEPCAFControl_Writer`
-- Round-trip tests; manual interoperability check in FreeCAD and one commercial CAD
-- Assembly instance colours
+- [x] Colour faces and bodies (native `ups_document_set_color`, NULL clears); face beats body
+- [x] Undo/redo of colour edits (exact: restores the previously *assigned* colour)
+- [x] Save STEP (AP214) with colours via `STEPCAFControl_Writer`; save → reload round-trip test
+- [x] CLI `paint` command; app toolbar with RAL palette, Ctrl+Z/Y, Save as
+- [x] Fix: concurrent STEP loads crashed (OCCT translators use global state) — now serialised
+- [ ] Manual interoperability check of saved files in FreeCAD and one commercial CAD
+- [ ] Colours in assemblies (faces/bodies inside instances are rejected today)
+- [ ] AP242 output option; custom colour picker (any RGB) in the app
 
 ## M3 — DXF export (2D views)
 

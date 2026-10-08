@@ -19,6 +19,7 @@ dotnet test                        # Microsoft Testing Platform (configured in g
 dotnet test --project tests/UpSTEPer.Core.Tests          # one project
 dotnet run --project src/UpSTEPer.Cli -- runtime         # is the native library loadable?
 dotnet run --project src/UpSTEPer.Cli -- info <file.stp> # load + stats + colours + mesh
+dotnet run --project src/UpSTEPer.Cli -- paint <in.stp> <out.stp> --face 80=#FF0000 --body 0=#3366CC   # colour + save
 dotnet run --project src/UpSTEPer.App -- <file.stp>       # desktop viewer
 dotnet run --project src/UpSTEPer.App -- <file.stp> --screenshot out.png [--select-face N]   # render 1 frame (optionally with face N highlighted) to PNG and exit
 
@@ -87,6 +88,9 @@ Never reference OCCT or native types from Core. UI projects (planned) depend on 
   vcpkg buildtrees live on a short path (`VCPKG_INSTALL_OPTIONS` in `CMakePresets.json`).
 - Parse numbers in the CLI with `Options.InvariantDouble`, never culture-dependent: on a German
   system `0.05` would otherwise become 5.
-- OCCT prints parser diagnostics (`**** ERR StepFile ...`) to stdout; not yet redirected.
+- OCCT console output is silenced in the native layer (`messages.cpp`); set `UPS_OCCT_VERBOSE=1`
+  to see it when debugging import/export problems.
+- Never call OCCT STEP readers/writers or create/close XDE documents without holding
+  `ups::detail::TranslatorMutex()` (global OCCT state; concurrent use crashes).
 - `dotnet test` on .NET 10 requires the MTP runner (`global.json` → `test.runner`); do not
   re-add `Microsoft.NET.Test.Sdk`.

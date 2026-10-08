@@ -48,10 +48,17 @@ Linux and macOS from CI-built binaries.
 
 ## M3 — DXF export (2D views)
 
-- Native: HLR per view direction, edge classification
-- `UpSTEPer.Export.Dxf` with ACadSharp: layers, line types, view placement, scale
-- CLI: `upsteper export-dxf <file> --views front,top,right,iso`
-- Approval tests on DXF output
+- [x] Native: exact HLR (`HLRBRep_Algo`) per view; edges classified into line / arc / circle /
+  ellipse / polyline; edge-on circles become lines (degenerate ellipses are invalid DXF)
+- [x] Core: `ProjectedView`, first-angle `DrawingLayout`, `HiddenLineCleanup` (hidden edges lying
+  on visible ones are dropped), `DrawingBuilder`
+- [x] `UpSTEPer.Export.Dxf` (ACadSharp): mm, layers VISIBLE / HIDDEN (dashed) / TANGENT
+- [x] CLI `export-dxf` (`--views`, `--no-hidden`, `--tangent`, `--gap`); app button "Export DXF"
+- [x] Tests: DXF read-back with ACadSharp, end-to-end on the example file
+- [ ] Split partially covered hidden edges (today they are kept whole)
+- [x] Scale 1:1 in mm, no frame/title block by default (decision 2026-10-08, ADR 0006)
+- [ ] Optional (opt-in only): other scales, frame/title block; section views, dimensions
+- [ ] Manual check of exported DXF in a commercial CAD (AutoCAD / DraftSight / LibreCAD)
 
 ## M4 — Repair, tiers 1–2
 

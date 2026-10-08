@@ -5,8 +5,9 @@
 [![CI](https://github.com/mattheuserb/UpSTEPer/actions/workflows/ci.yml/badge.svg)](https://github.com/mattheuserb/UpSTEPer/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **Status: pre-alpha (M2).** Load and view STEP models, select faces, colour faces and bodies
-> (undo/redo) and save as STEP — in the app and via the CLI. See the [roadmap](docs/roadmap.md).
+> **Status: pre-alpha (M3).** Load and view STEP models, select faces, colour faces and bodies
+> (undo/redo), save as STEP and export 2D drawings as DXF — in the app and via the CLI.
+> See the [roadmap](docs/roadmap.md).
 
 ## Goals
 
@@ -14,7 +15,7 @@
 |---|---|---|
 | View | Load STEP (AP203/AP214/AP242) and display it in 3D | M1 |
 | Colour | Colour individual bodies and individual faces, save back to STEP (app + `upsteper paint`) | M2 ✅ |
-| Export | Generate 2D drawing views (front/top/side/iso, hidden lines) as DXF | M3 |
+| Export | Generate 2D drawing views (front/top/side/iso, hidden lines) as DXF (app + `upsteper export-dxf`) | M3 ✅ |
 | Repair | Heal poorly exported models; turn faceted "polygon circles" back into true cylinders/circles | M4–M5 |
 
 Platforms: Windows x64, Linux x64, macOS arm64.

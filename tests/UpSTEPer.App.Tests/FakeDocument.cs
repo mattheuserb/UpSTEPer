@@ -56,6 +56,9 @@ internal sealed class FakeDocument : IStepDocument
         SavedPath = path;
     }
 
+    public UpSTEPer.Core.Drawing.ProjectedView Project(UpSTEPer.Core.Drawing.ViewDirection direction, UpSTEPer.Core.Drawing.ProjectionOptions options) =>
+        new(direction, []);
+
     public MeshData Tessellate(TessellationOptions options) =>
         new(new float[18], new float[18], [0, 1, 2, 3, 4, 5], [0, 1]);
 

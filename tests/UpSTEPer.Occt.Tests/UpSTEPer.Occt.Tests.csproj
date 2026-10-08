@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\UpSTEPer.Occt\UpSTEPer.Occt.csproj" />
+    <ProjectReference Include="..\..\src\UpSTEPer.Export.Dxf\UpSTEPer.Export.Dxf.csproj" />
   </ItemGroup>
 
 </Project>

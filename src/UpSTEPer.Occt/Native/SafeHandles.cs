@@ -17,6 +17,21 @@ internal sealed class DocumentSafeHandle : SafeHandleZeroOrMinusOneIsInvalid
     }
 }
 
+/// <summary>Owns an <c>ups_drawing*</c>; released with <c>ups_drawing_free</c>.</summary>
+internal sealed class DrawingSafeHandle : SafeHandleZeroOrMinusOneIsInvalid
+{
+    public DrawingSafeHandle()
+        : base(ownsHandle: true)
+    {
+    }
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.DrawingFree(handle);
+        return true;
+    }
+}
+
 /// <summary>Owns an <c>ups_mesh*</c>; released with <c>ups_mesh_free</c>.</summary>
 internal sealed class MeshSafeHandle : SafeHandleZeroOrMinusOneIsInvalid
 {

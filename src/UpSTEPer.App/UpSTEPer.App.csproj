@@ -21,6 +21,7 @@
     <ProjectReference Include="..\UpSTEPer.Core\UpSTEPer.Core.csproj" />
     <ProjectReference Include="..\UpSTEPer.Occt\UpSTEPer.Occt.csproj" />
     <ProjectReference Include="..\UpSTEPer.Rendering\UpSTEPer.Rendering.csproj" />
+    <ProjectReference Include="..\UpSTEPer.Export.Dxf\UpSTEPer.Export.Dxf.csproj" />
   </ItemGroup>
 
   <ItemGroup>

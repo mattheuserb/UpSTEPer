@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Writes UpSTEPer 2D drawings as DXF (ACadSharp, ADR 0006).</Description>
+    <RootNamespace>UpSTEPer.Export.Dxf</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ACadSharp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\UpSTEPer.Core\UpSTEPer.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="UpSTEPer.Export.Dxf.Tests" />
+  </ItemGroup>
+
+</Project>

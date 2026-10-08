@@ -1,4 +1,5 @@
 using UpSTEPer.Core;
+using UpSTEPer.Core.Drawing;
 using UpSTEPer.Occt.Native;
 
 namespace UpSTEPer.Occt;
@@ -83,6 +84,45 @@ internal sealed class OcctStepDocument : IStepDocument
 
         var fullPath = Path.GetFullPath(path);
         NativeError.ThrowIfFailed(NativeMethods.DocumentSaveStep(_handle, fullPath), $"Saving '{fullPath}'");
+    }
+
+    public ProjectedView Project(ViewDirection direction, ProjectionOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        ThrowIfDisposed();
+
+        var parameters = new NativeProjectionParams
+        {
+            View = (int)direction,
+            Deflection = options.Deflection,
+            IncludeHidden = options.IncludeHidden ? 1 : 0,
+            IncludeTangent = options.IncludeTangent ? 1 : 0,
+        };
+
+        NativeError.ThrowIfFailed(NativeMethods.DocumentProject(_handle, parameters, out var drawing), $"Projecting {direction} view");
+        using (drawing)
+        {
+            NativeError.ThrowIfFailed(NativeMethods.DrawingGetInfo(drawing, out var curveCount, out var pointCount), "Reading drawing info");
+            var curves = new NativeDrawingCurve[curveCount];
+            var points = new double[pointCount * 2];
+            unsafe
+            {
+                fixed (NativeDrawingCurve* curvesPtr = curves)
+                fixed (double* pointsPtr = points)
+                {
+                    NativeError.ThrowIfFailed(
+                        NativeMethods.DrawingCopy(drawing, curvesPtr, curves.Length, pointsPtr, points.Length), "Copying drawing");
+                }
+            }
+
+            var result = new DrawingCurve[curveCount];
+            for (var i = 0; i < curveCount; i++)
+            {
+                result[i] = DrawingConverter.ToCurve(curves[i], points);
+            }
+
+            return new ProjectedView(direction, result);
+        }
     }
 
     public MeshData Tessellate(TessellationOptions options)

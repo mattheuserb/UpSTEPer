@@ -126,6 +126,13 @@ jobs:
 
       # ---- .NET ---------------------------------------------------------------------------
 
+      # msvc-dev-cmd exports Platform=x64; MSBuild would then look for a "Release|x64" solution
+      # configuration (we only have Any CPU). An empty value makes MSBuild use its default.
+      - name: Reset MSBuild platform (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: echo "Platform=" >> "$GITHUB_ENV"
+
       - name: Build .NET
         run: dotnet build UpSTEPer.slnx -c Release -p:UpsNativeRid=${{ matrix.preset }}
 

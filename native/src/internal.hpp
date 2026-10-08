@@ -15,6 +15,7 @@
 #include <TopoDS_Shape.hxx>
 
 #include <exception>
+#include <mutex>
 #include <new>
 #include <optional>
 #include <string>
@@ -44,9 +45,18 @@ struct ups_document
     // Compound of all top-level shapes; the geometry everything else refers to.
     TopoDS_Shape shape;
 
+    // Top-level XDE labels (free shapes) the compound was built from.
+    ups::detail::LabelSequence roots;
+
     // Face id (0-based) == index in this map - 1. Ids are stable until the
     // shape is modified; see docs/adr/0005-topology-identity.md.
     ups::detail::ShapeIndexedMap faces;
+
+    // Body id (0-based) == index in this map - 1.
+    ups::detail::ShapeIndexedMap solids;
+
+    // Solids owning each face (key: face).
+    ups::detail::ShapeAncestorMap faceToSolids;
 
     // Resolved display colour per face id (face colour, else solid colour).
     std::vector<std::optional<Quantity_Color>> faceColors;
@@ -62,6 +72,20 @@ struct ups_mesh
 
 namespace ups::detail
 {
+// Recomputes ups_document::faceColors from the XDE colour attributes
+// (face colour, else owning solid, else single root). Defined in document.cpp.
+void ResolveFaceColors(ups_document& document);
+
+// Silences OCCT console output once per process (see messages.cpp). Call before using
+// OCCT readers or writers.
+void ConfigureOcctMessages();
+
+// OCCT's STEP translators and the XDE application singleton use process-global state
+// (Interface_Static parameters, protocol initialisation, document registry) that is not
+// thread-safe. Every call that reads/writes STEP or creates/closes an XDE document holds this
+// lock. Meshing and colour edits on *different* documents do not need it.
+std::mutex& TranslatorMutex();
+
 void SetLastError(std::string message);
 void ClearLastError();
 const char* LastError();

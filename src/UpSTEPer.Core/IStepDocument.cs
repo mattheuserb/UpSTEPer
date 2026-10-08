@@ -21,6 +21,35 @@ public interface IStepDocument : IDisposable
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="faceId"/> does not exist.</exception>
     ColorRgb? GetFaceColor(FaceId faceId);
 
+    /// <summary>Gets the body (solid) a face belongs to.</summary>
+    /// <param name="faceId">The face.</param>
+    /// <returns>The body, or <see langword="null"/> for faces outside any solid.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="faceId"/> does not exist.</exception>
+    BodyId? GetBodyOfFace(FaceId faceId);
+
+    /// <summary>
+    /// Gets the colour assigned directly to a face or body, ignoring inheritance. Unlike
+    /// <see cref="GetFaceColor"/>, a face without its own colour returns <see langword="null"/>
+    /// even when its body is coloured. Needed to undo colour changes exactly.
+    /// </summary>
+    /// <param name="target">The face or body.</param>
+    /// <returns>The assigned colour, or <see langword="null"/>.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">The target does not exist.</exception>
+    ColorRgb? GetAssignedColor(ColorTarget target);
+
+    /// <summary>Assigns a colour to a face or body, or removes it with <see langword="null"/>.</summary>
+    /// <remarks>Face colours take precedence over body colours. Meshes stay valid (topology is unchanged).</remarks>
+    /// <param name="target">The face or body.</param>
+    /// <param name="color">The colour, or <see langword="null"/> to remove the assigned colour.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The target does not exist.</exception>
+    /// <exception cref="GeometryOperationException">The target cannot be coloured (e.g. inside an assembly instance).</exception>
+    void SetColor(ColorTarget target, ColorRgb? color);
+
+    /// <summary>Writes the model as STEP (AP214) including colours.</summary>
+    /// <param name="path">The output path; an existing file is overwritten.</param>
+    /// <exception cref="IOException">The file cannot be written.</exception>
+    void SaveStep(string path);
+
     /// <summary>Triangulates the model for display.</summary>
     /// <param name="options">Tessellation quality.</param>
     /// <returns>The mesh.</returns>

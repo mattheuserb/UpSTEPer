@@ -33,7 +33,28 @@ internal sealed class FakeStepDocument : IStepDocument
 
     public bool IsDisposed { get; private set; }
 
-    public ColorRgb? GetFaceColor(FaceId faceId) => faceId.Value < 2 ? _red : null;
+    public Dictionary<ColorTarget, ColorRgb?> AssignedColors { get; } = [];
+
+    public string? SavedPath { get; private set; }
+
+    public ColorRgb? GetFaceColor(FaceId faceId) =>
+        AssignedColors.TryGetValue(ColorTarget.Of(faceId), out var assigned) ? assigned : faceId.Value < 2 ? _red : null;
+
+    public BodyId? GetBodyOfFace(FaceId faceId) => new BodyId(0);
+
+    public ColorRgb? GetAssignedColor(ColorTarget target) => AssignedColors.GetValueOrDefault(target);
+
+    public void SetColor(ColorTarget target, ColorRgb? color)
+    {
+        if (target.Id < 0 || target.Id >= (target.Kind == ColorTargetKind.Face ? Statistics.FaceCount : Statistics.SolidCount))
+        {
+            throw new ArgumentOutOfRangeException(nameof(target));
+        }
+
+        AssignedColors[target] = color;
+    }
+
+    public void SaveStep(string path) => SavedPath = path;
 
     public MeshData Tessellate(TessellationOptions options)
     {

@@ -30,13 +30,59 @@ internal sealed class OcctStepDocument : IStepDocument
     public ColorRgb? GetFaceColor(FaceId faceId)
     {
         ThrowIfDisposed();
-        ArgumentOutOfRangeException.ThrowIfNegative(faceId.Value, nameof(faceId));
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(faceId.Value, Statistics.FaceCount, nameof(faceId));
+        ValidateTarget(ColorTarget.Of(faceId));
 
         var status = NativeMethods.DocumentGetFaceColor(_handle, faceId.Value, out var color, out var hasColor);
         NativeError.ThrowIfFailed(status, "Reading face colour");
 
-        return hasColor != 0 ? new ColorRgb(Clamp(color.R), Clamp(color.G), Clamp(color.B)) : null;
+        return hasColor != 0 ? ToColor(color) : null;
+    }
+
+    public BodyId? GetBodyOfFace(FaceId faceId)
+    {
+        ThrowIfDisposed();
+        ValidateTarget(ColorTarget.Of(faceId));
+
+        NativeError.ThrowIfFailed(NativeMethods.DocumentGetFaceBody(_handle, faceId.Value, out var bodyId), "Reading face body");
+        return bodyId >= 0 ? new BodyId(bodyId) : null;
+    }
+
+    public ColorRgb? GetAssignedColor(ColorTarget target)
+    {
+        ThrowIfDisposed();
+        ValidateTarget(target);
+
+        var status = NativeMethods.DocumentGetAssignedColor(_handle, ToNative(target.Kind), target.Id, out var color, out var hasColor);
+        NativeError.ThrowIfFailed(status, $"Reading colour of {target}");
+        return hasColor != 0 ? ToColor(color) : null;
+    }
+
+    public unsafe void SetColor(ColorTarget target, ColorRgb? color)
+    {
+        ThrowIfDisposed();
+        ValidateTarget(target);
+
+        NativeStatus status;
+        if (color is { } value)
+        {
+            var native = new NativeColor { R = value.R, G = value.G, B = value.B };
+            status = NativeMethods.DocumentSetColor(_handle, ToNative(target.Kind), target.Id, &native);
+        }
+        else
+        {
+            status = NativeMethods.DocumentSetColor(_handle, ToNative(target.Kind), target.Id, null);
+        }
+
+        NativeError.ThrowIfFailed(status, $"Colouring {target}");
+    }
+
+    public void SaveStep(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        ThrowIfDisposed();
+
+        var fullPath = Path.GetFullPath(path);
+        NativeError.ThrowIfFailed(NativeMethods.DocumentSaveStep(_handle, fullPath), $"Saving '{fullPath}'");
     }
 
     public MeshData Tessellate(TessellationOptions options)
@@ -88,8 +134,26 @@ internal sealed class OcctStepDocument : IStepDocument
 
     public void Dispose() => _handle.Dispose();
 
-    // Guards against sub-ulp overshoot from colour space conversion in OCCT.
-    private static float Clamp(float channel) => Math.Clamp(channel, 0f, 1f);
+    // Clamping guards against sub-ulp overshoot from colour space conversion in OCCT.
+    private static ColorRgb ToColor(NativeColor color) =>
+        new(Math.Clamp(color.R, 0f, 1f), Math.Clamp(color.G, 0f, 1f), Math.Clamp(color.B, 0f, 1f));
+
+    private static NativeTargetKind ToNative(ColorTargetKind kind) => kind switch
+    {
+        ColorTargetKind.Face => NativeTargetKind.Face,
+        ColorTargetKind.Body => NativeTargetKind.Body,
+        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown target kind."),
+    };
+
+    private void ValidateTarget(ColorTarget target)
+    {
+        var (count, noun) = target.Kind == ColorTargetKind.Face ? (Statistics.FaceCount, "faces") : (Statistics.SolidCount, "bodies");
+        if (target.Id < 0 || target.Id >= count)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(target), target.Id, $"{target.Kind} {target.Id} does not exist; the model has {count} {noun} (0..{count - 1}).");
+        }
+    }
 
     private ModelStatistics ReadStatistics()
     {

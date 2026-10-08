@@ -23,6 +23,7 @@ internal static class NativeError
         {
             NativeStatus.InvalidArgument => new ArgumentException(message),
             NativeStatus.FileRead or NativeStatus.Transfer => new StepImportException(message),
+            NativeStatus.FileWrite => new IOException(message),
             _ => new GeometryOperationException(message),
         };
     }

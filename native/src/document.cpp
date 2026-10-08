@@ -22,6 +22,7 @@ ups_document::~ups_document()
 {
     if (!xdeDocument.IsNull() && xdeDocument->IsOpened())
     {
+        const std::lock_guard<std::mutex> lock(ups::detail::TranslatorMutex());
         XCAFApp_Application::GetApplication()->Close(xdeDocument);
     }
 }
@@ -37,21 +38,20 @@ std::optional<Quantity_Color> FindColor(const Handle(XCAFDoc_ColorTool)& colorTo
     }
     return std::nullopt;
 }
+} // namespace
 
 // Resolves the display colour of every face: own colour, else owning solid,
 // else the single top-level shape. Assembly instance colours are a known gap
 // (tracked in docs/roadmap.md, milestone M2).
-void ResolveFaceColors(ups_document& document, const ups::detail::LabelSequence& roots)
+void ups::detail::ResolveFaceColors(ups_document& document)
 {
     const Handle(XCAFDoc_ColorTool) colorTool = XCAFDoc_DocumentTool::ColorTool(document.xdeDocument->Main());
-
-    ups::detail::ShapeAncestorMap faceToSolids;
-    TopExp::MapShapesAndAncestors(document.shape, TopAbs_FACE, TopAbs_SOLID, faceToSolids);
+    const ShapeAncestorMap& faceToSolids = document.faceToSolids;
 
     std::optional<Quantity_Color> rootColor;
-    if (roots.Length() == 1)
+    if (document.roots.Length() == 1)
     {
-        rootColor = FindColor(colorTool, XCAFDoc_ShapeTool::GetShape(roots.First()));
+        rootColor = FindColor(colorTool, XCAFDoc_ShapeTool::GetShape(document.roots.First()));
     }
 
     document.faceColors.assign(static_cast<size_t>(document.faces.Extent()), std::nullopt);
@@ -75,7 +75,6 @@ void ResolveFaceColors(ups_document& document, const ups::detail::LabelSequence&
         document.faceColors[static_cast<size_t>(index - 1)] = color ? color : rootColor;
     }
 }
-} // namespace
 
 extern "C" UPS_API ups_status ups_document_load_step(const char* utf8_path, ups_document** out_document)
 {
@@ -86,7 +85,12 @@ extern "C" UPS_API ups_status ups_document_load_step(const char* utf8_path, ups_
         }
         *out_document = nullptr;
 
+        ups::detail::ConfigureOcctMessages();
         auto document = std::make_unique<ups_document>();
+
+        // Declared after `document`, so on an error path the lock is released before `document`
+        // is destroyed: ~ups_document takes the same, non-recursive lock.
+        const std::lock_guard<std::mutex> lock(ups::detail::TranslatorMutex());
         XCAFApp_Application::GetApplication()->NewDocument("MDTV-XCAF", document->xdeDocument);
 
         STEPCAFControl_Reader reader;
@@ -104,20 +108,21 @@ extern "C" UPS_API ups_status ups_document_load_step(const char* utf8_path, ups_
         }
 
         const Handle(XCAFDoc_ShapeTool) shapeTool = XCAFDoc_DocumentTool::ShapeTool(document->xdeDocument->Main());
-        ups::detail::LabelSequence roots;
-        shapeTool->GetFreeShapes(roots);
+        shapeTool->GetFreeShapes(document->roots);
 
         TopoDS_Compound compound;
         BRep_Builder builder;
         builder.MakeCompound(compound);
-        for (const TDF_Label& root : roots)
+        for (const TDF_Label& root : document->roots)
         {
             builder.Add(compound, XCAFDoc_ShapeTool::GetShape(root));
         }
         document->shape = compound;
 
         TopExp::MapShapes(document->shape, TopAbs_FACE, document->faces);
-        ResolveFaceColors(*document, roots);
+        TopExp::MapShapes(document->shape, TopAbs_SOLID, document->solids);
+        TopExp::MapShapesAndAncestors(document->shape, TopAbs_FACE, TopAbs_SOLID, document->faceToSolids);
+        ups::detail::ResolveFaceColors(*document);
 
         *out_document = document.release();
         return UPS_OK;
@@ -143,7 +148,7 @@ extern "C" UPS_API ups_status ups_document_get_stats(const ups_document* documen
             return static_cast<int32_t>(map.Extent());
         };
 
-        out_stats->solid_count = count(TopAbs_SOLID);
+        out_stats->solid_count = static_cast<int32_t>(document->solids.Extent());
         out_stats->shell_count = count(TopAbs_SHELL);
         out_stats->face_count = static_cast<int32_t>(document->faces.Extent());
         out_stats->edge_count = count(TopAbs_EDGE);

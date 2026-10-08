@@ -74,6 +74,14 @@ public class MainViewModelTests
 
         public ColorRgb? GetFaceColor(FaceId faceId) => faceId.Value == 0 ? ColorRgb.FromHex("#FF0000") : null;
 
+        public BodyId? GetBodyOfFace(FaceId faceId) => new BodyId(0);
+
+        public ColorRgb? GetAssignedColor(ColorTarget target) => null;
+
+        public void SetColor(ColorTarget target, ColorRgb? color) => throw new NotSupportedException();
+
+        public void SaveStep(string path) => throw new NotSupportedException();
+
         public MeshData Tessellate(TessellationOptions options) =>
             new(new float[18], new float[18], [0, 1, 2, 3, 4, 5], [0, 1]);
 

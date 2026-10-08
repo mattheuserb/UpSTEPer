@@ -42,6 +42,28 @@ internal sealed partial class MainWindow : Window
         }
     }
 
+    private async void OnExportDxfClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel { HasDocument: true } viewModel)
+        {
+            return;
+        }
+
+        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Export DXF drawing",
+            DefaultExtension = "dxf",
+            SuggestedFileName = "drawing.dxf",
+            FileTypeChoices = [new FilePickerFileType("DXF drawing") { Patterns = ["*.dxf"] }],
+            ShowOverwritePrompt = true,
+        }).ConfigureAwait(true);
+
+        if (file?.TryGetLocalPath() is { } path)
+        {
+            await viewModel.ExportDxfAsync(path).ConfigureAwait(true);
+        }
+    }
+
     private async void OnSaveAsClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not MainViewModel { HasDocument: true } viewModel)

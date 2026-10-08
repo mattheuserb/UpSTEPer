@@ -206,6 +206,44 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public async Task ExportDxfAsync_WritesFileAndReportsCurves()
+    {
+        using var viewModel = await LoadedAsync(new FakeReader());
+        var path = Path.Combine(Path.GetTempPath(), $"upsteper-{Guid.NewGuid():N}.dxf");
+        try
+        {
+            var exported = await viewModel.ExportDxfAsync(path);
+
+            Assert.True(exported);
+            Assert.True(File.Exists(path));
+            Assert.StartsWith("Exported 0 curves", viewModel.Status, StringComparison.Ordinal);
+            Assert.False(viewModel.IsBusy);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task ExportDxfAsync_UnwritablePath_ShowsError()
+    {
+        using var viewModel = await LoadedAsync(new FakeReader());
+        var path = Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}", "out.dxf");
+
+        Assert.False(await viewModel.ExportDxfAsync(path));
+        Assert.StartsWith("Error:", viewModel.Status, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ExportDxfAsync_WithoutDocument_ReturnsFalse()
+    {
+        using var viewModel = new MainViewModel(new FakeReader());
+
+        Assert.False(await viewModel.ExportDxfAsync("out.dxf"));
+    }
+
+    [Fact]
     public async Task Dispose_DisposesOpenDocument()
     {
         var reader = new FakeReader();

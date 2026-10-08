@@ -2,6 +2,8 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using UpSTEPer.Core;
+using UpSTEPer.Core.Drawing;
+using UpSTEPer.Export.Dxf;
 using UpSTEPer.Rendering;
 
 namespace UpSTEPer.App.ViewModels;
@@ -135,6 +137,43 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             _fileName = Path.GetFileName(path);
             IsDirty = false;
             Status = $"Saved {path}";
+            return true;
+        }
+        catch (Exception exception) when (exception is IOException or GeometryOperationException)
+        {
+            Status = $"Error: {exception.Message}";
+            return false;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Exports the standard 2D views (front, top, left, iso; first-angle) with hidden lines as DXF.
+    /// </summary>
+    /// <param name="path">The output path.</param>
+    /// <returns><see langword="true"/> when the file was written.</returns>
+    public async Task<bool> ExportDxfAsync(string path)
+    {
+        if (_session is null)
+        {
+            return false;
+        }
+
+        IsBusy = true;
+        Status = "Computing views with hidden-line removal ...";
+        try
+        {
+            var curveCount = await _session.RunAsync(document =>
+            {
+                var views = DrawingBuilder.Build(document, DrawingBuilder.StandardViews, ProjectionOptions.Default);
+                DxfExporter.Write(path, views);
+                return views.Sum(v => v.Curves.Count);
+            }).ConfigureAwait(true);
+
+            Status = string.Create(CultureInfo.CurrentCulture, $"Exported {curveCount:N0} curves to {path}");
             return true;
         }
         catch (Exception exception) when (exception is IOException or GeometryOperationException)

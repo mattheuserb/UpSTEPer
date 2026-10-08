@@ -18,7 +18,9 @@
     <Border DockPanel.Dock="Top" Padding="8" BorderThickness="0,0,0,1" BorderBrush="#D0D4D9">
       <WrapPanel Orientation="Horizontal">
         <Button Content="Open STEP..." Click="OnOpenClick" IsEnabled="{Binding !IsBusy}" Margin="0,0,6,0" />
-        <Button Content="Save as..." Click="OnSaveAsClick" HotKey="Ctrl+S" IsEnabled="{Binding HasDocument}" Margin="0,0,16,0" />
+        <Button Content="Save as..." Click="OnSaveAsClick" HotKey="Ctrl+S" IsEnabled="{Binding HasDocument}" Margin="0,0,6,0" />
+        <Button Content="Export DXF..." Click="OnExportDxfClick" IsEnabled="{Binding HasDocument}" Margin="0,0,16,0"
+                ToolTip.Tip="Front, top, left and isometric view with hidden lines (first-angle projection)" />
 
         <ListBox ItemsSource="{Binding Palette}" SelectedItem="{Binding SelectedPaletteEntry}"
                  Background="Transparent" Padding="0" Margin="0,0,8,0" VerticalAlignment="Center">

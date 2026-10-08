@@ -10,7 +10,7 @@ All geometry work is done by Open CASCADE Technology (OCCT), a C++ library.
 
 ```
 ┌──────────────────────────────┐   ┌───────────────────────────┐
-│ UpSTEPer.App (planned, M1)   │   │ UpSTEPer.Cli              │  presentation / composition roots
+│ UpSTEPer.App (Avalonia)      │   │ UpSTEPer.Cli              │  presentation / composition roots
 │ Avalonia, MVVM, renderer     │   │ System.CommandLine        │
 └──────────────┬───────────────┘   └─────────────┬─────────────┘
                └───────────────┬─────────────────┘

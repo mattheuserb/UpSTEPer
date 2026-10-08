@@ -29,3 +29,13 @@ DXF with 2D views is sufficient.
 ## Consequences
 
 ACadSharp can also write DWG; enabling it later is a small change if ever needed.
+
+## Addendum (2026-10-08, implementation)
+
+- Layers are `VISIBLE`, `HIDDEN` (linetype `DASHED`) and `TANGENT` instead of `OUTLINE`:
+  silhouettes are visible edges in drawing practice; smooth face transitions are the optional extra.
+- Views are arranged in **first-angle projection** (ISO 128 method E, the European standard).
+- HLR reports hidden edges that project exactly onto visible ones; they are removed before export
+  (`HiddenLineCleanup`), otherwise contours appear doubled.
+- Circles seen edge-on come out of HLR as ellipses with a vanishing minor axis, which DXF readers
+  reject; the native layer emits them as lines.

@@ -186,6 +186,8 @@ jobs:
         run: |
           dotnet run --project src/UpSTEPer.Cli -c Release --no-build -- runtime
           dotnet run --project src/UpSTEPer.Cli -c Release --no-build -- info "examples/ESKV 12 RAL 7035 10066410.stp"
+          dotnet run --project src/UpSTEPer.Cli -c Release --no-build -- export-dxf "examples/ESKV 12 RAL 7035 10066410.stp" artifacts/example.dxf
+          test -s artifacts/example.dxf
 
       # Renders the example in the real app and saves the first frame. Covers the GPU code that
       # unit tests cannot (MeshRenderer, ModelView) on every platform's GL flavour: ANGLE/GLES on

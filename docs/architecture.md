@@ -101,8 +101,20 @@ Tiered, each tier a separate, testable pipeline step with a report of what chang
 
 Colours survive repair by mapping through `BRepTools_History` (ADR 0005).
 
-## DXF export (M3 design)
+## DXF export (M3)
 
-`HLRBRep_Algo` computes visible/hidden edges for each view direction; edges are classified
-(line, circle, arc, ellipse, spline) and written with ACadSharp to layers `VISIBLE`, `HIDDEN`,
-`OUTLINE`. True circles are emitted as `CIRCLE`/`ARC`, not polylines. Dimensions are out of scope.
+```
+IStepDocument.Project(view)          native: HLRBRep_Algo + HLRBRep_HLRToShape, edge classification
+  -> HiddenLineCleanup               Core: drop hidden curves lying on visible ones (ISO 128)
+  -> DrawingLayout.Arrange           Core: first-angle placement, iso top right
+  -> DxfExporter.Write               Export.Dxf: ACadSharp, ASCII DXF, millimetres
+```
+
+- Views: Z is up; front looks along +Y. Projection axes are defined in `native/src/drawing.cpp`.
+- Curves: visible = sharp edges + silhouettes; hidden = the same behind the model; tangent = smooth
+  face transitions (optional). Lines, circles, arcs and ellipses stay analytic (`LINE`, `CIRCLE`,
+  `ARC`, `ELLIPSE`); anything else (B-splines, torus silhouettes) becomes an `LWPOLYLINE` within
+  the deflection. Arc/ellipse directions are normalised to counter-clockwise.
+- Layers: `VISIBLE` (0.5 mm), `HIDDEN` (`DASHED`, 0.25 mm), `TANGENT` (0.13 mm).
+- `DrawingBuilder` is the single entry point used by the CLI and the app.
+- Out of scope so far: scale/sheet/title block, sections, dimensions.

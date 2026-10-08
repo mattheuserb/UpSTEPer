@@ -16,4 +16,8 @@
     <ProjectReference Include="..\UpSTEPer.Occt\UpSTEPer.Occt.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="UpSTEPer.Cli.Tests" />
+  </ItemGroup>
+
 </Project>

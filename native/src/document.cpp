@@ -169,9 +169,9 @@ extern "C" UPS_API ups_status ups_document_get_face_color(
         *out_has_color = color ? 1 : 0;
         if (color)
         {
-            Standard_Real r = 0.0;
-            Standard_Real g = 0.0;
-            Standard_Real b = 0.0;
+            double r = 0.0;
+            double g = 0.0;
+            double b = 0.0;
             color->Values(r, g, b, Quantity_TOC_sRGB);
             *out_color = ups_color{static_cast<float>(r), static_cast<float>(g), static_cast<float>(b)};
         }

@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\UpSTEPer.Cli\UpSTEPer.Cli.csproj" />
+  </ItemGroup>
+
+</Project>

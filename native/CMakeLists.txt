@@ -54,9 +54,17 @@ if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
         "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
 endif()
 
+# Normalise paths before matching the exclude patterns (CMake >= 4.x).
+if(POLICY CMP0207)
+    cmake_policy(SET CMP0207 NEW)
+endif()
+
+# The MSVC runtime (vcruntime/msvcp) is not bundled: it comes from the VC++ Redistributable,
+# which the installer will require (see docs/roadmap.md, packaging).
 install(TARGETS upsteper_native
     RUNTIME_DEPENDENCIES
         PRE_EXCLUDE_REGEXES "api-ms-.*" "ext-ms-.*"
+            "[Vv][Cc][Rr][Uu][Nn][Tt][Ii][Mm][Ee].*" "[Mm][Ss][Vv][Cc][Pp].*" "[Cc][Oo][Nn][Cc][Rr][Tt].*"
         POST_EXCLUDE_REGEXES
             ".*[Ss]ystem32/.*"
             "^/lib/.*" "^/lib64/.*" "^/usr/lib/.*" "^/usr/lib64/.*"

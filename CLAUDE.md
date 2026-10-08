@@ -19,6 +19,7 @@ dotnet run --project src/UpSTEPer.Cli -- runtime         # is the native library
 dotnet run --project src/UpSTEPer.Cli -- info <file.stp> # load + stats + colours + mesh
 
 # Native bridge (needs C++ toolchain, CMake >= 3.24, Ninja, VCPKG_ROOT) — see docs/development.md
+powershell -File scripts/build-native.ps1 -VcpkgRoot C:\vcpkg   # Windows: sets up MSVC env itself
 cd native && cmake --preset <win-x64|linux-x64|osx-arm64> && cmake --build --preset <preset> && cmake --install build/<preset>
 ```
 
@@ -72,5 +73,11 @@ Never reference OCCT or native types from Core. UI projects (planned) depend on 
   clearing it (`BRepTools::Clean`) first.
 - Face ids are indices into a `ShapeIndexedMap` and become invalid after any topology change;
   see `docs/adr/0005-topology-identity.md`.
+- Windows native build: `Enter-VsDevShell` overwrites `VCPKG_ROOT` with the VS-bundled vcpkg;
+  `scripts/build-native.ps1` re-sets it afterwards. OCCT object paths exceed MAX_PATH unless
+  vcpkg buildtrees live on a short path (`VCPKG_INSTALL_OPTIONS` in `CMakePresets.json`).
+- Parse numbers in the CLI with `Options.InvariantDouble`, never culture-dependent: on a German
+  system `0.05` would otherwise become 5.
+- OCCT prints parser diagnostics (`**** ERR StepFile ...`) to stdout; not yet redirected.
 - `dotnet test` on .NET 10 requires the MTP runner (`global.json` → `test.runner`); do not
   re-add `Microsoft.NET.Test.Sdk`.

@@ -17,6 +17,24 @@ Linux additionally needs: `pkg-config autoconf autoconf-archive automake libtool
 
 The .NET code builds without it; only kernel-dependent tests and the CLI need it.
 
+**Windows (recommended):** the script finds Visual Studio/Build Tools via `vswhere`, loads the
+MSVC developer environment and runs configure, build and install:
+
+```powershell
+git clone https://github.com/microsoft/vcpkg C:\vcpkg; C:\vcpkg\bootstrap-vcpkg.bat -disableMetrics
+./scripts/build-native.ps1 -VcpkgRoot C:\vcpkg
+```
+
+Keep `VCPKG_ROOT` on a short path without spaces. The presets build vcpkg ports in
+`VCPKG_ROOT/b` (`--x-buildtrees-root`), because OCCT object file paths exceed the Windows
+260-character limit when built inside a deep project folder. Windows uses the
+`x64-windows-release` triplet (dynamic, release only), which halves the OCCT build time.
+
+The MSVC runtime (`vcruntime140*.dll`, `msvcp140*.dll`) is intentionally not copied to
+`artifacts/native`; end users need the VC++ Redistributable (to be handled by the installer).
+
+**Manually (all platforms):**
+
 ```bash
 cd native
 cmake --preset win-x64          # or linux-x64 / osx-arm64; Windows: run from a "Developer PowerShell for VS"

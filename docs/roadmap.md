@@ -11,7 +11,9 @@ Goal: prove that the native bridge builds and runs on all three platforms.
 - [x] .NET adapter with SafeHandles and error translation
 - [x] CLI: `runtime`, `info`
 - [x] Unit and integration tests; CI matrix (Windows, Linux, macOS)
+- [x] Native build and all tests green locally on Windows (OCCT 8.0.1, MSVC 14.51)
 - [ ] **CI green on all three platforms** (first run builds OCCT; fix packaging issues)
+- [ ] Redirect OCCT console diagnostics (`Message::DefaultMessenger`) into our error reporting
 - [ ] Spike: Avalonia window with OpenGL control rendering `MeshData` on all three platforms
 
 Exit criterion: `upsteper info` and an Avalonia window showing the example file work on Windows,
@@ -54,6 +56,6 @@ Linux and macOS from CI-built binaries.
 
 ## Later
 
-- Packaging: Velopack/self-contained publish, AppImage, signed/notarised macOS build (needs Apple developer account)
+- Packaging: VC++ Redistributable prerequisite on Windows, Velopack/self-contained publish, AppImage, signed/notarised macOS build (needs Apple developer account)
 - Localisation (de, en)
 - API docs with DocFX

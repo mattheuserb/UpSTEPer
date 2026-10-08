@@ -9,14 +9,15 @@
       "installDir": "${sourceDir}/../artifacts/native/${presetName}",
       "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "VCPKG_INSTALL_OPTIONS": "--x-buildtrees-root=$env{VCPKG_ROOT}/b"
       }
     },
     {
       "name": "win-x64",
       "inherits": "base",
       "generator": "Ninja",
-      "cacheVariables": { "VCPKG_TARGET_TRIPLET": "x64-windows" },
+      "cacheVariables": { "VCPKG_TARGET_TRIPLET": "x64-windows-release" },
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
     },
     {

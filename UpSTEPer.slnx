@@ -5,6 +5,7 @@
     <Project Path="src/UpSTEPer.Occt/UpSTEPer.Occt.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/UpSTEPer.Cli.Tests/UpSTEPer.Cli.Tests.csproj" />
     <Project Path="tests/UpSTEPer.Core.Tests/UpSTEPer.Core.Tests.csproj" />
     <Project Path="tests/UpSTEPer.Occt.Tests/UpSTEPer.Occt.Tests.csproj" />
   </Folder>

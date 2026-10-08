@@ -8,7 +8,7 @@ var reader = new OcctStepReader();
 
 var rootCommand = new RootCommand("UpSTEPer - view, colour, repair and convert STEP models.")
 {
-    InfoCommand.Create(reader, Console.Out),
+    InfoCommand.Create(reader, Console.Out, Console.Error),
     RuntimeCommand.Create(Console.Out),
 };
 

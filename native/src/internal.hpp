@@ -86,8 +86,7 @@ ups_status Guarded(TBody&& body) noexcept
     {
         // Must precede std::exception: Standard_Failure derives from it since OCCT 8.0.
         const char* text = failure.what();
-        return Fail(UPS_ERROR_OPERATION,
-                    std::string("OCCT ") + failure.DynamicType()->Name() + ": " + (text != nullptr ? text : ""));
+        return Fail(UPS_ERROR_OPERATION, std::string("OCCT: ") + (text != nullptr && *text != '\0' ? text : "unspecified failure"));
     }
     catch (const std::bad_alloc&)
     {

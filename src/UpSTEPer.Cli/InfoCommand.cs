@@ -7,19 +7,13 @@ namespace UpSTEPer.Cli;
 /// <summary><c>upsteper info &lt;file&gt;</c>: prints topology, colours and tessellation statistics.</summary>
 internal static class InfoCommand
 {
-    public static Command Create(IStepReader reader, TextWriter output)
+    public static Command Create(IStepReader reader, TextWriter output, TextWriter error)
     {
         var fileArgument = new Argument<FileInfo>("file") { Description = "STEP file (.stp/.step) to inspect." };
-        var linearOption = new Option<double>("--linear-deflection")
-        {
-            Description = "Tessellation chord tolerance in mm.",
-            DefaultValueFactory = _ => TessellationOptions.Default.LinearDeflection,
-        };
-        var angularOption = new Option<double>("--angular-deflection")
-        {
-            Description = "Tessellation angular tolerance in radians.",
-            DefaultValueFactory = _ => TessellationOptions.Default.AngularDeflectionRadians,
-        };
+        var linearOption = Options.InvariantDouble(
+            "--linear-deflection", "Tessellation chord tolerance in mm.", TessellationOptions.Default.LinearDeflection);
+        var angularOption = Options.InvariantDouble(
+            "--angular-deflection", "Tessellation angular tolerance in radians.", TessellationOptions.Default.AngularDeflectionRadians);
 
         var command = new Command("info", "Print topology, colour and mesh statistics of a STEP file.")
         {
@@ -28,12 +22,12 @@ internal static class InfoCommand
             angularOption,
         };
 
-        command.SetAction(parseResult =>
+        command.SetAction(parseResult => CommandRunner.Run(error, () =>
         {
             var file = parseResult.GetValue(fileArgument)!;
             var options = new TessellationOptions(parseResult.GetValue(linearOption), parseResult.GetValue(angularOption));
             return Run(reader, output, file.FullName, options);
-        });
+        }));
 
         return command;
     }

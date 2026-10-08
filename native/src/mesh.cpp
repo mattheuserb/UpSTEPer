@@ -8,6 +8,7 @@
 #include <Poly_Triangulation.hxx>
 #include <TopLoc_Location.hxx>
 #include <TopoDS.hxx>
+#include <TopoDS_Face.hxx>
 #include <gp_Vec.hxx>
 
 #include <algorithm>

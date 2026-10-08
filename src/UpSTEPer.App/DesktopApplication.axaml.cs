@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
@@ -12,6 +13,7 @@ namespace UpSTEPer.App;
 internal sealed partial class DesktopApplication : Application
 {
     private const int ScreenshotTimeoutExitCode = 2;
+    private const int RenderingFailedExitCode = 3;
     private static readonly TimeSpan _screenshotTimeout = TimeSpan.FromSeconds(60);
 
     private readonly AppOptions _options;
@@ -40,8 +42,11 @@ internal sealed partial class DesktopApplication : Application
 
             if (_options.ScreenshotPath is { } screenshotPath)
             {
+                // Automation mode: make GL diagnostics visible on stderr.
+                Trace.Listeners.Add(new ConsoleTraceListener(useErrorStream: true));
                 window.ModelView.ScreenshotPath = screenshotPath;
                 window.ModelView.ScreenshotSaved += (_, _) => desktop.Shutdown(0);
+                window.ModelView.RenderingFailed += (_, _) => desktop.Shutdown(RenderingFailedExitCode);
 
                 // Never hang in automation (CI): give up when no frame was rendered in time.
                 DispatcherTimer.RunOnce(() => desktop.Shutdown(ScreenshotTimeoutExitCode), _screenshotTimeout);

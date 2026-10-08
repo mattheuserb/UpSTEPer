@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Avalonia;
@@ -39,6 +40,9 @@ internal sealed class ModelView : OpenGlControlBase
     /// <summary>Raised on the UI thread after <see cref="ScreenshotPath"/> has been written.</summary>
     public event EventHandler? ScreenshotSaved;
 
+    /// <summary>Raised on the UI thread when the renderer cannot be initialised (e.g. shader errors).</summary>
+    public event EventHandler<RenderingFailedEventArgs>? RenderingFailed;
+
     /// <summary>Gets or sets the scene to display.</summary>
     public SceneData? Scene
     {
@@ -74,8 +78,26 @@ internal sealed class ModelView : OpenGlControlBase
     {
         ArgumentNullException.ThrowIfNull(gl);
         _gl = GL.GetApi(gl.GetProcAddress);
-        _renderer = new MeshRenderer(_gl, GlVersion.Type == GlProfileType.OpenGLES);
-        _sceneDirty = true;
+        Trace.TraceInformation(
+            "OpenGL context {0} {1}.{2}: {3} | {4} | GLSL {5}",
+            GlVersion.Type,
+            GlVersion.Major,
+            GlVersion.Minor,
+            _gl.GetStringS(StringName.Version),
+            _gl.GetStringS(StringName.Renderer),
+            _gl.GetStringS(StringName.ShadingLanguageVersion));
+
+        try
+        {
+            _renderer = new MeshRenderer(_gl, GlVersion.Type == GlProfileType.OpenGLES);
+            _sceneDirty = true;
+        }
+        catch (InvalidOperationException exception)
+        {
+            // Shader compile/link errors: report instead of silently showing nothing.
+            Trace.TraceError("Renderer initialisation failed: {0}", exception.Message);
+            Dispatcher.UIThread.Post(() => RenderingFailed?.Invoke(this, new RenderingFailedEventArgs(exception.Message)));
+        }
     }
 
     /// <inheritdoc />

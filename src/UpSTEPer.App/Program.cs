@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Logging;
 
 namespace UpSTEPer.App;
 
@@ -18,5 +19,5 @@ internal static class Program
         AppBuilder.Configure(() => new DesktopApplication(options))
             .UsePlatformDetect()
             .WithInterFont()
-            .LogToTrace();
+            .LogToTextWriter(Console.Error, LogEventLevel.Warning);
 }

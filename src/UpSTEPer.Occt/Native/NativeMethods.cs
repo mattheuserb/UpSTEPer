@@ -1,5 +1,12 @@
 using System.Runtime.InteropServices;
 
+// Native libraries must never come from the current directory or PATH, so a planted DLL cannot
+// be picked up (CA5392). The primary mechanism is NativeLibraryResolver, which loads
+// upsteper_native by full path from the application directory on every platform. This
+// attribute is the fallback for anything the resolver does not handle; SafeDirectories rather
+// than AssemblyDirectory, which CA5393 rates unsafe.
+[assembly: DefaultDllImportSearchPaths(DllImportSearchPath.SafeDirectories)]
+
 namespace UpSTEPer.Occt.Native;
 
 /// <summary>
@@ -9,6 +16,9 @@ namespace UpSTEPer.Occt.Native;
 internal static partial class NativeMethods
 {
     internal const string LibraryName = "upsteper_native";
+
+    // An explicit static constructor runs before the first P/Invoke in this class.
+    static NativeMethods() => NativeLibraryResolver.Register(typeof(NativeMethods).Assembly, LibraryName);
 
     [LibraryImport(LibraryName, EntryPoint = "ups_last_error_message")]
     internal static partial nint LastErrorMessage();

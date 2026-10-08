@@ -41,4 +41,26 @@ internal sealed partial class MainWindow : Window
             await viewModel.LoadAsync(path).ConfigureAwait(true);
         }
     }
+
+    private async void OnSaveAsClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel { HasDocument: true } viewModel)
+        {
+            return;
+        }
+
+        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Save STEP file",
+            DefaultExtension = "stp",
+            SuggestedFileName = "model.stp",
+            FileTypeChoices = [_stepFileType],
+            ShowOverwritePrompt = true,
+        }).ConfigureAwait(true);
+
+        if (file?.TryGetLocalPath() is { } path)
+        {
+            await viewModel.SaveAsync(path).ConfigureAwait(true);
+        }
+    }
 }

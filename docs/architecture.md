@@ -66,18 +66,28 @@ marshalling trivial, keeps OCCT types out of .NET, and is easy to test. See ADR 
 
 OCCT objects are not safe for concurrent access. Rules:
 
-1. A document is only used by one thread at a time.
-2. The app (M1) runs geometry work on a dedicated worker and marshals results to the UI thread;
-   long operations accept `CancellationToken` and report `IProgress<T>` (mapped to OCCT's
-   `Message_ProgressIndicator`).
+1. A document is only used by one thread at a time. The app enforces this with
+   `DocumentSession`, which queues every operation and runs it on the thread pool.
+2. Different documents may be used concurrently, **except** that OCCT's STEP translators and the
+   XDE application singleton use process-global state: the native layer serialises STEP
+   reading/writing and document creation/destruction with one mutex (`TranslatorMutex`).
+   `ConcurrencyTests` guards this; without it parallel loads crashed with an access violation.
 3. OCCT may parallelise internally (e.g. meshing with `isInParallel`), which is safe.
+4. Planned: long operations accept `CancellationToken` and report `IProgress<T>` (mapped to
+   OCCT's `Message_ProgressIndicator`).
 
-## Colours (M2 design)
+## Colours (M2)
 
 - Import uses OCCT XDE (`STEPCAFControl_Reader`) with colour, name and layer modes enabled.
 - Resolution order for display: face colour → solid colour → single root colour.
-- Edits are stored as overrides keyed by `FaceId`/body and written back through
-  `XCAFDoc_ColorTool` + `STEPCAFControl_Writer`. Known gap: colours on assembly instances.
+- Edits go straight into the XDE document via `XCAFDoc_ColorTool` (surface colour on the face or
+  solid label; sub-shape labels are created on demand) and are written by
+  `STEPCAFControl_Writer`. Clearing removes the label's colour, so the face falls back to its body.
+- Undo/redo (`EditHistory` in the app) stores the *assigned* colour before and after
+  (`GetAssignedColor`), not the displayed one, so undo restores inheritance exactly.
+- After an edit the app builds `SceneData.WithFaceColors` on the same mesh: no re-tessellation,
+  the view keeps its camera and only re-uploads the colour buffer.
+- Known gap: faces/bodies inside assembly instances are rejected (`UPS_ERROR_OPERATION`).
 
 ## Repair (M4–M5 design)
 

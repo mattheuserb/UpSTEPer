@@ -42,6 +42,21 @@ internal static partial class NativeMethods
     internal static partial NativeStatus DocumentGetFaceColor(
         DocumentSafeHandle document, int faceId, out NativeColor color, out int hasColor);
 
+    [LibraryImport(LibraryName, EntryPoint = "ups_document_get_face_body")]
+    internal static partial NativeStatus DocumentGetFaceBody(DocumentSafeHandle document, int faceId, out int bodyId);
+
+    [LibraryImport(LibraryName, EntryPoint = "ups_document_get_assigned_color")]
+    internal static partial NativeStatus DocumentGetAssignedColor(
+        DocumentSafeHandle document, NativeTargetKind kind, int id, out NativeColor color, out int hasColor);
+
+    // color: pointer to the colour, or null to remove the assigned colour.
+    [LibraryImport(LibraryName, EntryPoint = "ups_document_set_color")]
+    internal static unsafe partial NativeStatus DocumentSetColor(
+        DocumentSafeHandle document, NativeTargetKind kind, int id, NativeColor* color);
+
+    [LibraryImport(LibraryName, EntryPoint = "ups_document_save_step", StringMarshalling = StringMarshalling.Utf8)]
+    internal static partial NativeStatus DocumentSaveStep(DocumentSafeHandle document, string utf8Path);
+
     [LibraryImport(LibraryName, EntryPoint = "ups_document_tessellate")]
     internal static partial NativeStatus DocumentTessellate(
         DocumentSafeHandle document, in NativeTessellationParams parameters, out MeshSafeHandle mesh);
@@ -74,7 +89,15 @@ internal enum NativeStatus
     Transfer = 3,
     Operation = 4,
     BufferTooSmall = 5,
+    FileWrite = 6,
     Internal = 99,
+}
+
+/// <summary>Mirrors <c>ups_target_kind</c>.</summary>
+internal enum NativeTargetKind
+{
+    Face = 0,
+    Body = 1,
 }
 
 /// <summary>Mirrors <c>ups_document_stats</c>.</summary>

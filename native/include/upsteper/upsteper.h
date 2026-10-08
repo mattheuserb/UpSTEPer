@@ -10,7 +10,9 @@
  *   - Strings are UTF-8 and zero-terminated. Returned strings are owned by the
  *     library and stay valid until the next call on the same thread.
  *   - Indices exposed to callers are 0-based (OCCT is 1-based internally).
- *   - Handles are not thread-safe; callers serialise access per document.
+ *   - Handles are not thread-safe; callers serialise access per document. Different
+ *     documents may be used from different threads concurrently: STEP reading/writing and
+ *     document creation/destruction are serialised internally (OCCT translators use global state).
  */
 #ifndef UPSTEPER_H
 #define UPSTEPER_H
@@ -41,6 +43,7 @@ typedef enum ups_status
     UPS_ERROR_TRANSFER = 3,       /* STEP parsed but conversion to B-Rep failed */
     UPS_ERROR_OPERATION = 4,      /* a geometric algorithm failed */
     UPS_ERROR_BUFFER_TOO_SMALL = 5,
+    UPS_ERROR_FILE_WRITE = 6,     /* output file cannot be written */
     UPS_ERROR_INTERNAL = 99
 } ups_status;
 
@@ -90,6 +93,40 @@ UPS_API ups_status ups_document_get_stats(const ups_document* document, ups_docu
  */
 UPS_API ups_status ups_document_get_face_color(
     const ups_document* document, int32_t face_id, ups_color* out_color, int32_t* out_has_color);
+
+/* ------------------------------------------------------------ appearance -- */
+
+typedef enum ups_target_kind
+{
+    UPS_TARGET_FACE = 0, /* id is a face id (0 .. face_count-1) */
+    UPS_TARGET_BODY = 1  /* id is a body (solid) id (0 .. solid_count-1) */
+} ups_target_kind;
+
+/**
+ * Body (solid) owning a face. *out_body_id is -1 for faces that belong to no solid
+ * (e.g. loose shells or surfaces).
+ */
+UPS_API ups_status ups_document_get_face_body(const ups_document* document, int32_t face_id, int32_t* out_body_id);
+
+/**
+ * Colour assigned directly to a face or body in the document, ignoring inheritance
+ * (a face without its own colour reports none even if its body is coloured).
+ * Use ups_document_get_face_color for the resolved display colour.
+ */
+UPS_API ups_status ups_document_get_assigned_color(
+    const ups_document* document, ups_target_kind kind, int32_t id, ups_color* out_color, int32_t* out_has_color);
+
+/**
+ * Assigns a colour to a face or body, or removes the assigned colour when color is NULL.
+ * Face colours take precedence over body colours. Display colours (ups_document_get_face_color)
+ * are updated immediately; existing meshes stay valid (topology is unchanged).
+ * Fails with UPS_ERROR_OPERATION for shapes inside assembly instances (not supported yet).
+ */
+UPS_API ups_status ups_document_set_color(
+    ups_document* document, ups_target_kind kind, int32_t id, const ups_color* color);
+
+/** Writes the document as STEP (AP214) including colours, names and layers. */
+UPS_API ups_status ups_document_save_step(ups_document* document, const char* utf8_path);
 
 /* ------------------------------------------------------------------ mesh -- */
 

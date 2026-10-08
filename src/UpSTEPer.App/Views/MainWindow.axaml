@@ -7,20 +7,50 @@
         x:DataType="vm:MainViewModel"
         Title="{Binding Title}"
         Width="1200" Height="800"
-        MinWidth="480" MinHeight="320">
+        MinWidth="640" MinHeight="400">
+  <Window.KeyBindings>
+    <KeyBinding Gesture="Ctrl+Z" Command="{Binding UndoCommand}" />
+    <KeyBinding Gesture="Ctrl+Y" Command="{Binding RedoCommand}" />
+    <KeyBinding Gesture="Ctrl+Shift+Z" Command="{Binding RedoCommand}" />
+  </Window.KeyBindings>
+
   <DockPanel>
     <Border DockPanel.Dock="Top" Padding="8" BorderThickness="0,0,0,1" BorderBrush="#D0D4D9">
-      <StackPanel Orientation="Horizontal" Spacing="12">
-        <Button Content="Open STEP..." Click="OnOpenClick" IsEnabled="{Binding !IsBusy}" />
-        <TextBlock Text="{Binding Status}" VerticalAlignment="Center" />
-      </StackPanel>
+      <WrapPanel Orientation="Horizontal">
+        <Button Content="Open STEP..." Click="OnOpenClick" IsEnabled="{Binding !IsBusy}" Margin="0,0,6,0" />
+        <Button Content="Save as..." Click="OnSaveAsClick" HotKey="Ctrl+S" IsEnabled="{Binding HasDocument}" Margin="0,0,16,0" />
+
+        <ListBox ItemsSource="{Binding Palette}" SelectedItem="{Binding SelectedPaletteEntry}"
+                 Background="Transparent" Padding="0" Margin="0,0,8,0" VerticalAlignment="Center">
+          <ListBox.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Orientation="Horizontal" />
+            </ItemsPanelTemplate>
+          </ListBox.ItemsPanel>
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:PaletteEntry">
+              <Border Width="22" Height="22" CornerRadius="3" Background="{Binding Hex}"
+                      BorderBrush="#80000000" BorderThickness="1" ToolTip.Tip="{Binding Name}" />
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Button Content="Colour face" Command="{Binding ColorFaceCommand}" Margin="0,0,6,0" />
+        <Button Content="Colour body" Command="{Binding ColorBodyCommand}" Margin="0,0,6,0" />
+        <Button Content="Remove face colour" Command="{Binding ClearFaceColorCommand}" Margin="0,0,16,0" />
+        <Button Content="Undo" Command="{Binding UndoCommand}" ToolTip.Tip="Ctrl+Z" Margin="0,0,6,0" />
+        <Button Content="Redo" Command="{Binding RedoCommand}" ToolTip.Tip="Ctrl+Y" />
+      </WrapPanel>
     </Border>
-    <Border DockPanel.Dock="Bottom" Padding="8,4">
+    <Border DockPanel.Dock="Bottom" Padding="8,4" BorderThickness="0,1,0,0" BorderBrush="#D0D4D9">
       <DockPanel>
         <TextBlock DockPanel.Dock="Right" FontSize="12" Text="{Binding SelectionInfo}" />
-        <TextBlock Foreground="#5F6368" FontSize="12"
-                   Text="Click: select face   Left drag: rotate   Right/middle drag: pan   Wheel: zoom   Double-click: fit" />
+        <TextBlock FontSize="12" Text="{Binding Status}" TextTrimming="CharacterEllipsis" />
       </DockPanel>
+    </Border>
+    <Border DockPanel.Dock="Bottom" Padding="8,2">
+      <TextBlock Foreground="#5F6368" FontSize="11"
+                 Text="Click: select face   Left drag: rotate   Right/middle drag: pan   Wheel: zoom   Double-click: fit" />
     </Border>
     <controls:ModelView x:Name="ModelViewControl" Scene="{Binding Scene}" SelectedFace="{Binding SelectedFace}" />
   </DockPanel>

@@ -36,42 +36,50 @@ ups_status ResolveTarget(const ups_document& document, ups_target_kind kind, int
     return UPS_OK;
 }
 
-// The XDE label holding attributes of shape, or a null label when it has none yet.
-TDF_Label FindLabel(const ups_document& document, const TopoDS_Shape& shape)
+// The label carrying the colour of a face/solid of a part occurrence: the definition label itself
+// when the shape is the whole definition (single-solid part), else its sub-shape label. Returns a
+// null label when the sub-shape has no label yet and `create` is false.
+TDF_Label AttributeLabel(const ups_document& document, const ups::detail::PartInstance& instance,
+                         const TopoDS_Shape& definitionSubShape, bool create)
 {
+    if (definitionSubShape.IsSame(XCAFDoc_ShapeTool::GetShape(instance.part)))
+    {
+        return instance.part;
+    }
+
     const Handle(XCAFDoc_ShapeTool) shapeTool = XCAFDoc_DocumentTool::ShapeTool(document.xdeDocument->Main());
     TDF_Label label;
-    return shapeTool->Search(shape, label) ? label : TDF_Label();
-}
-
-// Finds the label of shape or creates a sub-shape label under the top-level part that contains it.
-// Shapes inside assembly instances are not supported yet (their faces live in referenced parts
-// with instance locations, docs/roadmap.md M2).
-TDF_Label FindOrAddLabel(const ups_document& document, const TopoDS_Shape& shape)
-{
-    TDF_Label label = FindLabel(document, shape);
-    if (!label.IsNull())
+    if (shapeTool->FindSubShape(instance.part, definitionSubShape, label))
     {
         return label;
     }
+    return create ? shapeTool->AddSubShape(instance.part, definitionSubShape) : TDF_Label();
+}
 
-    const Handle(XCAFDoc_ShapeTool) shapeTool = XCAFDoc_DocumentTool::ShapeTool(document.xdeDocument->Main());
-    for (const TDF_Label& root : document.roots)
+// Finds the part occurrence of the target's shape in the document.
+ups_status FindTargetOccurrence(const ups_document& document, ups_target_kind kind, int32_t id,
+                                ups::detail::PartInstance& instance, TopoDS_Shape& definitionSubShape)
+{
+    TopoDS_Shape shape;
+    if (const ups_status status = ResolveTarget(document, kind, id, shape); status != UPS_OK)
     {
-        if (XCAFDoc_ShapeTool::IsAssembly(root))
-        {
-            continue;
-        }
-
-        ups::detail::ShapeIndexedMap subShapes;
-        TopExp::MapShapes(XCAFDoc_ShapeTool::GetShape(root), shape.ShapeType(), subShapes);
-        if (subShapes.Contains(shape))
-        {
-            return shapeTool->AddSubShape(root, shape);
-        }
+        return status;
     }
+    if (!ups::detail::FindOccurrence(document, shape, instance, definitionSubShape))
+    {
+        return Fail(UPS_ERROR_OPERATION, "Shape does not belong to any part of the product structure.");
+    }
+    return UPS_OK;
+}
 
-    return TDF_Label();
+std::optional<Quantity_Color> AssignedColor(const Handle(XCAFDoc_ColorTool)& colors, const TDF_Label& label)
+{
+    Quantity_Color color;
+    if (!label.IsNull() && (colors->GetColor(label, XCAFDoc_ColorSurf, color) || colors->GetColor(label, XCAFDoc_ColorGen, color)))
+    {
+        return color;
+    }
+    return std::nullopt;
 }
 
 void ToUps(const Quantity_Color& color, ups_color& out)
@@ -120,25 +128,19 @@ extern "C" UPS_API ups_status ups_document_get_assigned_color(
             return Fail(UPS_ERROR_INVALID_ARGUMENT, "Document and output pointers must not be null.");
         }
 
-        TopoDS_Shape shape;
-        if (const ups_status status = ResolveTarget(*document, kind, id, shape); status != UPS_OK)
+        ups::detail::PartInstance instance;
+        TopoDS_Shape subShape;
+        if (const ups_status status = FindTargetOccurrence(*document, kind, id, instance, subShape); status != UPS_OK)
         {
             return status;
         }
 
-        *out_has_color = 0;
-        const TDF_Label label = FindLabel(*document, shape);
-        if (label.IsNull())
-        {
-            return UPS_OK;
-        }
-
         const Handle(XCAFDoc_ColorTool) colorTool = XCAFDoc_DocumentTool::ColorTool(document->xdeDocument->Main());
-        Quantity_Color color;
-        if (colorTool->GetColor(label, XCAFDoc_ColorSurf, color) || colorTool->GetColor(label, XCAFDoc_ColorGen, color))
+        const std::optional<Quantity_Color> color = AssignedColor(colorTool, AttributeLabel(*document, instance, subShape, false));
+        *out_has_color = color ? 1 : 0;
+        if (color)
         {
-            ToUps(color, *out_color);
-            *out_has_color = 1;
+            ToUps(*color, *out_color);
         }
         return UPS_OK;
     });
@@ -153,33 +155,40 @@ extern "C" UPS_API ups_status ups_document_set_color(
             return Fail(UPS_ERROR_INVALID_ARGUMENT, "Document must not be null.");
         }
 
-        TopoDS_Shape shape;
-        if (const ups_status status = ResolveTarget(*document, kind, id, shape); status != UPS_OK)
+        ups::detail::PartInstance instance;
+        TopoDS_Shape subShape;
+        if (const ups_status status = FindTargetOccurrence(*document, kind, id, instance, subShape); status != UPS_OK)
         {
             return status;
         }
 
         const Handle(XCAFDoc_ColorTool) colorTool = XCAFDoc_DocumentTool::ColorTool(document->xdeDocument->Main());
+        if (color == nullptr && !AssignedColor(colorTool, AttributeLabel(*document, instance, subShape, false)))
+        {
+            return UPS_OK; // nothing assigned, nothing to remove
+        }
+
+        // Colour only this occurrence: shared definitions on its path get their own copies first
+        // (project decision, docs/adr/0005). Ids are kept, so look the target up again afterwards.
+        ups::detail::MakeOccurrenceUnique(*document, instance);
+        if (const ups_status status = FindTargetOccurrence(*document, kind, id, instance, subShape); status != UPS_OK)
+        {
+            return status;
+        }
+
+        const TDF_Label label = AttributeLabel(*document, instance, subShape, true);
+        if (label.IsNull())
+        {
+            return Fail(UPS_ERROR_OPERATION, "Cannot attach a colour to this shape.");
+        }
+
+        colorTool->UnSetColor(label, XCAFDoc_ColorGen);
         if (color == nullptr)
         {
-            // Nothing assigned means nothing to remove.
-            const TDF_Label label = FindLabel(*document, shape);
-            if (!label.IsNull())
-            {
-                colorTool->UnSetColor(label, XCAFDoc_ColorSurf);
-                colorTool->UnSetColor(label, XCAFDoc_ColorGen);
-            }
+            colorTool->UnSetColor(label, XCAFDoc_ColorSurf);
         }
         else
         {
-            const TDF_Label label = FindOrAddLabel(*document, shape);
-            if (label.IsNull())
-            {
-                return Fail(UPS_ERROR_OPERATION, "Colouring shapes inside assembly instances is not supported yet.");
-            }
-
-            // Replace a generic colour so the new surface colour is the only one on this label.
-            colorTool->UnSetColor(label, XCAFDoc_ColorGen);
             colorTool->SetColor(label, Quantity_Color(color->r, color->g, color->b, Quantity_TOC_sRGB), XCAFDoc_ColorSurf);
         }
 

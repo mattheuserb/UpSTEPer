@@ -12,9 +12,11 @@
 #include <TDF_Label.hxx>
 #include <TDocStd_Document.hxx>
 #include <TopTools_ShapeMapHasher.hxx>
+#include <TopLoc_Location.hxx>
 #include <TopoDS_Shape.hxx>
 
 #include <exception>
+#include <functional>
 #include <mutex>
 #include <new>
 #include <optional>
@@ -72,8 +74,34 @@ struct ups_mesh
 
 namespace ups::detail
 {
-// Recomputes ups_document::faceColors from the XDE colour attributes
-// (face colour, else owning solid, else single root). Defined in document.cpp.
+// ---- Assembly instances (instances.cpp) -------------------------------------------------------
+
+// One placed occurrence of a part definition in the document shape.
+struct PartInstance
+{
+    TDF_Label part;                // simple-shape definition label
+    std::vector<TDF_Label> path;   // component labels from the root down to the part (empty: free part)
+    TopLoc_Location location;      // accumulated placement of the part definition
+};
+
+// Calls visit for every part occurrence, depth-first, with the colour it inherits from its
+// instances, definitions and parent assemblies (precedence: instance > definition > parent).
+using InstanceVisitor = std::function<void(const PartInstance&, const std::optional<Quantity_Color>& inherited)>;
+void ForEachPartInstance(const ups_document& document, const InstanceVisitor& visit);
+
+// 1-based index of shape in map, or 0. Falls back to matching TShape and placement because the
+// same placement can be represented by differently composed location chains.
+int FindIndexTolerant(const ShapeIndexedMap& map, const TopoDS_Shape& shape);
+
+// The part occurrence containing a located face or solid of the document shape, and the
+// corresponding sub-shape of the part definition (unlocated relative to the definition).
+bool FindOccurrence(const ups_document& document, const TopoDS_Shape& located, PartInstance& instance, TopoDS_Shape& definitionSubShape);
+
+// Gives the occurrence its own copies of every shared definition on its path ("make independent")
+// so it can be coloured without affecting other occurrences. Keeps all face and body ids.
+void MakeOccurrenceUnique(ups_document& document, const PartInstance& instance);
+
+// Recomputes ups_document::faceColors from the XDE colour attributes (instances.cpp).
 void ResolveFaceColors(ups_document& document);
 
 // Silences OCCT console output once per process (see messages.cpp). Call before using

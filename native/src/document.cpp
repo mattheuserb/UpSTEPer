@@ -27,55 +27,6 @@ ups_document::~ups_document()
     }
 }
 
-namespace
-{
-std::optional<Quantity_Color> FindColor(const Handle(XCAFDoc_ColorTool)& colorTool, const TopoDS_Shape& shape)
-{
-    Quantity_Color color;
-    if (colorTool->GetColor(shape, XCAFDoc_ColorSurf, color) || colorTool->GetColor(shape, XCAFDoc_ColorGen, color))
-    {
-        return color;
-    }
-    return std::nullopt;
-}
-} // namespace
-
-// Resolves the display colour of every face: own colour, else owning solid,
-// else the single top-level shape. Assembly instance colours are a known gap
-// (tracked in docs/roadmap.md, milestone M2).
-void ups::detail::ResolveFaceColors(ups_document& document)
-{
-    const Handle(XCAFDoc_ColorTool) colorTool = XCAFDoc_DocumentTool::ColorTool(document.xdeDocument->Main());
-    const ShapeAncestorMap& faceToSolids = document.faceToSolids;
-
-    std::optional<Quantity_Color> rootColor;
-    if (document.roots.Length() == 1)
-    {
-        rootColor = FindColor(colorTool, XCAFDoc_ShapeTool::GetShape(document.roots.First()));
-    }
-
-    document.faceColors.assign(static_cast<size_t>(document.faces.Extent()), std::nullopt);
-    for (int index = 1; index <= document.faces.Extent(); ++index)
-    {
-        const TopoDS_Shape& face = document.faces(index);
-        std::optional<Quantity_Color> color = FindColor(colorTool, face);
-
-        if (!color && faceToSolids.Contains(face))
-        {
-            for (const TopoDS_Shape& solid : faceToSolids.FindFromKey(face))
-            {
-                color = FindColor(colorTool, solid);
-                if (color)
-                {
-                    break;
-                }
-            }
-        }
-
-        document.faceColors[static_cast<size_t>(index - 1)] = color ? color : rootColor;
-    }
-}
-
 extern "C" UPS_API ups_status ups_document_load_step(const char* utf8_path, ups_document** out_document)
 {
     return Guarded([&]() -> ups_status {

@@ -41,24 +41,16 @@ jobs:
 
   build:
     name: ${{ matrix.preset }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.preset == 'win-x64' && 'windows-2022' || matrix.preset == 'linux-x64' && 'ubuntu-24.04' || 'macos-15' }}
     # Only a cold cache builds OCCT from source (~20-60 min); otherwise a run takes minutes.
     timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
-        preset: [win-x64, linux-x64, osx-arm64]
-        include:
-          - preset: win-x64
-            os: windows-2022
-          - preset: linux-x64
-            os: ubuntu-24.04
-          - preset: osx-arm64
-            os: macos-15
         # macOS minutes are billed 10x on private repositories: run it only for pushes to main
-        # and manual runs, not for feature branches or pull requests.
-        exclude:
-          - preset: ${{ (github.ref != 'refs/heads/main' && github.event_name != 'workflow_dispatch') && 'osx-arm64' || 'none' }}
+        # and manual runs. (Built as an expression because matrix "include" would re-add a
+        # combination removed by "exclude".)
+        preset: ${{ fromJSON((github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && '["win-x64","linux-x64","osx-arm64"]' || '["win-x64","linux-x64"]') }}
 
     env:
       # Our pinned vcpkg checkout. VCPKG_ROOT itself is exported in the setup step, because
@@ -133,7 +125,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: vcpkg-cache
-          key: vcpkg-${{ matrix.preset }}-${{ hashFiles('native/vcpkg.json', 'native/triplets/**') }}
+          key: ${{ steps.vcpkg-cache.outputs.cache-primary-key }}
 
       - name: Build and install native library
         if: steps.native-cache.outputs.cache-hit != 'true'
@@ -147,7 +139,8 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: artifacts/native/${{ matrix.preset }}
-          key: native-${{ matrix.preset }}-${{ hashFiles('native/**') }}
+          # Reuse the key computed before the build; hashing native/** now would include native/build.
+          key: ${{ steps.native-cache.outputs.cache-primary-key }}
 
       # ---- .NET ---------------------------------------------------------------------------
 

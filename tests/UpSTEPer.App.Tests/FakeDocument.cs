@@ -3,10 +3,12 @@ using UpSTEPer.Core;
 namespace UpSTEPer.App.Tests;
 
 /// <summary>
-/// In-memory document: two faces on one body. The file colours face 0 red; the body has no colour.
+/// In-memory document with two faces. The file colours face 0 red; bodies have no colour.
+/// Default: one part with one body owning both faces. With <c>twoBodies</c>: an assembly with
+/// "Part A" (body 0, face 0) and "Part B" (body 1, face 1).
 /// Colour resolution mirrors the native layer: face colour, else body colour, else none.
 /// </summary>
-internal sealed class FakeDocument : IStepDocument
+internal sealed class FakeDocument(bool twoBodies = false) : IStepDocument
 {
     public static readonly ColorRgb FileRed = ColorRgb.FromHex("#FF0000");
 
@@ -17,7 +19,7 @@ internal sealed class FakeDocument : IStepDocument
 
     public string SourcePath => "fake.stp";
 
-    public ModelStatistics Statistics { get; } = new(1, 1, 2, 6, 4);
+    public ModelStatistics Statistics { get; } = new(twoBodies ? 2 : 1, twoBodies ? 2 : 1, 2, 6, 4);
 
     public string? SavedPath { get; private set; }
 
@@ -27,10 +29,21 @@ internal sealed class FakeDocument : IStepDocument
 
     public ColorRgb? GetFaceColor(FaceId faceId) =>
         _assigned.TryGetValue(ColorTarget.Of(faceId), out var face) ? face
-        : _assigned.TryGetValue(new ColorTarget(ColorTargetKind.Body, 0), out var body) ? body
+        : _assigned.TryGetValue(ColorTarget.Of(GetBodyOfFace(faceId)!.Value), out var body) ? body
         : null;
 
-    public BodyId? GetBodyOfFace(FaceId faceId) => new BodyId(0);
+    public IReadOnlyList<ModelNode> GetModelTree() => twoBodies
+        ?
+        [
+            new ModelNode("Assembly", ModelNodeKind.Assembly, null,
+            [
+                new ModelNode("Part A", ModelNodeKind.Part, null, [new ModelNode("Part A", ModelNodeKind.Body, new BodyId(0), [])]),
+                new ModelNode("Part B", ModelNodeKind.Part, null, [new ModelNode("Part B", ModelNodeKind.Body, new BodyId(1), [])]),
+            ]),
+        ]
+        : [new ModelNode("Fake part", ModelNodeKind.Part, null, [new ModelNode("Fake part", ModelNodeKind.Body, new BodyId(0), [])])];
+
+    public BodyId? GetBodyOfFace(FaceId faceId) => new BodyId(twoBodies ? faceId.Value : 0);
 
     public ColorRgb? GetAssignedColor(ColorTarget target) => _assigned.TryGetValue(target, out var color) ? color : null;
 
@@ -68,7 +81,7 @@ internal sealed class FakeDocument : IStepDocument
 }
 
 /// <summary>Reader handing out <see cref="FakeDocument"/>s (or throwing) and remembering them.</summary>
-internal sealed class FakeReader(Func<string, IStepDocument>? load = null) : IStepReader
+internal sealed class FakeReader(Func<string, IStepDocument>? load = null, bool twoBodies = false) : IStepReader
 {
     public List<FakeDocument> Documents { get; } = [];
 
@@ -79,7 +92,7 @@ internal sealed class FakeReader(Func<string, IStepDocument>? load = null) : ISt
             return load(path);
         }
 
-        var document = new FakeDocument();
+        var document = new FakeDocument(twoBodies);
         Documents.Add(document);
         return document;
     }

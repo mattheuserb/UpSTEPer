@@ -8,13 +8,18 @@ using UpSTEPer.Rendering;
 
 namespace UpSTEPer.App.ViewModels;
 
-/// <summary>State of the main window: the open model, selection, colouring and undo history.</summary>
+/// <summary>State of the main window: the open model, model tree, selection, colouring and undo history.</summary>
 internal sealed partial class MainViewModel : ObservableObject, IDisposable
 {
+    private static readonly IReadOnlySet<FaceId> _noFaces = new HashSet<FaceId>();
+
     private readonly IStepReader _reader;
     private readonly EditHistory _history = new();
     private DocumentSession? _session;
     private string? _fileName;
+
+    // Body id of every face (-1 = none), to highlight bodies selected in the tree.
+    private int[] _faceBodies = [];
 
     /// <summary>Initializes a new instance of the <see cref="MainViewModel"/> class.</summary>
     /// <param name="reader">Reader used to load STEP files.</param>
@@ -30,6 +35,10 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     /// <summary>Gets or sets the scene shown in the 3D view.</summary>
     [ObservableProperty]
     public partial SceneData? Scene { get; set; }
+
+    /// <summary>Gets or sets the product structure of the open model.</summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<ModelNode> ModelTree { get; set; } = [];
 
     /// <summary>Gets or sets the window title.</summary>
     [ObservableProperty]
@@ -49,10 +58,19 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial bool IsDirty { get; set; }
 
-    /// <summary>Gets or sets the face selected in the 3D view.</summary>
+    /// <summary>Gets or sets the face selected in the 3D view (clears the tree selection).</summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ColorFaceCommand), nameof(ColorBodyCommand), nameof(ClearFaceColorCommand))]
     public partial FaceId? SelectedFace { get; set; }
+
+    /// <summary>Gets or sets the node selected in the model tree (clears the face selection).</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ColorBodyCommand))]
+    public partial ModelNode? SelectedNode { get; set; }
+
+    /// <summary>Gets or sets the faces highlighted in the 3D view (selected face or tree selection).</summary>
+    [ObservableProperty]
+    public partial IReadOnlySet<FaceId> HighlightedFaces { get; set; } = _noFaces;
 
     /// <summary>Gets or sets the description of the selection shown in the status bar.</summary>
     [ObservableProperty]
@@ -79,32 +97,22 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         Status = $"Loading {fileName} ...";
         try
         {
-            var (document, scene) = await Task.Run(() =>
-            {
-                var loaded = _reader.Load(path);
-                try
-                {
-                    var mesh = loaded.Tessellate(TessellationOptions.Default);
-                    var edges = loaded.TessellateEdges(TessellationOptions.Default);
-                    return (loaded, SceneData.Create(mesh, loaded.GetFaceColor, edges));
-                }
-                catch
-                {
-                    loaded.Dispose();
-                    throw;
-                }
-            }).ConfigureAwait(true);
+            var loaded = await Task.Run(() => LoadDocument(path)).ConfigureAwait(true);
 
             _session?.Dispose();
-            _session = new DocumentSession(document);
+            _session = new DocumentSession(loaded.Document);
             _history.Clear();
             _fileName = fileName;
+            _faceBodies = loaded.FaceBodies;
             SelectedFace = null;
-            Scene = scene;
+            SelectedNode = null;
+            ModelTree = loaded.Tree;
+            Scene = loaded.Scene;
             IsDirty = false;
+            var statistics = loaded.Document.Statistics;
             Status = string.Create(
                 CultureInfo.CurrentCulture,
-                $"{fileName}: {document.Statistics.SolidCount} solid(s), {document.Statistics.FaceCount} faces, {scene.Mesh.TriangleCount:N0} triangles");
+                $"{fileName}: {statistics.SolidCount} solid(s), {statistics.FaceCount} faces, {loaded.Scene.Mesh.TriangleCount:N0} triangles");
             NotifyHistoryChanged();
             OnPropertyChanged(nameof(HasDocument));
             return true;
@@ -196,53 +204,67 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     public void Dispose() => _session?.Dispose();
 
     /// <summary>Gives the selected face the selected palette colour.</summary>
-    [RelayCommand(CanExecute = nameof(CanEditSelection))]
+    [RelayCommand(CanExecute = nameof(CanEditFace))]
     private Task ColorFaceAsync() =>
-        ApplyAsync(ColorTarget.Of(SelectedFace!.Value), SelectedPaletteEntry.Color, record: true);
+        ApplyAsync([(ColorTarget.Of(SelectedFace!.Value), SelectedPaletteEntry.Color)], record: true);
 
-    /// <summary>Gives the body of the selected face the selected palette colour.</summary>
-    [RelayCommand(CanExecute = nameof(CanEditSelection))]
-    private async Task ColorBodyAsync()
+    /// <summary>Colours the bodies of the tree selection, or the body of the selected face.</summary>
+    [RelayCommand(CanExecute = nameof(CanEditBodies))]
+    private Task ColorBodyAsync()
     {
-        var face = SelectedFace!.Value;
-        var body = await _session!.RunAsync(document => document.GetBodyOfFace(face)).ConfigureAwait(true);
-        if (body is null)
+        var bodies = SelectedBodies();
+        if (bodies.Count == 0)
         {
-            Status = $"Face {face.Value} does not belong to a body.";
-            return;
+            Status = "The selection does not belong to a body.";
+            return Task.CompletedTask;
         }
 
-        await ApplyAsync(ColorTarget.Of(body.Value), SelectedPaletteEntry.Color, record: true).ConfigureAwait(true);
+        return ApplyAsync([.. bodies.Select(b => (ColorTarget.Of(b), (ColorRgb?)SelectedPaletteEntry.Color))], record: true);
     }
 
     /// <summary>Removes the selected face's own colour, so it shows its body colour again.</summary>
-    [RelayCommand(CanExecute = nameof(CanEditSelection))]
+    [RelayCommand(CanExecute = nameof(CanEditFace))]
     private Task ClearFaceColorAsync() =>
-        ApplyAsync(ColorTarget.Of(SelectedFace!.Value), null, record: true);
+        ApplyAsync([(ColorTarget.Of(SelectedFace!.Value), null)], record: true);
 
-    /// <summary>Reverts the last colour change.</summary>
+    /// <summary>Reverts the last colour change (one step, possibly several bodies).</summary>
     [RelayCommand(CanExecute = nameof(CanUndo))]
     private Task UndoAsync()
     {
-        var edit = _history.Undo();
-        return ApplyAsync(edit.Target, edit.Before, record: false);
+        var step = _history.Undo();
+        return ApplyAsync([.. step.Reverse().Select(e => (e.Target, e.Before))], record: false);
     }
 
     /// <summary>Re-applies the last undone colour change.</summary>
     [RelayCommand(CanExecute = nameof(CanRedo))]
     private Task RedoAsync()
     {
-        var edit = _history.Redo();
-        return ApplyAsync(edit.Target, edit.After, record: false);
+        var step = _history.Redo();
+        return ApplyAsync([.. step.Select(e => (e.Target, e.After))], record: false);
     }
 
-    private bool CanEditSelection() => !IsBusy && _session is not null && SelectedFace is not null;
+    private bool CanEditFace() => !IsBusy && _session is not null && SelectedFace is not null;
+
+    private bool CanEditBodies() =>
+        !IsBusy && _session is not null && (SelectedFace is not null || SelectedNode?.GetBodies().Any() == true);
 
     private bool CanUndo() => !IsBusy && _history.CanUndo;
 
     private bool CanRedo() => !IsBusy && _history.CanRedo;
 
-    private async Task ApplyAsync(ColorTarget target, ColorRgb? color, bool record)
+    private List<BodyId> SelectedBodies()
+    {
+        if (SelectedNode is { } node)
+        {
+            return [.. node.GetBodies().Distinct()];
+        }
+
+        return SelectedFace is { } face && face.Value < _faceBodies.Length && _faceBodies[face.Value] >= 0
+            ? [new BodyId(_faceBodies[face.Value])]
+            : [];
+    }
+
+    private async Task ApplyAsync(IReadOnlyList<(ColorTarget Target, ColorRgb? Color)> changes, bool record)
     {
         if (_session is null || Scene is not { } scene)
         {
@@ -252,24 +274,31 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         IsBusy = true;
         try
         {
-            var (before, faceColors) = await _session.RunAsync(document =>
+            var (edits, faceColors) = await _session.RunAsync(document =>
             {
-                var previous = document.GetAssignedColor(target);
-                document.SetColor(target, color);
+                var applied = new List<ColorEdit>();
+                foreach (var (target, color) in changes)
+                {
+                    applied.Add(new ColorEdit(target, document.GetAssignedColor(target), color));
+                    document.SetColor(target, color);
+                }
+
                 var colors = Enumerable.Range(0, document.Statistics.FaceCount)
                     .Select(i => document.GetFaceColor(new FaceId(i)))
                     .ToArray();
-                return (previous, colors);
+                return (applied, colors);
             }).ConfigureAwait(true);
 
             if (record)
             {
-                _history.Record(new ColorEdit(target, before, color));
+                _history.Record(edits);
             }
 
             Scene = scene.WithFaceColors(face => face.Value < faceColors.Length ? faceColors[face.Value] : null);
             IsDirty = true;
-            Status = $"{target}: {color?.ToHex() ?? "colour removed"}";
+            Status = changes.Count == 1
+                ? $"{changes[0].Target}: {changes[0].Color?.ToHex() ?? "colour removed"}"
+                : $"{changes.Count} targets changed";
             UpdateSelectionInfo();
         }
         catch (Exception exception) when (exception is GeometryOperationException or ArgumentException)
@@ -289,17 +318,83 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         RedoCommand.NotifyCanExecuteChanged();
     }
 
-    partial void OnSelectedFaceChanged(FaceId? value) => UpdateSelectionInfo();
+    partial void OnSelectedFaceChanged(FaceId? value)
+    {
+        if (value is not null)
+        {
+            SelectedNode = null;
+        }
+
+        UpdateHighlight();
+    }
+
+    partial void OnSelectedNodeChanged(ModelNode? value)
+    {
+        if (value is not null)
+        {
+            SelectedFace = null;
+        }
+
+        UpdateHighlight();
+    }
 
     partial void OnIsDirtyChanged(bool value) => UpdateTitle();
 
     partial void OnSceneChanged(SceneData? value) => UpdateTitle();
 
+    private void UpdateHighlight()
+    {
+        if (SelectedFace is { } face)
+        {
+            HighlightedFaces = new HashSet<FaceId> { face };
+        }
+        else if (SelectedNode is { } node)
+        {
+            var bodies = node.GetBodies().Select(b => b.Value).ToHashSet();
+            HighlightedFaces = Enumerable.Range(0, _faceBodies.Length)
+                .Where(i => bodies.Contains(_faceBodies[i]))
+                .Select(i => new FaceId(i))
+                .ToHashSet();
+        }
+        else
+        {
+            HighlightedFaces = _noFaces;
+        }
+
+        UpdateSelectionInfo();
+    }
+
     private void UpdateTitle() =>
         Title = _fileName is null ? "UpSTEPer" : $"{(IsDirty ? "*" : string.Empty)}{_fileName} - UpSTEPer";
 
     private void UpdateSelectionInfo() =>
-        SelectionInfo = SelectedFace is { } face
-            ? $"Selected: face {face.Value}, colour {Scene?.GetFaceColor(face)?.ToHex() ?? "none (default grey)"}"
-            : string.Empty;
+        SelectionInfo = (SelectedFace, SelectedNode) switch
+        {
+            ({ } face, _) => $"Selected: face {face.Value}, colour {Scene?.GetFaceColor(face)?.ToHex() ?? "none (default grey)"}",
+            (_, { } node) => string.Create(
+                CultureInfo.CurrentCulture,
+                $"Selected: {node.DisplayName} ({node.GetBodies().Count()} bodies, {HighlightedFaces.Count} faces)"),
+            _ => string.Empty,
+        };
+
+    private LoadedModel LoadDocument(string path)
+    {
+        var document = _reader.Load(path);
+        try
+        {
+            var mesh = document.Tessellate(TessellationOptions.Default);
+            var edges = document.TessellateEdges(TessellationOptions.Default);
+            var faceBodies = Enumerable.Range(0, document.Statistics.FaceCount)
+                .Select(i => document.GetBodyOfFace(new FaceId(i))?.Value ?? -1)
+                .ToArray();
+            return new LoadedModel(document, SceneData.Create(mesh, document.GetFaceColor, edges), document.GetModelTree(), faceBodies);
+        }
+        catch
+        {
+            document.Dispose();
+            throw;
+        }
+    }
+
+    private sealed record LoadedModel(IStepDocument Document, SceneData Scene, IReadOnlyList<ModelNode> Tree, int[] FaceBodies);
 }

@@ -36,6 +36,10 @@ internal sealed class ModelView : OpenGlControlBase
     public static readonly StyledProperty<FaceId?> SelectedFaceProperty =
         AvaloniaProperty.Register<ModelView, FaceId?>(nameof(SelectedFace), defaultBindingMode: BindingMode.TwoWay);
 
+    /// <summary>Defines the <see cref="HighlightedFaces"/> property.</summary>
+    public static readonly StyledProperty<IReadOnlySet<FaceId>> HighlightedFacesProperty =
+        AvaloniaProperty.Register<ModelView, IReadOnlySet<FaceId>>(nameof(HighlightedFaces), defaultValue: new HashSet<FaceId>());
+
     /// <summary>Defines the <see cref="ShowEdges"/> property.</summary>
     public static readonly StyledProperty<bool> ShowEdgesProperty =
         AvaloniaProperty.Register<ModelView, bool>(nameof(ShowEdges), defaultValue: true);
@@ -71,6 +75,13 @@ internal sealed class ModelView : OpenGlControlBase
     {
         get => GetValue(SelectedFaceProperty);
         set => SetValue(SelectedFaceProperty, value);
+    }
+
+    /// <summary>Gets or sets the faces drawn in the highlight colour (selected face or bodies from the tree).</summary>
+    public IReadOnlySet<FaceId> HighlightedFaces
+    {
+        get => GetValue(HighlightedFacesProperty);
+        set => SetValue(HighlightedFacesProperty, value);
     }
 
     /// <summary>Gets or sets a value indicating whether model edges are drawn on top of the faces.</summary>
@@ -119,7 +130,7 @@ internal sealed class ModelView : OpenGlControlBase
 
             RequestNextFrameRendering();
         }
-        else if (change.Property == SelectedFaceProperty)
+        else if (change.Property == HighlightedFacesProperty)
         {
             _colorsDirty = true;
             RequestNextFrameRendering();
@@ -183,7 +194,7 @@ internal sealed class ModelView : OpenGlControlBase
         {
             if (Scene is { } scene)
             {
-                _renderer.Upload(scene.Mesh, scene.GetVertexColors(SelectedFace).Span);
+                _renderer.Upload(scene.Mesh, scene.GetVertexColors(HighlightedFaces).Span);
                 _renderer.UploadEdges(scene.Edges);
             }
 
@@ -194,7 +205,7 @@ internal sealed class ModelView : OpenGlControlBase
         {
             if (Scene is { } scene)
             {
-                _renderer.UpdateColors(scene.GetVertexColors(SelectedFace).Span);
+                _renderer.UpdateColors(scene.GetVertexColors(HighlightedFaces).Span);
             }
 
             _colorsDirty = false;

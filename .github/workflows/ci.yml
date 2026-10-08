@@ -197,16 +197,21 @@ jobs:
         continue-on-error: ${{ runner.os == 'macOS' }}
         shell: bash
         run: |
-          shot="artifacts/screenshots/viewer-${{ matrix.preset }}.png"
           mkdir -p artifacts/screenshots
-          args=(--project src/UpSTEPer.App -c Release --no-build -- "examples/ESKV 12 RAL 7035 10066410.stp" --screenshot "$shot")
           if [ "$RUNNER_OS" = "Linux" ]; then
             sudo apt-get install -y --no-install-recommends xvfb libgl1-mesa-dri libice6 libsm6 libfontconfig1
-            xvfb-run -a -s "-screen 0 1600x1000x24" dotnet run "${args[@]}"
+            run() { xvfb-run -a -s "-screen 0 1600x1000x24" dotnet run "$@"; }
           else
-            dotnet run "${args[@]}"
+            run() { dotnet run "$@"; }
           fi
-          test -s "$shot"
+          app=(--project src/UpSTEPer.App -c Release --no-build -- "examples/ESKV 12 RAL 7035 10066410.stp")
+          # Plain view, then with face 80 (visible in the start view) highlighted.
+          run "${app[@]}" --screenshot "artifacts/screenshots/viewer-${{ matrix.preset }}.png"
+          run "${app[@]}" --screenshot "artifacts/screenshots/viewer-${{ matrix.preset }}-selected.png" --select-face 80
+          test -s "artifacts/screenshots/viewer-${{ matrix.preset }}.png"
+          test -s "artifacts/screenshots/viewer-${{ matrix.preset }}-selected.png"
+          # The highlight must change the image.
+          ! cmp -s "artifacts/screenshots/viewer-${{ matrix.preset }}.png" "artifacts/screenshots/viewer-${{ matrix.preset }}-selected.png"
 
       - name: Report unverified macOS rendering
         if: steps.screenshot.outcome == 'failure' && runner.os == 'macOS'

@@ -3,10 +3,10 @@ namespace UpSTEPer.Occt.Tests;
 /// <summary>Locates test data in the repository and skips tests that need the native library.</summary>
 internal static class TestFiles
 {
-    private static readonly Lazy<string> RepoRoot = new(FindRepoRoot);
+    private static readonly Lazy<string> _repoRoot = new(FindRepoRoot);
 
     /// <summary>CADENAS cable gland ESKV 12: one solid, 109 analytic faces, one body colour (RAL 7035).</summary>
-    public static string CableGland => Path.Combine(RepoRoot.Value, "examples", "ESKV 12 RAL 7035 10066410.stp");
+    public static string CableGland => Path.Combine(_repoRoot.Value, "examples", "ESKV 12 RAL 7035 10066410.stp");
 
     /// <summary>
     /// Skips the current test when upsteper_native has not been built. When the environment

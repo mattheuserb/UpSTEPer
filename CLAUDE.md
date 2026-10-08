@@ -12,6 +12,8 @@ using Open CASCADE Technology (OCCT 8) through a thin native C ABI. Status and p
 ## Commands
 
 ```bash
+./scripts/check.ps1                # full CI quality gate locally; run before every commit
+./scripts/check.ps1 -Fix           # apply dotnet format fixes first
 dotnet build                       # whole solution (UpSTEPer.slnx); warnings are errors
 dotnet test                        # Microsoft Testing Platform (configured in global.json)
 dotnet test --project tests/UpSTEPer.Core.Tests          # one project
@@ -53,7 +55,10 @@ Never reference OCCT or native types from Core. UI projects (planned) depend on 
 ## Conventions
 
 - .NET: Framework Design Guidelines; file-scoped namespaces; nullable enabled; XML docs on all
-  public API; `TreatWarningsAsErrors`; analyzers at `latest-recommended`. See `.editorconfig`.
+  public API; `TreatWarningsAsErrors`; analyzers at `latest-all`. Never silence a rule with
+  `NoWarn`/`#pragma`; follow "When a rule does not fit" in CONTRIBUTING.md.
+- P/Invokes: `upsteper_native` is loaded only by absolute path from the app directory
+  (`NativeLibraryResolver`); do not add other native libraries without the same treatment.
 - Package versions only in `Directory.Packages.props` (Central Package Management).
 - C++17, OCCT naming in native code (`PascalCase` functions inside `ups::detail`), `ups_` prefix
   and `snake_case` for exported C symbols.

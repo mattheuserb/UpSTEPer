@@ -12,11 +12,51 @@ Thanks for your interest! This document describes how we work.
 
 1. Fork and create a branch: `feature/<short-name>` or `fix/<short-name>`.
 2. Keep changes focused; one concern per pull request.
-3. `dotnet build` must be warning-free (warnings are errors) and `dotnet test` green.
+3. `./scripts/check.ps1` must pass (see [Code quality](#code-quality)).
 4. If you touch native code, CI must pass on all three platforms.
 5. Open a PR describing *what* and *why*; link the issue.
 
 Commit messages: imperative mood, short subject (≤ 72 chars), body explaining why.
+
+## Code quality
+
+All checks run locally with one command, exactly as in CI:
+
+```powershell
+./scripts/check.ps1          # verify: format, analyzers, tests, coverage report
+./scripts/check.ps1 -Fix     # apply formatting/code-style fixes first
+./scripts/check.ps1 -NoCoverage
+```
+
+(Windows PowerShell 5.1 or PowerShell 7 on any OS. Without the native library, kernel tests are
+skipped; set `UPS_REQUIRE_NATIVE=1` to make them mandatory as in CI.)
+
+### Rules
+
+| Area | Rule | Where configured |
+|---|---|---|
+| Analyzers | All .NET analyzers (`AnalysisLevel=latest-all`) | `Directory.Build.props` |
+| Warnings | Every compiler/analyzer warning is an error | `TreatWarningsAsErrors` |
+| Code style | Naming, `var`, braces, usings, file-scoped namespaces ... enforced in the build | `.editorconfig` + `EnforceCodeStyleInBuild` |
+| Formatting | `dotnet format --verify-no-changes` must pass | CI job `format + analyzers` |
+| Nullability | Nullable reference types enabled everywhere | `Directory.Build.props` |
+| Docs | XML documentation on all public API (CS1591), not required in tests | `GenerateDocumentationFile` |
+| Tests | All tests green on Windows, Linux and macOS; native tests mandatory in CI | `.github/workflows/ci.yml` |
+| Coverage | Reported on every CI run (job summary + `coverage-report` artifact); no threshold yet | `scripts/check.ps1`, CI |
+
+### When a rule does not fit
+
+1. Prefer fixing the code.
+2. If a rule is wrong for the whole project, relax it in `.editorconfig` with a reason in the
+   same line. Never use `<NoWarn>`.
+3. For a single, justified spot use `[SuppressMessage(..., Justification = "...")]`, not
+   `#pragma warning disable`.
+4. Temporary relaxations for legacy code: set the rule to `suggestion` and add
+   `# TODO(#<issue>): ...` with a tracking issue. New code must not add to that debt.
+
+StyleCop.Analyzers is intentionally not used: it largely duplicates the IDE rules in
+`.editorconfig`, and its defaults (`this.` prefixes, no `_` field prefix, file headers) contradict
+the .NET conventions this repository follows.
 
 ## PR checklist
 

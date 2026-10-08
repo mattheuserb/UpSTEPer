@@ -64,10 +64,22 @@ dotnet_naming_symbols.private_constants.applicable_kinds = field
 dotnet_naming_symbols.private_constants.required_modifiers = const
 dotnet_naming_style.pascal.capitalization = pascal_case
 
-# Analyzer tuning
-dotnet_diagnostic.CA1303.severity = none   # No localisation of literals (CLI/log output)
-dotnet_diagnostic.CA1848.severity = suggestion
+# ---------------------------------------------------------------------------------------------
+# Analyzer policy (see CONTRIBUTING.md, "Code quality")
+#   - AnalysisLevel=latest-all in Directory.Build.props; warnings are errors.
+#   - Every relaxation below needs a reason. Temporary relaxations for legacy code use
+#     "suggestion" plus a tracking issue: "# TODO(#123): remove once ...".
+# ---------------------------------------------------------------------------------------------
+
+# Code-style rules that the build only enforces when their severity is set explicitly.
+dotnet_diagnostic.IDE1006.severity = warning   # Naming rules above
+dotnet_diagnostic.IDE0005.severity = warning   # Unnecessary using directives
+
+# Analyzer relaxations
+dotnet_diagnostic.CA1303.severity = none        # No localisation of literals (CLI/log output)
+dotnet_diagnostic.CA1848.severity = suggestion  # LoggerMessage delegates: only where logging is hot
 
 [tests/**.cs]
 dotnet_diagnostic.CA1707.severity = none   # Underscores allowed in test method names
 dotnet_diagnostic.CA2007.severity = none   # ConfigureAwait not needed in tests
+dotnet_diagnostic.CS1591.severity = none   # Test classes need no XML docs (doc file only enables IDE0005)

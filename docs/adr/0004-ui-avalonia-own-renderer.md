@@ -43,5 +43,6 @@ and per-face picking.
   core from the context type.
 - Verified by the CI viewer screenshot test on Windows and Linux. **macOS is open:** on the hosted
   runner `OpenGlControlBase` reports "Compositor backend doesn't support GPU interop" even with the
-  OpenGL compositor forced; a test on real Mac hardware is pending (docs/roadmap.md, M0). Status
+  OpenGL compositor forced. macOS is deferred to the end of the roadmap; the preferred fix is an
+  offscreen ANGLE (Metal) context (docs/roadmap.md, "macOS support"). Status
   stays *Proposed* until macOS is verified.

@@ -16,11 +16,8 @@ Goal: prove that the native bridge builds and runs on all three platforms.
 - [ ] Redirect OCCT console diagnostics (`Message::DefaultMessenger`) into our error reporting
 - [x] Spike: Avalonia window with OpenGL control rendering `MeshData` (verified locally on Windows/ANGLE)
 - [x] Viewer screenshot smoke test green in CI on Windows (ANGLE) and Linux (Mesa llvmpipe, Xvfb)
-- [ ] **macOS 3D view unverified.** On the GitHub-hosted macOS runner Avalonia 12 reports
-  "Compositor backend doesn't support GPU interop", also with the OpenGL compositor forced. Unknown
-  whether this is the GPU-less runner VM or Avalonia 12 on macOS in general. Next step: run
-  `UpSTEPer --screenshot` on a real Mac; if it fails there too, evaluate a Metal backend or an
-  offscreen GL context (ADR 0004). The CI step is non-blocking on macOS until then.
+- [ ] macOS 3D view — **deferred to the end of the roadmap** (decision 2026-10-08), see
+  [macOS support](#macos-support-last).
 
 Exit criterion: `upsteper info` and an Avalonia window showing the example file work on Windows,
 Linux and macOS from CI-built binaries.
@@ -59,6 +56,29 @@ Linux and macOS from CI-built binaries.
 - Interactive: select facets → fit cylinder/cone → preview deviation → apply
 - Automatic detection of cylindrical facet strips (holes, shafts)
 - **Needs real problem files** (see `docs/test-data.md`)
+
+## macOS support (last)
+
+Deliberately scheduled after all functional milestones; no Mac hardware is available to the
+project. The CLI and native kernel already work on macOS (CI green); only the 3D view is affected.
+
+**Problem.** On the GitHub-hosted macOS runner Avalonia 12 reports "Compositor backend doesn't
+support GPU interop" for `OpenGlControlBase`, also with the OpenGL compositor forced. Unknown
+whether this is the GPU-less runner VM or Avalonia 12 on macOS in general. The CI screenshot step
+is non-blocking on macOS and emits a warning.
+
+**Preferred approach: Google ANGLE (OpenGL ES on Metal), rendered offscreen.**
+
+1. Build ANGLE with its `metal` feature via vcpkg (port `angle`, BSD-3-Clause).
+2. Create our own EGL context, independent of Avalonia's compositor; render with the existing
+   `MeshRenderer` (already GLSL ES 3.00 capable — Windows uses ANGLE today).
+3. Hand frames to Avalonia: first by pixel copy into a `WriteableBitmap` (simple, ~6 MB per frame
+   at 1600×1000, fine for on-demand redraws), later optionally by sharing a Metal texture.
+4. If the runner VM has no Metal, use ANGLE's SwiftShader (CPU) backend for CI.
+
+Benefits beyond macOS: one shader dialect on all platforms, and independence from Avalonia's
+undocumented GL behaviour. Alternatives: a native Metal renderer (more work), or verification on a
+rented Mac / by community testers once the repository is public.
 
 ## Later
 

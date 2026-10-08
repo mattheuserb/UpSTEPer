@@ -191,7 +191,7 @@ jobs:
       # unit tests cannot (MeshRenderer, ModelView) on every platform's GL flavour: ANGLE/GLES on
       # Windows, Mesa (software, under Xvfb) on Linux, Apple OpenGL on macOS.
       # macOS is not blocking yet: on the hosted runner Avalonia reports "Compositor backend doesn't
-      # support GPU interop" (see docs/roadmap.md, M0). A failure there emits a warning instead.
+      # support GPU interop" (deferred, see docs/roadmap.md "macOS support"). A failure there emits a warning instead.
       - name: Viewer screenshot smoke test
         id: screenshot
         continue-on-error: ${{ runner.os == 'macOS' }}
@@ -210,7 +210,7 @@ jobs:
 
       - name: Report unverified macOS rendering
         if: steps.screenshot.outcome == 'failure' && runner.os == 'macOS'
-        run: echo "::warning title=macOS 3D view unverified::Viewer screenshot failed on macOS (known issue, docs/roadmap.md M0)."
+        run: echo "::warning title=macOS 3D view unverified::Viewer screenshot failed on macOS (deferred, docs/roadmap.md "macOS support")."
 
       - name: Upload viewer screenshot
         if: always()

@@ -13,3 +13,4 @@ We record significant decisions in the [MADR](https://adr.github.io/madr/) forma
 | [0006](0006-dxf-export-hlr-acadsharp.md) | DXF only, 2D views via OCCT HLR and ACadSharp | Accepted |
 | [0007](0007-tiered-repair.md) | Tiered geometry repair | Accepted |
 | [0008](0008-cli-first-testing.md) | CLI parity and test strategy | Accepted |
+| [0009](0009-instance-colouring.md) | Colouring faces and bodies inside assembly instances | Accepted |

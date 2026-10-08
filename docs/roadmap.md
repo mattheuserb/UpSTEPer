@@ -44,8 +44,8 @@ Linux and macOS from CI-built binaries.
 - [x] CLI `paint` command; app toolbar with RAL palette, Ctrl+Z/Y, Save as
 - [x] Fix: concurrent STEP loads crashed (OCCT translators use global state) — now serialised
 - [ ] Manual interoperability check of saved files in FreeCAD and one commercial CAD
-- [ ] **Colours in assemblies** (faces/bodies inside instances are rejected today) — now visible
-  in the model tree, next candidate
+- [x] Colours in assemblies: only the clicked instance changes; shared definitions are copied
+  for it ("make independent", ADR 0009), ids stay stable, save → reload tested
 - [ ] AP242 output option; custom colour picker (any RGB) in the app
 
 ## M3 — DXF export (2D views)

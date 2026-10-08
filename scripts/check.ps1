@@ -7,7 +7,7 @@
     2. Verifies formatting with `dotnet format --verify-no-changes` (or applies it with -Fix).
     3. Builds the solution; analyzer and compiler warnings are errors.
     4. Runs all tests with code coverage (Cobertura) into artifacts/coverage.
-    5. Writes an HTML report to artifacts/coverage/report and prints a summary.
+    5. Writes the coverage report and enforces the minimum (scripts/coverage-report.ps1).
 
     Tests that need the native library are skipped when it has not been built
     (see docs/development.md); set UPS_REQUIRE_NATIVE=1 to make them mandatory, as CI does.
@@ -70,12 +70,15 @@ try {
             dotnet test --solution $solution -c $Configuration --no-build `
                 --coverage --coverage-output-format cobertura --results-directory $coverageDir
         }
-        Invoke-Step 'Coverage report' {
-            dotnet reportgenerator "-reports:$coverageDir/*.cobertura.xml" "-targetdir:$coverageDir/report" `
-                '-reporttypes:Html;MarkdownSummaryGithub;TextSummary' '-assemblyfilters:-*.Tests' -verbosity:Warning
+        # The minimum is only meaningful with the full suite: without the native library the
+        # kernel tests are skipped and coverage drops.
+        $nativeBuilt = [bool] (Get-ChildItem (Join-Path $root 'artifacts/native') -Recurse -File -Filter '*upsteper_native.*' -ErrorAction SilentlyContinue)
+        if (-not $nativeBuilt) {
+            Write-Host 'Native library not built: coverage minimum is reported but not enforced.' -ForegroundColor Yellow
         }
-        Get-Content (Join-Path $coverageDir 'report/Summary.txt') | Select-Object -Skip 1 -First 16
-        Write-Host "HTML report: $(Join-Path $coverageDir 'report/index.html')"
+        Invoke-Step 'Coverage report and minimum' {
+            & (Join-Path $PSScriptRoot 'coverage-report.ps1') -CoverageDir $coverageDir -ReportOnly:(-not $nativeBuilt)
+        }
     }
 
     Write-Host 'All checks passed.' -ForegroundColor Green

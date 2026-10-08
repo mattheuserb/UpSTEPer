@@ -165,18 +165,16 @@ jobs:
           --coverage --coverage-output-format cobertura
           --results-directory ${{ github.workspace }}/artifacts/coverage
 
-      # Reports only; a minimum threshold will be added once a baseline is established
-      # (see CONTRIBUTING.md, "Code quality").
-      - name: Coverage report
+      # Same script and thresholds as scripts/check.ps1; fails below the minimum.
+      - name: Coverage report and minimum
         if: env.UPS_COVERAGE == '1'
+        shell: pwsh
         run: |
           dotnet tool restore
-          dotnet reportgenerator "-reports:artifacts/coverage/*.cobertura.xml" "-targetdir:artifacts/coverage/report" \
-            "-reporttypes:Html;MarkdownSummaryGithub" "-assemblyfilters:-*.Tests" -verbosity:Warning
-          cat artifacts/coverage/report/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+          ./scripts/coverage-report.ps1 -GitHubSummary
 
       - name: Upload coverage report
-        if: env.UPS_COVERAGE == '1'
+        if: always() && env.UPS_COVERAGE == '1'
         uses: actions/upload-artifact@v7
         with:
           name: coverage-report

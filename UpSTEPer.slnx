@@ -3,6 +3,7 @@
     <Project Path="src/UpSTEPer.App/UpSTEPer.App.csproj" />
     <Project Path="src/UpSTEPer.Cli/UpSTEPer.Cli.csproj" />
     <Project Path="src/UpSTEPer.Core/UpSTEPer.Core.csproj" />
+    <Project Path="src/UpSTEPer.Export.Dxf/UpSTEPer.Export.Dxf.csproj" />
     <Project Path="src/UpSTEPer.Occt/UpSTEPer.Occt.csproj" />
     <Project Path="src/UpSTEPer.Rendering/UpSTEPer.Rendering.csproj" />
   </Folder>
@@ -10,6 +11,7 @@
     <Project Path="tests/UpSTEPer.App.Tests/UpSTEPer.App.Tests.csproj" />
     <Project Path="tests/UpSTEPer.Cli.Tests/UpSTEPer.Cli.Tests.csproj" />
     <Project Path="tests/UpSTEPer.Core.Tests/UpSTEPer.Core.Tests.csproj" />
+    <Project Path="tests/UpSTEPer.Export.Dxf.Tests/UpSTEPer.Export.Dxf.Tests.csproj" />
     <Project Path="tests/UpSTEPer.Occt.Tests/UpSTEPer.Occt.Tests.csproj" />
     <Project Path="tests/UpSTEPer.Rendering.Tests/UpSTEPer.Rendering.Tests.csproj" />
   </Folder>

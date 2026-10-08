@@ -57,6 +57,20 @@ internal static partial class NativeMethods
     [LibraryImport(LibraryName, EntryPoint = "ups_document_save_step", StringMarshalling = StringMarshalling.Utf8)]
     internal static partial NativeStatus DocumentSaveStep(DocumentSafeHandle document, string utf8Path);
 
+    [LibraryImport(LibraryName, EntryPoint = "ups_document_project")]
+    internal static partial NativeStatus DocumentProject(
+        DocumentSafeHandle document, in NativeProjectionParams parameters, out DrawingSafeHandle drawing);
+
+    [LibraryImport(LibraryName, EntryPoint = "ups_drawing_free")]
+    internal static partial void DrawingFree(nint drawing);
+
+    [LibraryImport(LibraryName, EntryPoint = "ups_drawing_get_info")]
+    internal static partial NativeStatus DrawingGetInfo(DrawingSafeHandle drawing, out int curveCount, out int pointCount);
+
+    [LibraryImport(LibraryName, EntryPoint = "ups_drawing_copy")]
+    internal static unsafe partial NativeStatus DrawingCopy(
+        DrawingSafeHandle drawing, NativeDrawingCurve* curves, long curvesCapacity, double* points, long pointsCapacity);
+
     [LibraryImport(LibraryName, EntryPoint = "ups_document_tessellate")]
     internal static partial NativeStatus DocumentTessellate(
         DocumentSafeHandle document, in NativeTessellationParams parameters, out MeshSafeHandle mesh);
@@ -98,6 +112,43 @@ internal enum NativeTargetKind
 {
     Face = 0,
     Body = 1,
+}
+
+/// <summary>Mirrors <c>ups_curve_type</c>.</summary>
+internal enum NativeCurveType
+{
+    Line = 0,
+    Arc = 1,
+    Circle = 2,
+    Ellipse = 3,
+    Polyline = 4,
+}
+
+/// <summary>Mirrors <c>ups_drawing_curve</c> (72 bytes: 2 ints, 7 doubles, 2 ints).</summary>
+[StructLayout(LayoutKind.Sequential)]
+internal struct NativeDrawingCurve
+{
+    public NativeCurveType Type;
+    public int Kind;
+    public double D0;
+    public double D1;
+    public double D2;
+    public double D3;
+    public double D4;
+    public double D5;
+    public double D6;
+    public int FirstPoint;
+    public int PointCount;
+}
+
+/// <summary>Mirrors <c>ups_projection_params</c>.</summary>
+[StructLayout(LayoutKind.Sequential)]
+internal struct NativeProjectionParams
+{
+    public int View;
+    public double Deflection;
+    public int IncludeHidden;
+    public int IncludeTangent;
 }
 
 /// <summary>Mirrors <c>ups_document_stats</c>.</summary>

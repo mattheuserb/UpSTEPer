@@ -50,6 +50,14 @@ public interface IStepDocument : IDisposable
     /// <exception cref="IOException">The file cannot be written.</exception>
     void SaveStep(string path);
 
+    /// <summary>Projects the model into a 2D view with exact hidden-line removal.</summary>
+    /// <remarks>Lines, circles, arcs and ellipses stay analytic; other curves become polylines.</remarks>
+    /// <param name="direction">The viewing direction.</param>
+    /// <param name="options">What to include and the polyline tolerance.</param>
+    /// <returns>The view in its own coordinates (mm).</returns>
+    /// <exception cref="GeometryOperationException">Hidden-line removal failed.</exception>
+    Drawing.ProjectedView Project(Drawing.ViewDirection direction, Drawing.ProjectionOptions options);
+
     /// <summary>Triangulates the model for display.</summary>
     /// <param name="options">Tessellation quality.</param>
     /// <returns>The mesh.</returns>

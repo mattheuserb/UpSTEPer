@@ -128,6 +128,74 @@ UPS_API ups_status ups_document_set_color(
 /** Writes the document as STEP (AP214) including colours, names and layers. */
 UPS_API ups_status ups_document_save_step(ups_document* document, const char* utf8_path);
 
+/* --------------------------------------------------------------- drawing -- */
+
+typedef struct ups_drawing ups_drawing;
+
+/** Viewing direction. Z is up; FRONT looks along +Y (viewer at -Y). */
+typedef enum ups_view_direction
+{
+    UPS_VIEW_FRONT = 0,
+    UPS_VIEW_TOP = 1,    /* from +Z, X right, Y up */
+    UPS_VIEW_LEFT = 2,   /* from -X */
+    UPS_VIEW_RIGHT = 3,  /* from +X */
+    UPS_VIEW_BACK = 4,   /* from +Y */
+    UPS_VIEW_BOTTOM = 5, /* from -Z */
+    UPS_VIEW_ISO = 6     /* from (+1, -1, +1): front-right-top */
+} ups_view_direction;
+
+typedef enum ups_line_kind
+{
+    UPS_LINE_VISIBLE = 0, /* visible sharp edges and silhouettes */
+    UPS_LINE_HIDDEN = 1,  /* hidden sharp edges and silhouettes */
+    UPS_LINE_TANGENT = 2  /* visible smooth (tangent) edges between faces */
+} ups_line_kind;
+
+typedef enum ups_curve_type
+{
+    UPS_CURVE_LINE = 0,    /* data: x1 y1 x2 y2 */
+    UPS_CURVE_ARC = 1,     /* data: cx cy r a0 a1 — counter-clockwise from a0 to a1, radians */
+    UPS_CURVE_CIRCLE = 2,  /* data: cx cy r */
+    UPS_CURVE_ELLIPSE = 3, /* data: cx cy mx my ratio t0 t1 — (mx,my) = major semi-axis vector,
+                              ratio = minor/major, counter-clockwise from parameter t0 to t1 */
+    UPS_CURVE_POLYLINE = 4 /* points[first_point .. first_point+point_count) */
+} ups_curve_type;
+
+/** One 2D curve of a projected view, in model units (mm) in the view plane. */
+typedef struct ups_drawing_curve
+{
+    int32_t type; /* ups_curve_type */
+    int32_t kind; /* ups_line_kind */
+    double data[7];
+    int32_t first_point;
+    int32_t point_count;
+} ups_drawing_curve;
+
+typedef struct ups_projection_params
+{
+    int32_t view;            /* ups_view_direction */
+    double deflection;       /* chord tolerance for curves exported as polylines (mm) */
+    int32_t include_hidden;  /* non-zero: compute hidden lines */
+    int32_t include_tangent; /* non-zero: include smooth edges between faces */
+} ups_projection_params;
+
+/**
+ * Projects the model with exact hidden-line removal (HLRBRep_Algo). Lines, circles, arcs and
+ * ellipses stay analytic; other curves become polylines within params->deflection.
+ */
+UPS_API ups_status ups_document_project(
+    ups_document* document, const ups_projection_params* params, ups_drawing** out_drawing);
+
+UPS_API void ups_drawing_free(ups_drawing* drawing);
+
+UPS_API ups_status ups_drawing_get_info(const ups_drawing* drawing, int32_t* out_curve_count, int32_t* out_point_count);
+
+/** Copies curves and polyline points (x, y pairs: capacity in doubles = 2 * point_count). */
+UPS_API ups_status ups_drawing_copy(
+    const ups_drawing* drawing,
+    ups_drawing_curve* curves, int64_t curves_capacity,
+    double* points, int64_t points_capacity);
+
 /* ------------------------------------------------------------------ mesh -- */
 
 typedef struct ups_mesh ups_mesh;

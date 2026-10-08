@@ -89,13 +89,23 @@ internal sealed class ModelView : OpenGlControlBase
         base.OnPropertyChanged(change);
         if (change.Property == SceneProperty)
         {
-            if (Scene is { } scene)
+            var previous = change.OldValue as SceneData;
+            if (Scene is { } scene && previous is not null && ReferenceEquals(previous.Mesh, scene.Mesh))
             {
-                _camera.ResetOrientation();
-                _camera.FitTo(scene.Bounds);
+                // Same geometry with new colours (an edit): keep the camera, upload colours only.
+                _colorsDirty = true;
+            }
+            else
+            {
+                if (Scene is { } loaded)
+                {
+                    _camera.ResetOrientation();
+                    _camera.FitTo(loaded.Bounds);
+                }
+
+                _sceneDirty = true;
             }
 
-            _sceneDirty = true;
             RequestNextFrameRendering();
         }
         else if (change.Property == SelectedFaceProperty)

@@ -42,6 +42,7 @@ internal sealed partial class DesktopApplication : Application
             var viewModel = new MainViewModel(new OcctStepReader());
             var window = new MainWindow { DataContext = viewModel };
             desktop.MainWindow = window;
+            desktop.Exit += (_, _) => viewModel.Dispose();
 
             if (_options.ScreenshotPath is not null)
             {

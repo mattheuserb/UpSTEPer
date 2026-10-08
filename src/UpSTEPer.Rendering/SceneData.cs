@@ -8,12 +8,12 @@ public sealed class SceneData
     private readonly ColorRgb?[] _faceColors;
     private readonly ReadOnlyMemory<float> _vertexColors;
 
-    private SceneData(MeshData mesh, ColorRgb?[] faceColors)
+    private SceneData(MeshData mesh, ColorRgb?[] faceColors, BoundingBox bounds)
     {
         Mesh = mesh;
         _faceColors = faceColors;
         _vertexColors = VertexColors.Build(mesh, GetFaceColor);
-        Bounds = BoundingBox.FromPositions(mesh.Positions.Span);
+        Bounds = bounds;
     }
 
     /// <summary>Gets the colour used to highlight the selected face.</summary>
@@ -33,21 +33,19 @@ public sealed class SceneData
     {
         ArgumentNullException.ThrowIfNull(mesh);
         ArgumentNullException.ThrowIfNull(faceColor);
+        return new SceneData(mesh, ReadFaceColors(mesh, faceColor), BoundingBox.FromPositions(mesh.Positions.Span));
+    }
 
-        var faceIds = mesh.TriangleFaceIds.Span;
-        var faceCount = 0;
-        foreach (var id in faceIds)
-        {
-            faceCount = Math.Max(faceCount, id + 1);
-        }
-
-        var colors = new ColorRgb?[faceCount];
-        for (var face = 0; face < faceCount; face++)
-        {
-            colors[face] = faceColor(new FaceId(face));
-        }
-
-        return new SceneData(mesh, colors);
+    /// <summary>
+    /// Creates scene data for the same mesh with different face colours (e.g. after an edit). The
+    /// mesh instance is shared, so views can keep their camera and only update colours.
+    /// </summary>
+    /// <param name="faceColor">Colour per face; <see langword="null"/> uses <see cref="VertexColors.Default"/>.</param>
+    /// <returns>The new scene data.</returns>
+    public SceneData WithFaceColors(Func<FaceId, ColorRgb?> faceColor)
+    {
+        ArgumentNullException.ThrowIfNull(faceColor);
+        return new SceneData(Mesh, ReadFaceColors(Mesh, faceColor), Bounds);
     }
 
     /// <summary>Gets the colour assigned to a face in the model.</summary>
@@ -63,4 +61,21 @@ public sealed class SceneData
         highlighted is { } face
             ? VertexColors.Build(Mesh, f => f == face ? HighlightColor : GetFaceColor(f))
             : _vertexColors;
+
+    private static ColorRgb?[] ReadFaceColors(MeshData mesh, Func<FaceId, ColorRgb?> faceColor)
+    {
+        var faceCount = 0;
+        foreach (var id in mesh.TriangleFaceIds.Span)
+        {
+            faceCount = Math.Max(faceCount, id + 1);
+        }
+
+        var colors = new ColorRgb?[faceCount];
+        for (var face = 0; face < faceCount; face++)
+        {
+            colors[face] = faceColor(new FaceId(face));
+        }
+
+        return colors;
+    }
 }

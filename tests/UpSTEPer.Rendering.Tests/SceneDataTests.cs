@@ -19,7 +19,7 @@ public class SceneDataTests
 
         var scene = SceneData.Create(_mesh, face => face.Value == 0 ? red : null);
 
-        var colors = scene.VertexColors.ToArray();
+        var colors = scene.GetVertexColors(null).ToArray();
         Assert.Equal(18, colors.Length);
         Assert.Equal([1f, 0f, 0f, 1f, 0f, 0f, 1f, 0f, 0f], colors[..9]);
         var grey = VertexColors.Default;
@@ -34,6 +34,30 @@ public class SceneDataTests
         Assert.Equal(new Vector3(0, 0, 0), scene.Bounds.Min);
         Assert.Equal(new Vector3(1, 1, 5), scene.Bounds.Max);
         Assert.Same(_mesh, scene.Mesh);
+    }
+
+    [Fact]
+    public void GetVertexColors_HighlightsOnlySelectedFace()
+    {
+        var scene = SceneData.Create(_mesh, _ => ColorRgb.FromHex("#0000FF"));
+        var highlight = SceneData.HighlightColor;
+
+        var colors = scene.GetVertexColors(new FaceId(1)).ToArray();
+
+        Assert.Equal([0f, 0f, 1f], colors[..3]);
+        Assert.Equal([highlight.R, highlight.G, highlight.B], colors[9..12]);
+    }
+
+    [Fact]
+    public void GetFaceColor_ReturnsFileColourOrNull()
+    {
+        var red = ColorRgb.FromHex("#FF0000");
+        var scene = SceneData.Create(_mesh, face => face.Value == 0 ? red : null);
+
+        Assert.Equal(red, scene.GetFaceColor(new FaceId(0)));
+        Assert.Null(scene.GetFaceColor(new FaceId(1)));
+        Assert.Null(scene.GetFaceColor(new FaceId(99)));
+        Assert.Null(scene.GetFaceColor(new FaceId(-1)));
     }
 
     [Fact]

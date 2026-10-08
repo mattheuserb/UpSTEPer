@@ -89,6 +89,29 @@ public sealed class OrbitCamera
         Target += ((-deltaX * right) + (deltaY * up)) * unitsPerPixel;
     }
 
+    /// <summary>Creates the ray through a viewport position, for picking.</summary>
+    /// <param name="x">Horizontal position from the left edge.</param>
+    /// <param name="y">Vertical position from the top edge.</param>
+    /// <param name="width">Viewport width (same unit as <paramref name="x"/>).</param>
+    /// <param name="height">Viewport height (same unit as <paramref name="y"/>).</param>
+    /// <returns>A ray from the near plane into the scene.</returns>
+    public Ray CreateRay(float x, float y, float width, float height)
+    {
+        var aspect = width / MathF.Max(height, 1f);
+        if (!Matrix4x4.Invert(GetViewProjection(aspect), out var inverse))
+        {
+            return new Ray(Position, Forward);
+        }
+
+        var ndcX = (2f * x / MathF.Max(width, 1f)) - 1f;
+        var ndcY = 1f - (2f * y / MathF.Max(height, 1f));
+
+        // System.Numerics projections map the near plane to depth 0 and the far plane to 1.
+        var near = Unproject(new Vector4(ndcX, ndcY, 0f, 1f), inverse);
+        var far = Unproject(new Vector4(ndcX, ndcY, 1f, 1f), inverse);
+        return new Ray(near, Vector3.Normalize(far - near));
+    }
+
     /// <summary>Gets the combined view-projection matrix.</summary>
     /// <param name="aspectRatio">Viewport width divided by height.</param>
     /// <returns>The matrix.</returns>
@@ -99,5 +122,11 @@ public sealed class OrbitCamera
         var far = Distance + (_radius * 2f);
         var projection = Matrix4x4.CreatePerspectiveFieldOfView(FieldOfView, MathF.Max(aspectRatio, 1e-3f), near, far);
         return view * projection;
+    }
+
+    private static Vector3 Unproject(Vector4 ndc, Matrix4x4 inverseViewProjection)
+    {
+        var world = Vector4.Transform(ndc, inverseViewProjection);
+        return new Vector3(world.X, world.Y, world.Z) / world.W;
     }
 }

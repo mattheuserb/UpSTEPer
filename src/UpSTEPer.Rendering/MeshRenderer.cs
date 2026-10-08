@@ -99,6 +99,15 @@ public sealed class MeshRenderer : IDisposable
         _gl.BindVertexArray(0);
     }
 
+    /// <summary>Replaces only the vertex colours of the uploaded mesh (e.g. selection highlight).</summary>
+    /// <param name="vertexColors">RGB per vertex; same vertex count as the uploaded mesh.</param>
+    public void UpdateColors(ReadOnlySpan<float> vertexColors)
+    {
+        _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _colorBuffer);
+        _gl.BufferData(BufferTargetARB.ArrayBuffer, vertexColors, BufferUsageARB.StaticDraw);
+        _gl.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
+    }
+
     /// <summary>Clears the viewport and draws the uploaded mesh.</summary>
     /// <param name="camera">The camera.</param>
     /// <param name="width">Viewport width in pixels.</param>

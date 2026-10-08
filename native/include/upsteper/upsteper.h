@@ -128,6 +128,37 @@ UPS_API ups_status ups_document_set_color(
 /** Writes the document as STEP (AP214) including colours, names and layers. */
 UPS_API ups_status ups_document_save_step(ups_document* document, const char* utf8_path);
 
+/* ------------------------------------------------------------ model tree -- */
+
+typedef struct ups_tree ups_tree;
+
+typedef enum ups_node_kind
+{
+    UPS_NODE_ASSEMBLY = 0, /* XDE assembly (instance or top level) */
+    UPS_NODE_PART = 1,     /* simple shape (part), possibly an instance in an assembly */
+    UPS_NODE_BODY = 2      /* a solid of its parent part; body_id identifies it */
+} ups_node_kind;
+
+/** One node of the product structure, flattened in depth-first order (parents first). */
+typedef struct ups_tree_node
+{
+    int32_t parent;      /* index of the parent node, -1 for roots */
+    int32_t kind;        /* ups_node_kind */
+    int32_t body_id;     /* body (solid) id for UPS_NODE_BODY, else -1 */
+    int32_t name_offset; /* UTF-8 name in the names buffer (not zero-terminated) */
+    int32_t name_length; /* in bytes; 0 = unnamed */
+} ups_tree_node;
+
+/** Builds the product structure (assemblies, parts, bodies) from the XDE document. */
+UPS_API ups_status ups_document_get_tree(const ups_document* document, ups_tree** out_tree);
+
+UPS_API void ups_tree_free(ups_tree* tree);
+
+UPS_API ups_status ups_tree_get_info(const ups_tree* tree, int32_t* out_node_count, int32_t* out_names_length);
+
+UPS_API ups_status ups_tree_copy(
+    const ups_tree* tree, ups_tree_node* nodes, int64_t nodes_capacity, char* names, int64_t names_capacity);
+
 /* --------------------------------------------------------------- drawing -- */
 
 typedef struct ups_drawing ups_drawing;

@@ -8,52 +8,57 @@ namespace UpSTEPer.App.ViewModels;
 /// <param name="After">Assigned colour after the change (<see langword="null"/> = none).</param>
 internal sealed record ColorEdit(ColorTarget Target, ColorRgb? Before, ColorRgb? After);
 
-/// <summary>Undo/redo stacks for colour edits.</summary>
+/// <summary>Undo/redo stacks of edit steps; one step may change several targets (e.g. all bodies of a part).</summary>
 /// <remarks>
-/// The history only records; the caller applies <see cref="ColorEdit.Before"/> after
-/// <see cref="Undo"/> and <see cref="ColorEdit.After"/> after <see cref="Redo"/>.
+/// The history only records; the caller applies every <see cref="ColorEdit.Before"/> (in reverse
+/// order) after <see cref="Undo"/> and every <see cref="ColorEdit.After"/> after <see cref="Redo"/>.
 /// </remarks>
 internal sealed class EditHistory
 {
-    private readonly Stack<ColorEdit> _undo = new();
-    private readonly Stack<ColorEdit> _redo = new();
+    private readonly Stack<IReadOnlyList<ColorEdit>> _undo = new();
+    private readonly Stack<IReadOnlyList<ColorEdit>> _redo = new();
 
-    /// <summary>Gets a value indicating whether there is an edit to undo.</summary>
+    /// <summary>Gets a value indicating whether there is a step to undo.</summary>
     public bool CanUndo => _undo.Count > 0;
 
-    /// <summary>Gets a value indicating whether there is an undone edit to redo.</summary>
+    /// <summary>Gets a value indicating whether there is an undone step to redo.</summary>
     public bool CanRedo => _redo.Count > 0;
 
-    /// <summary>Records a new edit; clears the redo stack.</summary>
-    /// <param name="edit">The edit that was applied.</param>
-    public void Record(ColorEdit edit)
+    /// <summary>Records a new step; clears the redo stack. Empty steps are ignored.</summary>
+    /// <param name="step">The edits that were applied together.</param>
+    public void Record(IReadOnlyList<ColorEdit> step)
     {
-        ArgumentNullException.ThrowIfNull(edit);
-        _undo.Push(edit);
+        ArgumentNullException.ThrowIfNull(step);
+        if (step.Count == 0)
+        {
+            return;
+        }
+
+        _undo.Push(step);
         _redo.Clear();
     }
 
-    /// <summary>Moves the latest edit to the redo stack.</summary>
-    /// <returns>The edit to revert (apply its <see cref="ColorEdit.Before"/>).</returns>
+    /// <summary>Moves the latest step to the redo stack.</summary>
+    /// <returns>The step to revert.</returns>
     /// <exception cref="InvalidOperationException">Nothing to undo.</exception>
-    public ColorEdit Undo()
+    public IReadOnlyList<ColorEdit> Undo()
     {
-        var edit = _undo.Count > 0 ? _undo.Pop() : throw new InvalidOperationException("Nothing to undo.");
-        _redo.Push(edit);
-        return edit;
+        var step = _undo.Count > 0 ? _undo.Pop() : throw new InvalidOperationException("Nothing to undo.");
+        _redo.Push(step);
+        return step;
     }
 
-    /// <summary>Moves the latest undone edit back to the undo stack.</summary>
-    /// <returns>The edit to re-apply (apply its <see cref="ColorEdit.After"/>).</returns>
+    /// <summary>Moves the latest undone step back to the undo stack.</summary>
+    /// <returns>The step to re-apply.</returns>
     /// <exception cref="InvalidOperationException">Nothing to redo.</exception>
-    public ColorEdit Redo()
+    public IReadOnlyList<ColorEdit> Redo()
     {
-        var edit = _redo.Count > 0 ? _redo.Pop() : throw new InvalidOperationException("Nothing to redo.");
-        _undo.Push(edit);
-        return edit;
+        var step = _redo.Count > 0 ? _redo.Pop() : throw new InvalidOperationException("Nothing to redo.");
+        _undo.Push(step);
+        return step;
     }
 
-    /// <summary>Forgets all edits (e.g. after loading another file).</summary>
+    /// <summary>Forgets all steps (e.g. after loading another file).</summary>
     public void Clear()
     {
         _undo.Clear();

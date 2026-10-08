@@ -19,7 +19,7 @@ public class SceneDataTests
 
         var scene = SceneData.Create(_mesh, face => face.Value == 0 ? red : null);
 
-        var colors = scene.GetVertexColors(null).ToArray();
+        var colors = scene.GetVertexColors(new HashSet<FaceId>()).ToArray();
         Assert.Equal(18, colors.Length);
         Assert.Equal([1f, 0f, 0f, 1f, 0f, 0f, 1f, 0f, 0f], colors[..9]);
         var grey = VertexColors.Default;
@@ -42,7 +42,7 @@ public class SceneDataTests
         var scene = SceneData.Create(_mesh, _ => ColorRgb.FromHex("#0000FF"));
         var highlight = SceneData.HighlightColor;
 
-        var colors = scene.GetVertexColors(new FaceId(1)).ToArray();
+        var colors = scene.GetVertexColors(new HashSet<FaceId> { new FaceId(1) }).ToArray();
 
         Assert.Equal([0f, 0f, 1f], colors[..3]);
         Assert.Equal([highlight.R, highlight.G, highlight.B], colors[9..12]);

@@ -71,6 +71,19 @@ internal static partial class NativeMethods
     internal static unsafe partial NativeStatus DrawingCopy(
         DrawingSafeHandle drawing, NativeDrawingCurve* curves, long curvesCapacity, double* points, long pointsCapacity);
 
+    [LibraryImport(LibraryName, EntryPoint = "ups_document_get_tree")]
+    internal static partial NativeStatus DocumentGetTree(DocumentSafeHandle document, out TreeSafeHandle tree);
+
+    [LibraryImport(LibraryName, EntryPoint = "ups_tree_free")]
+    internal static partial void TreeFree(nint tree);
+
+    [LibraryImport(LibraryName, EntryPoint = "ups_tree_get_info")]
+    internal static partial NativeStatus TreeGetInfo(TreeSafeHandle tree, out int nodeCount, out int namesLength);
+
+    [LibraryImport(LibraryName, EntryPoint = "ups_tree_copy")]
+    internal static unsafe partial NativeStatus TreeCopy(
+        TreeSafeHandle tree, NativeTreeNode* nodes, long nodesCapacity, byte* names, long namesCapacity);
+
     [LibraryImport(LibraryName, EntryPoint = "ups_document_tessellate_edges")]
     internal static partial NativeStatus DocumentTessellateEdges(DocumentSafeHandle document, double deflection, out LinesSafeHandle lines);
 
@@ -131,6 +144,17 @@ internal enum NativeTargetKind
 {
     Face = 0,
     Body = 1,
+}
+
+/// <summary>Mirrors <c>ups_tree_node</c>.</summary>
+[StructLayout(LayoutKind.Sequential)]
+internal struct NativeTreeNode
+{
+    public int Parent;
+    public int Kind;
+    public int BodyId;
+    public int NameOffset;
+    public int NameLength;
 }
 
 /// <summary>Mirrors <c>ups_curve_type</c>.</summary>

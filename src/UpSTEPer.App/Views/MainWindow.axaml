@@ -1,18 +1,25 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:UpSTEPer.App.ViewModels"
+        xmlns:core="using:UpSTEPer.Core"
         xmlns:controls="using:UpSTEPer.App.Controls"
         x:Class="UpSTEPer.App.Views.MainWindow"
         x:ClassModifier="internal"
         x:DataType="vm:MainViewModel"
         Title="{Binding Title}"
-        Width="1200" Height="800"
+        Width="1280" Height="800"
         MinWidth="640" MinHeight="400">
   <Window.KeyBindings>
     <KeyBinding Gesture="Ctrl+Z" Command="{Binding UndoCommand}" />
     <KeyBinding Gesture="Ctrl+Y" Command="{Binding RedoCommand}" />
     <KeyBinding Gesture="Ctrl+Shift+Z" Command="{Binding RedoCommand}" />
   </Window.KeyBindings>
+
+  <Window.Styles>
+    <Style Selector="TreeViewItem">
+      <Setter Property="IsExpanded" Value="True" />
+    </Style>
+  </Window.Styles>
 
   <DockPanel>
     <Border DockPanel.Dock="Top" Padding="8" BorderThickness="0,0,0,1" BorderBrush="#D0D4D9">
@@ -38,7 +45,8 @@
         </ListBox>
 
         <Button Content="Colour face" Command="{Binding ColorFaceCommand}" Margin="0,0,6,0" />
-        <Button Content="Colour body" Command="{Binding ColorBodyCommand}" Margin="0,0,6,0" />
+        <Button Content="Colour body" Command="{Binding ColorBodyCommand}" Margin="0,0,6,0"
+                ToolTip.Tip="Colours the bodies selected in the model tree, or the body of the selected face" />
         <Button Content="Remove face colour" Command="{Binding ClearFaceColorCommand}" Margin="0,0,16,0" />
         <Button Content="Undo" Command="{Binding UndoCommand}" ToolTip.Tip="Ctrl+Z" Margin="0,0,6,0" />
         <Button Content="Redo" Command="{Binding RedoCommand}" ToolTip.Tip="Ctrl+Y" Margin="0,0,16,0" />
@@ -55,6 +63,25 @@
       <TextBlock Foreground="#5F6368" FontSize="11"
                  Text="Click: select face   Left drag: rotate   Right/middle drag: pan   Wheel: zoom   Double-click: fit" />
     </Border>
-    <controls:ModelView x:Name="ModelViewControl" Scene="{Binding Scene}" SelectedFace="{Binding SelectedFace}" ShowEdges="{Binding ShowEdges}" />
+
+    <Grid ColumnDefinitions="260,4,*">
+      <DockPanel Grid.Column="0">
+        <TextBlock DockPanel.Dock="Top" Text="Model" FontWeight="SemiBold" Margin="10,8,8,4" />
+        <TreeView ItemsSource="{Binding ModelTree}" SelectedItem="{Binding SelectedNode}">
+          <TreeView.ItemTemplate>
+            <TreeDataTemplate x:DataType="core:ModelNode" ItemsSource="{Binding Children}">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="{Binding Kind}" Foreground="#80868B" FontSize="11" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" />
+              </StackPanel>
+            </TreeDataTemplate>
+          </TreeView.ItemTemplate>
+        </TreeView>
+      </DockPanel>
+      <GridSplitter Grid.Column="1" Background="#D0D4D9" ResizeDirection="Columns" />
+      <controls:ModelView Grid.Column="2" x:Name="ModelViewControl"
+                          Scene="{Binding Scene}" SelectedFace="{Binding SelectedFace}"
+                          HighlightedFaces="{Binding HighlightedFaces}" ShowEdges="{Binding ShowEdges}" />
+    </Grid>
   </DockPanel>
 </Window>

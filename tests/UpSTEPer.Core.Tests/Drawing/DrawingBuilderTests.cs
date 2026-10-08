@@ -56,6 +56,8 @@ public class DrawingBuilderTests
 
         public ColorRgb? GetFaceColor(FaceId faceId) => null;
 
+        public IReadOnlyList<ModelNode> GetModelTree() => [];
+
         public BodyId? GetBodyOfFace(FaceId faceId) => null;
 
         public ColorRgb? GetAssignedColor(ColorTarget target) => null;

@@ -30,7 +30,8 @@ Linux and macOS from CI-built binaries.
   ID buffer — testable and independent of GPU quirks; highlight + face/colour in the status bar
 - [x] Edges overlay: B-Rep edges as lines (seams skipped), polygon offset against z-fighting, toggle in the toolbar
 - [ ] Standard views (front, top, right, iso) and view cube / toolbar
-- [ ] Model tree (assemblies, parts, bodies) from XDE labels; body selection
+- [x] Model tree (assemblies, parts, bodies) from XDE labels; selecting a node highlights its faces;
+  "Colour body" acts on the tree selection (one undo step for several bodies)
 - [ ] Display quality presets (re-mesh with `BRepTools::Clean`)
 - [ ] Progress and cancellation for long loads; DI/logging (Microsoft.Extensions)
 - [ ] Hover highlight (needs a BVH for picking performance)
@@ -43,7 +44,8 @@ Linux and macOS from CI-built binaries.
 - [x] CLI `paint` command; app toolbar with RAL palette, Ctrl+Z/Y, Save as
 - [x] Fix: concurrent STEP loads crashed (OCCT translators use global state) — now serialised
 - [ ] Manual interoperability check of saved files in FreeCAD and one commercial CAD
-- [ ] Colours in assemblies (faces/bodies inside instances are rejected today)
+- [ ] **Colours in assemblies** (faces/bodies inside instances are rejected today) — now visible
+  in the model tree, next candidate
 - [ ] AP242 output option; custom colour picker (any RGB) in the app
 
 ## M3 — DXF export (2D views)

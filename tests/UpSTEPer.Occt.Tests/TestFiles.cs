@@ -9,6 +9,12 @@ internal static class TestFiles
     public static string CableGland => Path.Combine(_repoRoot.Value, "examples", "ESKV 12 RAL 7035 10066410.stp");
 
     /// <summary>
+    /// Generated assembly (native/tools/make_test_assembly.cpp): Top → Base plate, Pin assembly (left),
+    /// Pin assembly (right); each pin assembly → Pin (1 body), Washer (2 bodies). 7 bodies in total.
+    /// </summary>
+    public static string TestAssembly => Path.Combine(_repoRoot.Value, "examples", "generated", "test-assembly.stp");
+
+    /// <summary>
     /// Skips the current test when upsteper_native has not been built. When the environment
     /// variable <c>UPS_REQUIRE_NATIVE=1</c> is set (CI), a missing library fails the test instead.
     /// </summary>

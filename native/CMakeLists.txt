@@ -21,6 +21,7 @@ add_library(upsteper_native SHARED
     src/messages.cpp
     src/drawing.cpp
     src/edges.cpp
+    src/tree.cpp
     src/version.cpp
 )
 
@@ -41,6 +42,14 @@ if(MSVC)
     target_compile_options(upsteper_native PRIVATE /W4 /permissive- /utf-8 /EHsc)
 else()
     target_compile_options(upsteper_native PRIVATE -Wall -Wextra)
+endif()
+
+# Developer tools (not installed, not built by default): test data generators.
+option(UPS_BUILD_TOOLS "Build developer tools such as the test data generators" OFF)
+if(UPS_BUILD_TOOLS)
+    add_executable(upsteper_make_test_assembly tools/make_test_assembly.cpp)
+    target_include_directories(upsteper_make_test_assembly PRIVATE ${OpenCASCADE_INCLUDE_DIR})
+    target_link_libraries(upsteper_make_test_assembly PRIVATE ${OpenCASCADE_LIBRARIES})
 endif()
 
 # Locate OCCT and its dependencies next to our library at runtime.

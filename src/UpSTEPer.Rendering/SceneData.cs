@@ -59,13 +59,16 @@ public sealed class SceneData
     public ColorRgb? GetFaceColor(FaceId face) =>
         face.Value >= 0 && face.Value < _faceColors.Length ? _faceColors[face.Value] : null;
 
-    /// <summary>Gets vertex colours with <paramref name="highlighted"/> drawn in <see cref="HighlightColor"/>.</summary>
-    /// <param name="highlighted">The face to highlight, or <see langword="null"/> for none.</param>
+    /// <summary>Gets vertex colours with the <paramref name="highlighted"/> faces drawn in <see cref="HighlightColor"/>.</summary>
+    /// <param name="highlighted">The faces to highlight; empty for none.</param>
     /// <returns>RGB per vertex.</returns>
-    public ReadOnlyMemory<float> GetVertexColors(FaceId? highlighted) =>
-        highlighted is { } face
-            ? VertexColors.Build(Mesh, f => f == face ? HighlightColor : GetFaceColor(f))
-            : _vertexColors;
+    public ReadOnlyMemory<float> GetVertexColors(IReadOnlySet<FaceId> highlighted)
+    {
+        ArgumentNullException.ThrowIfNull(highlighted);
+        return highlighted.Count == 0
+            ? _vertexColors
+            : VertexColors.Build(Mesh, f => highlighted.Contains(f) ? HighlightColor : GetFaceColor(f));
+    }
 
     private static ColorRgb?[] ReadFaceColors(MeshData mesh, Func<FaceId, ColorRgb?> faceColor)
     {

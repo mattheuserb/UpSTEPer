@@ -39,6 +39,29 @@ internal sealed class OcctStepDocument : IStepDocument
         return hasColor != 0 ? ToColor(color) : null;
     }
 
+    public IReadOnlyList<ModelNode> GetModelTree()
+    {
+        ThrowIfDisposed();
+
+        NativeError.ThrowIfFailed(NativeMethods.DocumentGetTree(_handle, out var tree), "Reading the product structure");
+        using (tree)
+        {
+            NativeError.ThrowIfFailed(NativeMethods.TreeGetInfo(tree, out var nodeCount, out var namesLength), "Reading tree info");
+            var nodes = new NativeTreeNode[nodeCount];
+            var names = new byte[namesLength];
+            unsafe
+            {
+                fixed (NativeTreeNode* nodesPtr = nodes)
+                fixed (byte* namesPtr = names)
+                {
+                    NativeError.ThrowIfFailed(NativeMethods.TreeCopy(tree, nodesPtr, nodes.Length, namesPtr, names.Length), "Copying tree");
+                }
+            }
+
+            return BuildTree(nodes, names);
+        }
+    }
+
     public BodyId? GetBodyOfFace(FaceId faceId)
     {
         ThrowIfDisposed();
@@ -206,6 +229,35 @@ internal sealed class OcctStepDocument : IStepDocument
     // Clamping guards against sub-ulp overshoot from colour space conversion in OCCT.
     private static ColorRgb ToColor(NativeColor color) =>
         new(Math.Clamp(color.R, 0f, 1f), Math.Clamp(color.G, 0f, 1f), Math.Clamp(color.B, 0f, 1f));
+
+    // Native nodes come depth-first with parents before children; rebuild the hierarchy bottom-up.
+    private static IReadOnlyList<ModelNode> BuildTree(NativeTreeNode[] nodes, byte[] names)
+    {
+        var children = new List<int>[nodes.Length];
+        var roots = new List<int>();
+        for (var i = 0; i < nodes.Length; i++)
+        {
+            children[i] = [];
+            if (nodes[i].Parent < 0)
+            {
+                roots.Add(i);
+            }
+            else
+            {
+                children[nodes[i].Parent].Add(i);
+            }
+        }
+
+        ModelNode Create(int index)
+        {
+            var node = nodes[index];
+            var name = System.Text.Encoding.UTF8.GetString(names, node.NameOffset, node.NameLength);
+            var body = node.Kind == (int)ModelNodeKind.Body && node.BodyId >= 0 ? new BodyId(node.BodyId) : (BodyId?)null;
+            return new ModelNode(name, (ModelNodeKind)node.Kind, body, [.. children[index].Select(Create)]);
+        }
+
+        return [.. roots.Select(Create)];
+    }
 
     private static NativeTargetKind ToNative(ColorTargetKind kind) => kind switch
     {

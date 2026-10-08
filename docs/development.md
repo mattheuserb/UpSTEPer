@@ -79,9 +79,21 @@ UPS_REQUIRE_NATIVE=1 dotnet test              # fail instead of skip when native
 
 ## CI
 
-`.github/workflows/ci.yml` builds and tests on Windows, Linux and macOS. The vcpkg binary cache is
-saved right after configure, so the expensive OCCT build is reused even when later steps fail.
-Native binaries per platform are uploaded as workflow artifacts (`native-<rid>`).
+`.github/workflows/ci.yml` builds and tests on Windows, Linux and macOS. Two cache layers keep
+runs short:
+
+| Cache | Key | Effect |
+|---|---|---|
+| `native-<preset>` | hash of everything under `native/` | Unchanged native code → the installed `upsteper_native` + OCCT are restored; vcpkg/CMake steps are skipped entirely |
+| `vcpkg-<preset>` | hash of `native/vcpkg.json` + `native/triplets/` | Native code changed → only our library is compiled; OCCT comes from the vcpkg binary cache |
+
+OCCT is rebuilt from source only when the vcpkg baseline or triplets change, when a runner-image
+compiler update changes vcpkg's ABI hash, or when GitHub evicts the cache (7 days unused, 10 GB
+per repository). The vcpkg cache is saved right after configure, so a later failure does not
+lose that work. All triplets are release-only (`native/triplets/` overlays for Linux/macOS).
+
+macOS runs on pushes to `main` and manual runs, not on pull requests (10× minute billing on
+private repositories). Native binaries per platform are uploaded as artifacts (`native-<rid>`).
 
 ## Updating OCCT / vcpkg
 

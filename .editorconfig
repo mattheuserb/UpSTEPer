@@ -83,3 +83,6 @@ dotnet_diagnostic.CA1848.severity = suggestion  # LoggerMessage delegates: only 
 dotnet_diagnostic.CA1707.severity = none   # Underscores allowed in test method names
 dotnet_diagnostic.CA2007.severity = none   # ConfigureAwait not needed in tests
 dotnet_diagnostic.CS1591.severity = none   # Test classes need no XML docs (doc file only enables IDE0005)
+
+[src/UpSTEPer.App/**.cs]
+dotnet_diagnostic.CA1812.severity = none   # Controls/views are instantiated by compiled XAML (IL weaving after Roslyn runs)

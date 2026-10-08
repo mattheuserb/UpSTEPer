@@ -1,0 +1,24 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:UpSTEPer.App.ViewModels"
+        xmlns:controls="using:UpSTEPer.App.Controls"
+        x:Class="UpSTEPer.App.Views.MainWindow"
+        x:ClassModifier="internal"
+        x:DataType="vm:MainViewModel"
+        Title="{Binding Title}"
+        Width="1200" Height="800"
+        MinWidth="480" MinHeight="320">
+  <DockPanel>
+    <Border DockPanel.Dock="Top" Padding="8" BorderThickness="0,0,0,1" BorderBrush="#D0D4D9">
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <Button Content="Open STEP..." Click="OnOpenClick" IsEnabled="{Binding !IsBusy}" />
+        <TextBlock Text="{Binding Status}" VerticalAlignment="Center" />
+      </StackPanel>
+    </Border>
+    <Border DockPanel.Dock="Bottom" Padding="8,4">
+      <TextBlock Foreground="#5F6368" FontSize="12"
+                 Text="Left drag: rotate   Right/middle drag: pan   Wheel: zoom   Double-click: fit" />
+    </Border>
+    <controls:ModelView x:Name="ModelViewControl" Scene="{Binding Scene}" />
+  </DockPanel>
+</Window>

@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <Description>UpSTEPer desktop application (Avalonia).</Description>
+    <AssemblyName>UpSTEPer</AssemblyName>
+    <RootNamespace>UpSTEPer.App</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\UpSTEPer.Core\UpSTEPer.Core.csproj" />
+    <ProjectReference Include="..\UpSTEPer.Occt\UpSTEPer.Occt.csproj" />
+    <ProjectReference Include="..\UpSTEPer.Rendering\UpSTEPer.Rendering.csproj" />
+  </ItemGroup>
+
+</Project>

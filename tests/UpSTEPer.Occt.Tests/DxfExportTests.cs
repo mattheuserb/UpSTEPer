@@ -27,6 +27,24 @@ public sealed class DxfExportTests : IDisposable
         Assert.Contains(entities, e => e is Line && e.Layer.Name == DxfExporter.HiddenLayer);
         Assert.Contains(entities, e => e is Ellipse);
         Assert.All(entities.OfType<Ellipse>(), e => Assert.InRange(e.RadiusRatio, 1e-6, 1.0));
+
+        // Scale 1:1 in millimetres: the gland's outer diameter is 18 mm.
+        Assert.Equal(9.0, entities.OfType<Circle>().Where(e => e is not Arc).Max(c => c.Radius), 6);
+    }
+
+    [Fact]
+    public void Export_HasNoFrameTitleBlockOrPaperSpaceContent()
+    {
+        TestFiles.RequireNativeLibrary();
+        using (var document = new OcctStepReader().Load(TestFiles.CableGland))
+        {
+            DxfExporter.Write(_path, DrawingBuilder.Build(document, [ViewDirection.Front], ProjectionOptions.Default));
+        }
+
+        var dxf = DxfReader.Read(_path);
+
+        Assert.DoesNotContain(dxf.Entities, e => e is TextEntity or MText or Insert);
+        Assert.All(dxf.Entities, e => Assert.Contains(e.Layer.Name, new[] { DxfExporter.VisibleLayer, DxfExporter.HiddenLayer, DxfExporter.TangentLayer }));
     }
 
     [Fact]

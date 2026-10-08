@@ -56,7 +56,8 @@ Linux and macOS from CI-built binaries.
 - [x] CLI `export-dxf` (`--views`, `--no-hidden`, `--tangent`, `--gap`); app button "Export DXF"
 - [x] Tests: DXF read-back with ACadSharp, end-to-end on the example file
 - [ ] Split partially covered hidden edges (today they are kept whole)
-- [ ] Scale and sheet frame (title block), section views, dimensions
+- [x] Scale 1:1 in mm, no frame/title block by default (decision 2026-10-08, ADR 0006)
+- [ ] Optional (opt-in only): other scales, frame/title block; section views, dimensions
 - [ ] Manual check of exported DXF in a commercial CAD (AutoCAD / DraftSight / LibreCAD)
 
 ## M4 — Repair, tiers 1–2

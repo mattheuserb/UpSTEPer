@@ -9,7 +9,9 @@ using UpSTEPer.Core.Drawing;
 namespace UpSTEPer.Export.Dxf;
 
 /// <summary>
-/// Writes arranged 2D views as an ASCII DXF in millimetres. Each line kind goes to its own layer:
+/// Writes arranged 2D views as an ASCII DXF in millimetres at scale 1:1 (model coordinates, no
+/// scaling), without drawing frame or title block (project decision, ADR 0006). Each line kind
+/// goes to its own layer:
 /// <c>VISIBLE</c> (continuous, 0.5 mm), <c>HIDDEN</c> (dashed, 0.25 mm), <c>TANGENT</c> (thin).
 /// Circles, arcs and ellipses are written as true DXF entities, never as polylines.
 /// </summary>

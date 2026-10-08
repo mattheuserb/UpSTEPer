@@ -35,6 +35,9 @@ ACadSharp can also write DWG; enabling it later is a small change if ever needed
 - Layers are `VISIBLE`, `HIDDEN` (linetype `DASHED`) and `TANGENT` instead of `OUTLINE`:
   silhouettes are visible edges in drawing practice; smooth face transitions are the optional extra.
 - Views are arranged in **first-angle projection** (ISO 128 method E, the European standard).
+- **Scale 1:1 by default, no drawing frame and no title block** (decision by the project owner,
+  2026-10-08): the DXF holds model coordinates in millimetres; framing, scaling and plotting are
+  done in the CAD system. Other scales or a frame may come later as opt-in options only.
 - HLR reports hidden edges that project exactly onto visible ones; they are removed before export
   (`HiddenLineCleanup`), otherwise contours appear doubled.
 - Circles seen edge-on come out of HLR as ellipses with a vanishing minor axis, which DXF readers

@@ -40,6 +40,8 @@ internal sealed class FakeStepDocument : IStepDocument
     public ColorRgb? GetFaceColor(FaceId faceId) =>
         AssignedColors.TryGetValue(ColorTarget.Of(faceId), out var assigned) ? assigned : faceId.Value < 2 ? _red : null;
 
+    public IReadOnlyList<ModelNode> GetModelTree() => [];
+
     public BodyId? GetBodyOfFace(FaceId faceId) => new BodyId(0);
 
     public ColorRgb? GetAssignedColor(ColorTarget target) => AssignedColors.GetValueOrDefault(target);

@@ -32,6 +32,21 @@ internal sealed class DrawingSafeHandle : SafeHandleZeroOrMinusOneIsInvalid
     }
 }
 
+/// <summary>Owns an <c>ups_tree*</c>; released with <c>ups_tree_free</c>.</summary>
+internal sealed class TreeSafeHandle : SafeHandleZeroOrMinusOneIsInvalid
+{
+    public TreeSafeHandle()
+        : base(ownsHandle: true)
+    {
+    }
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.TreeFree(handle);
+        return true;
+    }
+}
+
 /// <summary>Owns an <c>ups_lines*</c>; released with <c>ups_lines_free</c>.</summary>
 internal sealed class LinesSafeHandle : SafeHandleZeroOrMinusOneIsInvalid
 {

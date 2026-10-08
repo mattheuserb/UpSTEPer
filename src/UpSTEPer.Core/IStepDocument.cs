@@ -21,6 +21,10 @@ public interface IStepDocument : IDisposable
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="faceId"/> does not exist.</exception>
     ColorRgb? GetFaceColor(FaceId faceId);
 
+    /// <summary>Gets the product structure: assemblies, parts and their bodies, with names.</summary>
+    /// <returns>The top-level nodes.</returns>
+    IReadOnlyList<ModelNode> GetModelTree();
+
     /// <summary>Gets the body (solid) a face belongs to.</summary>
     /// <param name="faceId">The face.</param>
     /// <returns>The body, or <see langword="null"/> for faces outside any solid.</returns>

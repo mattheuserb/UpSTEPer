@@ -36,8 +36,9 @@ Linux and macOS from CI-built binaries.
 - [x] Model tree (assemblies, parts, bodies) from XDE labels; selecting a node highlights its faces;
   "Colour body" acts on the tree selection (one undo step for several bodies)
 - [x] Display quality (coarse / normal / fine) in the toolbar: re-meshes in the background and keeps
-  colours, selection and camera; chord tolerance scales with the model size (bounding box
-  diagonal), the previous triangulation is discarded (`BRepTools::Clean`)
+  colours, selection and camera; chord tolerance and minimum triangle size scale with the model
+  size (bounding box diagonal, from the edges), the previous triangulation is discarded
+  (`BRepTools::Clean`). Measured on a 72,000-face engine assembly (`docs/test-data.md`)
 - [x] Progress and cancellation for loading and meshing: native callback (ADR 0010), progress bar
   and Cancel (Esc) in the app, progress line and Ctrl+C in the CLI
 - [x] DI/logging (Microsoft.Extensions): containers in app and CLI, daily log file in the app,
@@ -109,6 +110,9 @@ rented Mac / by community testers once the repository is public.
 
 ## Later
 
+- **Before the repository goes public:** remove `examples/G_I202_XX_64331V.stp` (Siemens, licence
+  unclear) from the Git history (`git filter-repo`, force push, everyone re-clones) or publish with
+  a fresh history. The file left the working tree on 2026-10-09 (`docs/test-data.md`).
 - Packaging: VC++ Redistributable prerequisite on Windows, Velopack/self-contained publish, AppImage, signed/notarised macOS build (needs Apple developer account)
 - Localisation (de, en)
 - API docs with DocFX

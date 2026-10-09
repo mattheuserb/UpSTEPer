@@ -144,7 +144,22 @@ extern "C" UPS_API ups_status ups_document_get_bounds(const ups_document* docume
 
         *out_bounds = ups_bounds{};
         Bnd_Box box;
-        BRepBndLib::Add(document->shape, box, /*useTriangulation*/ false);
+        // Bound the edges, not the faces: for faces BRepBndLib::Add bounds the poles of the whole
+        // underlying surface, which made a 2.5 m engine assembly report 11.8 m (display
+        // tolerances 5x too coarse). Edge curves are segmented to their range first, so the box
+        // stays tight; AddOptimal on the whole shape is exact too but took 141 s on that model.
+        // Faces bulging beyond their boundary edges are covered by the tolerance of a display box.
+        ups::detail::ShapeIndexedMap edges;
+        TopExp::MapShapes(document->shape, TopAbs_EDGE, edges);
+        for (int index = 1; index <= edges.Extent(); ++index)
+        {
+            BRepBndLib::Add(edges(index), box, /*useTriangulation*/ false);
+        }
+        if (box.IsVoid())
+        {
+            // No edges (e.g. only vertices): fall back to the whole shape.
+            BRepBndLib::Add(document->shape, box, /*useTriangulation*/ false);
+        }
         if (box.IsVoid())
         {
             out_bounds->is_void = 1;

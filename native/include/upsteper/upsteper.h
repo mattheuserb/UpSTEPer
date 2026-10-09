@@ -141,9 +141,9 @@ UPS_API void ups_document_free(ups_document* document);
 UPS_API ups_status ups_document_get_stats(const ups_document* document, ups_document_stats* out_stats);
 
 /**
- * Axis-aligned bounding box of the model from its exact geometry (not a mesh). It may be
- * slightly larger than the model (tolerances, spline control points); good for scaling
- * display tolerances and views, not for measuring.
+ * Axis-aligned bounding box of the model from its exact geometry (not a mesh), bounded by the
+ * edges: untrimmed surfaces do not enlarge it, but a face bulging beyond its boundary edges
+ * (e.g. a dome) may stick out slightly. Good for scaling display tolerances, not for measuring.
  */
 UPS_API ups_status ups_document_get_bounds(const ups_document* document, ups_bounds* out_bounds);
 
@@ -296,6 +296,8 @@ typedef struct ups_tessellation_params
 {
     double linear_deflection;   /* model units (mm); smaller = finer */
     double angular_deflection;  /* radians; smaller = rounder circles */
+    double min_size;            /* mm; shortest triangle edge, limits segments on small features;
+                                   <= 0: OCCT default (0.1 * linear_deflection) */
     int32_t relative;           /* non-zero: linear_deflection is relative to edge size */
 } ups_tessellation_params;
 

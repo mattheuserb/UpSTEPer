@@ -135,6 +135,10 @@ extern "C" UPS_API ups_status ups_document_tessellate_with_progress(
         meshParams.Deflection = params->linear_deflection;
         meshParams.Angle = params->angular_deflection;
         meshParams.Relative = params->relative != 0;
+        if (params->min_size > 0.0)
+        {
+            meshParams.MinSize = params->min_size;
+        }
         meshParams.InParallel = true;
         BRepMesh_IncrementalMesh mesher(document->shape, meshParams, progress->Start());
         if (progress->IsCancelled())

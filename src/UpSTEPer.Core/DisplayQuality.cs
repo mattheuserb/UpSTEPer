@@ -9,6 +9,6 @@ public enum DisplayQuality
     /// <summary>The default (~11° per segment).</summary>
     Normal = 1,
 
-    /// <summary>Smooth curves, more triangles (~3° per segment).</summary>
+    /// <summary>Smooth curves, more triangles (~6° per segment).</summary>
     Fine = 2,
 }

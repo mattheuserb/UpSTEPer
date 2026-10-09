@@ -35,27 +35,40 @@ public sealed record TessellationOptions
     public static TessellationOptions Fine { get; } = new(0.01, 0.05);
 
     /// <summary>
-    /// Gets display options for a model: the chord tolerance scales with the model size, so a
-    /// quality level looks alike on a 3 mm part and a 3 m assembly (without the triangle count
-    /// of a fixed millimetre tolerance exploding on large models).
+    /// Gets display options for a model: chord tolerance and shortest triangle edge scale with the
+    /// model size, so a quality level looks alike on a 3 mm part and a 3 m assembly.
     /// </summary>
+    /// <remarks>
+    /// The minimum size keeps the angular deflection from giving every small screw and hole of a
+    /// large assembly the full number of segments: on a 2.5 m engine with 72,000 faces it cuts
+    /// Normal from 12.1 to 2.7 million triangles, while a single 40 mm part hardly changes
+    /// (measurements in docs/test-data.md).
+    /// </remarks>
     /// <param name="quality">The quality level.</param>
     /// <param name="bounds">The model bounds, or <see langword="null"/> when unknown (uses the fixed presets).</param>
     /// <returns>The options.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="quality"/> is not defined.</exception>
     public static TessellationOptions ForModel(DisplayQuality quality, ModelBounds? bounds)
     {
-        var (fixedPreset, sizeFactor) = quality switch
+        // Factors of the bounding box diagonal; angles in radians.
+        var (fixedPreset, linearFactor, angle, minSizeFactor) = quality switch
         {
-            DisplayQuality.Coarse => (Coarse, 2e-3),
-            DisplayQuality.Normal => (Default, 5e-4),
-            DisplayQuality.Fine => (Fine, 1e-4),
+            DisplayQuality.Coarse => (Coarse, 2e-3, 0.5, 2e-3),
+            DisplayQuality.Normal => (Default, 5e-4, 0.2, 1e-3),
+            DisplayQuality.Fine => (Fine, 1e-4, 0.1, 5e-4),
             _ => throw new ArgumentOutOfRangeException(nameof(quality), quality, "Unknown display quality."),
         };
 
-        return bounds is null
-            ? fixedPreset
-            : new TessellationOptions(Math.Max(bounds.Diagonal * sizeFactor, MinimumModelDeflection), fixedPreset.AngularDeflectionRadians);
+        if (bounds is null)
+        {
+            return fixedPreset;
+        }
+
+        var diagonal = bounds.Diagonal;
+        return new TessellationOptions(Math.Max(diagonal * linearFactor, MinimumModelDeflection), angle)
+        {
+            MinSize = Math.Max(diagonal * minSizeFactor, MinimumModelDeflection),
+        };
     }
 
     /// <summary>Gets the maximum chord deviation.</summary>
@@ -66,6 +79,18 @@ public sealed record TessellationOptions
 
     /// <summary>Gets a value indicating whether <see cref="LinearDeflection"/> is relative.</summary>
     public bool IsRelative { get; }
+
+    /// <summary>
+    /// Gets the shortest triangle edge in model units (mm), or <see langword="null"/> for the
+    /// kernel default (a tenth of <see cref="LinearDeflection"/>). Limits the number of segments on
+    /// small features such as screws and holes, where the angular deflection would otherwise rule.
+    /// </summary>
+    /// <exception cref="ArgumentOutOfRangeException">The value is not a positive, finite number.</exception>
+    public double? MinSize
+    {
+        get;
+        init => field = value is { } size ? ValidatePositive(size, nameof(MinSize)) : null;
+    }
 
     private static double ValidatePositive(double value, string paramName)
     {

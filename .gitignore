@@ -24,3 +24,6 @@ Thumbs.db
 
 # Local scratch output (never commit generated or modified STEP/DXF files)
 /out/
+
+# Large local test files (too big for the repository; see docs/test-data.md)
+/examples/local/

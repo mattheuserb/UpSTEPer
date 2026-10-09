@@ -110,6 +110,9 @@ rented Mac / by community testers once the repository is public.
 
 ## Later
 
+- **Before the repository goes public:** remove `examples/G_I202_XX_64331V.stp` (Siemens, licence
+  unclear) from the Git history (`git filter-repo`, force push, everyone re-clones) or publish with
+  a fresh history. The file left the working tree on 2026-10-09 (`docs/test-data.md`).
 - Packaging: VC++ Redistributable prerequisite on Windows, Velopack/self-contained publish, AppImage, signed/notarised macOS build (needs Apple developer account)
 - Localisation (de, en)
 - API docs with DocFX

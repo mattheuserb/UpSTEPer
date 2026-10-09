@@ -18,6 +18,13 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     private DocumentSession? _session;
     private string? _fileName;
 
+    // The running cancellable operation (loading or meshing), or null.
+    private CancellationTokenSource? _operation;
+
+    // Quality of the mesh on screen; restored in the selector when re-meshing is cancelled.
+    private DisplayQuality _meshedQuality = DisplayQuality.Normal;
+    private bool _isRestoringQuality;
+
     // Body id of every face (-1 = none), to highlight bodies selected in the tree.
     private int[] _faceBodies = [];
 
@@ -95,6 +102,13 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial PaletteEntry SelectedPaletteEntry { get; set; }
 
+    /// <summary>Gets or sets the progress (0..1) of the running load or meshing operation.</summary>
+    [ObservableProperty]
+    public partial double ProgressFraction { get; set; }
+
+    /// <summary>Gets a value indicating whether a cancellable operation (loading, meshing) is running.</summary>
+    public bool IsCancellable => _operation is not null;
+
     /// <summary>Gets a value indicating whether a model is loaded.</summary>
     public bool HasDocument => _session is not null;
 
@@ -107,9 +121,10 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         IsBusy = true;
         Status = $"Loading {fileName} ...";
         var quality = DisplayQuality;
+        var (progress, cancellationToken) = BeginOperation($"Loading {fileName}");
         try
         {
-            var loaded = await Task.Run(() => LoadDocument(path, quality)).ConfigureAwait(true);
+            var loaded = await Task.Run(() => LoadDocument(path, quality, progress, cancellationToken)).ConfigureAwait(true);
 
             _session?.Dispose();
             _session = new DocumentSession(loaded.Document);
@@ -120,6 +135,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             SelectedNode = null;
             ModelTree = loaded.Tree;
             Scene = loaded.Scene;
+            _meshedQuality = quality;
             IsDirty = false;
             var statistics = loaded.Document.Statistics;
             Status = string.Create(
@@ -129,6 +145,11 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             OnPropertyChanged(nameof(HasDocument));
             return true;
         }
+        catch (OperationCanceledException)
+        {
+            Status = HasDocument ? $"Loading {fileName} cancelled; the previous model stays open." : $"Loading {fileName} cancelled.";
+            return false;
+        }
         catch (Exception exception) when (exception is FileNotFoundException or StepImportException or GeometryOperationException)
         {
             Status = $"Error: {exception.Message}";
@@ -136,6 +157,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         }
         finally
         {
+            EndOperation();
             IsBusy = false;
         }
     }
@@ -213,7 +235,22 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     }
 
     /// <inheritdoc />
-    public void Dispose() => _session?.Dispose();
+    public void Dispose()
+    {
+        // Let a running load or meshing stop early instead of blocking the shutdown. The native
+        // callback only reads IsCancellationRequested, which stays valid after Dispose.
+        _operation?.Cancel();
+        _operation?.Dispose();
+        _session?.Dispose();
+    }
+
+    /// <summary>Requests cancellation of the running load or meshing operation.</summary>
+    [RelayCommand(CanExecute = nameof(IsCancellable))]
+    private void Cancel()
+    {
+        _operation?.Cancel();
+        Status = "Cancelling ...";
+    }
 
     /// <summary>Triangulates the open model again with the current <see cref="DisplayQuality"/>, keeping colours, selection and view.</summary>
     [RelayCommand]
@@ -227,28 +264,87 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         var quality = DisplayQuality;
         IsBusy = true;
         Status = $"Meshing with {quality} display quality ...";
+        var (progress, cancellationToken) = BeginOperation($"Meshing ({quality})");
         try
         {
             var (mesh, edges) = await _session.RunAsync(document =>
             {
                 var options = TessellationOptions.ForModel(quality, document.Bounds);
-                return (document.Tessellate(options), document.TessellateEdges(options));
+                return (document.Tessellate(options, progress, cancellationToken), document.TessellateEdges(options));
             }).ConfigureAwait(true);
 
             Scene = Scene?.WithGeometry(mesh, edges);
+            _meshedQuality = quality;
             Status = string.Create(CultureInfo.CurrentCulture, $"{quality} display quality: {mesh.TriangleCount:N0} triangles");
+        }
+        catch (OperationCanceledException)
+        {
+            RestoreDisplayQuality();
+            Status = $"Meshing cancelled; display quality stays {_meshedQuality}.";
         }
         catch (GeometryOperationException exception)
         {
+            RestoreDisplayQuality();
             Status = $"Error: {exception.Message}";
         }
         finally
         {
+            EndOperation();
             IsBusy = false;
         }
     }
 
-    partial void OnDisplayQualityChanged(DisplayQuality value) => RemeshCommand.Execute(null);
+    partial void OnDisplayQualityChanged(DisplayQuality value)
+    {
+        if (!_isRestoringQuality)
+        {
+            RemeshCommand.Execute(null);
+        }
+    }
+
+    // Shows the quality of the mesh on screen again without re-meshing.
+    private void RestoreDisplayQuality()
+    {
+        _isRestoringQuality = true;
+        try
+        {
+            DisplayQuality = _meshedQuality;
+        }
+        finally
+        {
+            _isRestoringQuality = false;
+        }
+    }
+
+    // Starts a cancellable operation. Reports are marshalled to the UI thread by Progress<T>
+    // and dropped once the operation has ended, so a late report cannot overwrite the final status.
+    private (IProgress<OperationProgress> Progress, CancellationToken Token) BeginOperation(string label)
+    {
+        var operation = new CancellationTokenSource();
+        _operation = operation;
+        ProgressFraction = 0;
+        OnPropertyChanged(nameof(IsCancellable));
+        CancelCommand.NotifyCanExecuteChanged();
+
+        var progress = new Progress<OperationProgress>(report =>
+        {
+            if (ReferenceEquals(_operation, operation) && !operation.IsCancellationRequested)
+            {
+                ProgressFraction = report.Fraction;
+                Status = string.Create(CultureInfo.CurrentCulture, $"{label}: {report.Phase} {report.Fraction:P0}");
+            }
+        });
+        return (progress, operation.Token);
+    }
+
+    private void EndOperation()
+    {
+        _operation?.Dispose();
+        _operation = null;
+        ProgressFraction = 0;
+        OnPropertyChanged(nameof(IsCancellable));
+        CancelCommand.NotifyCanExecuteChanged();
+    }
 
     /// <summary>Switches between perspective and orthographic projection.</summary>
     [RelayCommand]
@@ -428,13 +524,14 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             _ => string.Empty,
         };
 
-    private LoadedModel LoadDocument(string path, DisplayQuality quality)
+    // Loading takes most of the time; meshing at normal quality the rest.
+    private LoadedModel LoadDocument(string path, DisplayQuality quality, IProgress<OperationProgress> progress, CancellationToken cancellationToken)
     {
-        var document = _reader.Load(path);
+        var document = _reader.Load(path, new ScaledProgress(progress, 0, 0.8), cancellationToken);
         try
         {
             var options = TessellationOptions.ForModel(quality, document.Bounds);
-            var mesh = document.Tessellate(options);
+            var mesh = document.Tessellate(options, new ScaledProgress(progress, 0.8, 1), cancellationToken);
             var edges = document.TessellateEdges(options);
             var faceBodies = Enumerable.Range(0, document.Statistics.FaceCount)
                 .Select(i => document.GetBodyOfFace(new FaceId(i))?.Value ?? -1)

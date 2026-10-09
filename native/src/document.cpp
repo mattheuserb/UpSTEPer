@@ -5,6 +5,7 @@
 #include <BRep_Builder.hxx>
 #include <Bnd_Box.hxx>
 #include <IFSelect_ReturnStatus.hxx>
+#include <Message_ProgressScope.hxx>
 #include <STEPCAFControl_Reader.hxx>
 
 #include <TopExp.hxx>
@@ -31,6 +32,12 @@ ups_document::~ups_document()
 
 extern "C" UPS_API ups_status ups_document_load_step(const char* utf8_path, ups_document** out_document)
 {
+    return ups_document_load_step_with_progress(utf8_path, nullptr, nullptr, out_document);
+}
+
+extern "C" UPS_API ups_status ups_document_load_step_with_progress(
+    const char* utf8_path, ups_progress_callback callback, void* user_data, ups_document** out_document)
+{
     return Guarded([&]() -> ups_status {
         if (utf8_path == nullptr || out_document == nullptr)
         {
@@ -39,6 +46,9 @@ extern "C" UPS_API ups_status ups_document_load_step(const char* utf8_path, ups_
         *out_document = nullptr;
 
         ups::detail::ConfigureOcctMessages();
+        const Handle(ups::detail::CallbackProgress) progress = new ups::detail::CallbackProgress(callback, user_data);
+        progress->SetPhase("Reading");
+        Message_ProgressScope scope(progress->Start(), "Loading", 10);
         auto document = std::make_unique<ups_document>();
 
         // Declared after `document`, so on an error path the lock is released before `document`
@@ -51,11 +61,24 @@ extern "C" UPS_API ups_status ups_document_load_step(const char* utf8_path, ups_
         reader.SetNameMode(true);
         reader.SetLayerMode(true);
 
+        // Parsing reports no progress in OCCT 8; it gets a fixed share of the bar.
         if (reader.ReadFile(utf8_path) != IFSelect_RetDone)
         {
             return Fail(UPS_ERROR_FILE_READ, std::string("Cannot read STEP file: ") + utf8_path);
         }
-        if (!reader.Transfer(document->xdeDocument))
+        scope.Next(2);
+        progress->SetPhase("Transferring");
+        if (progress->IsCancelled())
+        {
+            return Fail(UPS_ERROR_CANCELLED, "Loading was cancelled.");
+        }
+
+        const bool transferred = reader.Transfer(document->xdeDocument, scope.Next(8));
+        if (progress->IsCancelled())
+        {
+            return Fail(UPS_ERROR_CANCELLED, "Loading was cancelled.");
+        }
+        if (!transferred)
         {
             return Fail(UPS_ERROR_TRANSFER, "STEP file was read but contains no transferable geometry.");
         }
@@ -77,6 +100,7 @@ extern "C" UPS_API ups_status ups_document_load_step(const char* utf8_path, ups_
         TopExp::MapShapesAndAncestors(document->shape, TopAbs_FACE, TopAbs_SOLID, document->faceToSolids);
         ups::detail::ResolveFaceColors(*document);
 
+        progress->ReportDone();
         *out_document = document.release();
         return UPS_OK;
     });

@@ -9,7 +9,7 @@ namespace UpSTEPer.Cli;
 /// </summary>
 internal static class PaintCommand
 {
-    public static Command Create(IStepReader reader, TextWriter output, TextWriter error)
+    public static Command Create(IStepReader reader, TextWriter output, TextWriter error, IProgress<OperationProgress>? progress = null)
     {
         var inputArgument = new Argument<FileInfo>("input") { Description = "STEP file to read." };
         var outputArgument = new Argument<FileInfo>("output") { Description = "STEP file to write (overwritten)." };
@@ -30,7 +30,7 @@ internal static class PaintCommand
             bodyOption,
         };
 
-        command.SetAction(parseResult => CommandRunner.Run(error, () =>
+        command.SetAction((parseResult, cancellationToken) => Task.FromResult(CommandRunner.Run(error, () =>
         {
             // Body colours first, so face colours given in the same call are applied on top.
             var assignments = (parseResult.GetValue(bodyOption) ?? [])
@@ -43,15 +43,16 @@ internal static class PaintCommand
                 throw new FormatException("Nothing to do: give at least one --face or --body assignment.");
             }
 
-            return Run(reader, output, parseResult.GetValue(inputArgument)!.FullName, parseResult.GetValue(outputArgument)!.FullName, assignments);
-        }));
+            var input = parseResult.GetValue(inputArgument)!.FullName;
+            using var document = reader.Load(input, progress, cancellationToken);
+            return Run(document, output, parseResult.GetValue(outputArgument)!.FullName, assignments);
+        })));
 
         return command;
     }
 
-    private static int Run(IStepReader reader, TextWriter output, string input, string outputPath, IReadOnlyList<ColorAssignment> assignments)
+    private static int Run(IStepDocument document, TextWriter output, string outputPath, IReadOnlyList<ColorAssignment> assignments)
     {
-        using var document = reader.Load(input);
         foreach (var assignment in assignments)
         {
             document.SetColor(assignment.Target, assignment.Color);

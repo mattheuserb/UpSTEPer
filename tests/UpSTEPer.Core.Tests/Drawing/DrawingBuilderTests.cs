@@ -70,7 +70,8 @@ public class DrawingBuilderTests
 
         public EdgeData TessellateEdges(TessellationOptions options) => EdgeData.Empty;
 
-        public MeshData Tessellate(TessellationOptions options) => MeshData.Empty;
+        public MeshData Tessellate(TessellationOptions options, IProgress<OperationProgress>? progress = null, CancellationToken cancellationToken = default) =>
+            MeshData.Empty;
 
         public void Dispose()
         {

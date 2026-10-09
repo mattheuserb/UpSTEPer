@@ -188,10 +188,11 @@ internal sealed class OcctStepDocument : IStepDocument
         }
     }
 
-    public MeshData Tessellate(TessellationOptions options)
+    public MeshData Tessellate(TessellationOptions options, IProgress<OperationProgress>? progress = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(options);
         ThrowIfDisposed();
+        cancellationToken.ThrowIfCancellationRequested();
 
         var parameters = new NativeTessellationParams
         {
@@ -200,7 +201,27 @@ internal sealed class OcctStepDocument : IStepDocument
             Relative = options.IsRelative ? 1 : 0,
         };
 
-        NativeError.ThrowIfFailed(NativeMethods.DocumentTessellate(_handle, parameters, out var meshHandle), "Tessellation");
+        MeshSafeHandle meshHandle;
+        using (var nativeProgress = new NativeProgress(progress, cancellationToken))
+        {
+            NativeStatus status;
+            unsafe
+            {
+                status = NativeMethods.DocumentTessellateWithProgress(
+                    _handle, parameters, NativeProgress.Callback, nativeProgress.UserData, out meshHandle);
+            }
+
+            try
+            {
+                nativeProgress.ThrowIfFailed(status, "Tessellation");
+            }
+            catch
+            {
+                meshHandle.Dispose();
+                throw;
+            }
+        }
+
         using (meshHandle)
         {
             NativeError.ThrowIfFailed(NativeMethods.MeshGetInfo(meshHandle, out var info), "Reading mesh info");

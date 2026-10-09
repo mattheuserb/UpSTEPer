@@ -298,6 +298,69 @@ public class MainViewModelTests
         Assert.False(viewModel.IsBusy);
     }
 
+    [Fact]
+    public async Task CancelCommand_DuringLoad_KeepsPreviousModel()
+    {
+        var reader = new FakeReader();
+        using var viewModel = await LoadedAsync(reader);
+        var scene = viewModel.Scene;
+        reader.BlockUntilCancelled = true;
+
+        var loading = viewModel.LoadAsync("big.stp");
+        Assert.True(viewModel.IsCancellable);
+        Assert.True(viewModel.CancelCommand.CanExecute(null));
+        viewModel.CancelCommand.Execute(null);
+        var loaded = await loading;
+
+        Assert.False(loaded);
+        Assert.Same(scene, viewModel.Scene);
+        Assert.False(reader.Documents[0].IsDisposed);
+        Assert.Contains("cancelled", viewModel.Status, StringComparison.Ordinal);
+        Assert.False(viewModel.IsCancellable);
+        Assert.False(viewModel.IsBusy);
+    }
+
+    [Fact]
+    public async Task Remesh_Cancelled_RestoresQualityWithoutRemeshing()
+    {
+        var reader = new FakeReader();
+        using var viewModel = await LoadedAsync(reader);
+        var document = reader.Documents[0];
+        var scene = viewModel.Scene;
+        document.CancelNextTessellation = true;
+
+        viewModel.DisplayQuality = DisplayQuality.Fine;
+        await viewModel.RemeshCommand.ExecutionTask!;
+
+        Assert.Equal(DisplayQuality.Normal, viewModel.DisplayQuality);
+        Assert.Same(scene, viewModel.Scene);
+        Assert.Equal(2, document.TessellationRequests.Count);
+        Assert.Contains("cancelled", viewModel.Status, StringComparison.Ordinal);
+        Assert.False(viewModel.IsCancellable);
+    }
+
+    [Fact]
+    public void CancelCommand_WithoutOperation_CannotExecute()
+    {
+        using var viewModel = new MainViewModel(new FakeReader());
+
+        Assert.False(viewModel.CancelCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void ScaledProgress_MapsFractionIntoSection()
+    {
+        var reports = new List<OperationProgress>();
+        var scaled = new ScaledProgress(new SynchronousProgress(reports.Add), 0.8, 1);
+
+        scaled.Report(new OperationProgress(0.5, "Meshing"));
+        scaled.Report(new OperationProgress(2, "Meshing"));
+
+        Assert.Equal(0.9, reports[0].Fraction, 12);
+        Assert.Equal("Meshing", reports[0].Phase);
+        Assert.Equal(1.0, reports[1].Fraction, 12);
+    }
+
     private static async Task<MainViewModel> LoadedAsync(FakeReader reader)
     {
         var viewModel = new MainViewModel(reader);

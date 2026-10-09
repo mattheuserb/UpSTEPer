@@ -69,6 +69,33 @@ public sealed class InfoCommandTests : IDisposable
         _error.Dispose();
     }
 
+    [Fact]
+    public async Task Info_PassesProgressAndCancellationToReader()
+    {
+        var reader = new FakeStepReader(path => new FakeStepDocument(path));
+        var progress = new Progress<OperationProgress>();
+        using var cancellation = new CancellationTokenSource();
+
+        var root = new RootCommand { InfoCommand.Create(reader, _output, _error, progress) };
+        await root.Parse(["info", "model.stp"]).InvokeAsync(cancellationToken: cancellation.Token);
+
+        Assert.Same(progress, reader.LastProgress);
+        Assert.True(reader.LastCancellationToken.CanBeCanceled);
+    }
+
+    [Fact]
+    public async Task Info_CancelledBeforeLoading_ReturnsCancelledExitCode()
+    {
+        var reader = new FakeStepReader(path => new FakeStepDocument(path));
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync();
+
+        var root = new RootCommand { InfoCommand.Create(reader, _output, _error) };
+        var exitCode = await root.Parse(["info", "model.stp"]).InvokeAsync(cancellationToken: cancellation.Token);
+
+        Assert.Equal(CommandRunner.Cancelled, exitCode);
+    }
+
     private int Invoke(IStepReader reader, params string[] args)
     {
         var root = new RootCommand { InfoCommand.Create(reader, _output, _error) };

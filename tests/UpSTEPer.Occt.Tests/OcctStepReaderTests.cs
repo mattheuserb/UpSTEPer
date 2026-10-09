@@ -9,7 +9,7 @@ public class OcctStepReaderTests
     [Fact]
     public void Load_MissingFile_ThrowsFileNotFound()
     {
-        Assert.Throws<FileNotFoundException>(() => _reader.Load("does-not-exist.stp"));
+        Assert.Throws<FileNotFoundException>(() => _reader.Load("does-not-exist.stp", cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -20,7 +20,7 @@ public class OcctStepReaderTests
         File.WriteAllText(path, "this is not ISO-10303-21");
         try
         {
-            Assert.Throws<StepImportException>(() => _reader.Load(path));
+            Assert.Throws<StepImportException>(() => _reader.Load(path, cancellationToken: TestContext.Current.CancellationToken));
         }
         finally
         {
@@ -33,7 +33,7 @@ public class OcctStepReaderTests
     {
         TestFiles.RequireNativeLibrary();
 
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(1, document.Statistics.SolidCount);
         Assert.Equal(109, document.Statistics.FaceCount);
@@ -46,7 +46,7 @@ public class OcctStepReaderTests
         // COLOUR_RGB('',0.76,0.79,0.77) applied to the solid in the file.
         const float Tolerance = 0.01f;
 
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
         for (var i = 0; i < document.Statistics.FaceCount; i++)
         {
@@ -62,7 +62,7 @@ public class OcctStepReaderTests
     public void GetFaceColor_OutOfRange_Throws()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Throws<ArgumentOutOfRangeException>(() => document.GetFaceColor(new FaceId(document.Statistics.FaceCount)));
     }
@@ -71,7 +71,7 @@ public class OcctStepReaderTests
     public void Dispose_ThenAccess_ThrowsObjectDisposed()
     {
         TestFiles.RequireNativeLibrary();
-        var document = _reader.Load(TestFiles.CableGland);
+        var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
         document.Dispose();
 
         Assert.Throws<ObjectDisposedException>(() => document.Statistics);

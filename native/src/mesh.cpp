@@ -108,6 +108,13 @@ ups_status CopyArray(const std::vector<T>& source, T* target, int64_t capacity, 
 extern "C" UPS_API ups_status ups_document_tessellate(
     ups_document* document, const ups_tessellation_params* params, ups_mesh** out_mesh)
 {
+    return ups_document_tessellate_with_progress(document, params, nullptr, nullptr, out_mesh);
+}
+
+extern "C" UPS_API ups_status ups_document_tessellate_with_progress(
+    ups_document* document, const ups_tessellation_params* params,
+    ups_progress_callback callback, void* user_data, ups_mesh** out_mesh)
+{
     return Guarded([&]() -> ups_status {
         if (document == nullptr || params == nullptr || out_mesh == nullptr)
         {
@@ -121,8 +128,21 @@ extern "C" UPS_API ups_status ups_document_tessellate(
 
         // BRepMesh keeps an existing finer triangulation; discard it so coarser settings apply.
         BRepTools::Clean(document->shape);
-        BRepMesh_IncrementalMesh mesher(document->shape, params->linear_deflection, params->relative != 0,
-                                        params->angular_deflection, /*isInParallel*/ true);
+
+        const Handle(ups::detail::CallbackProgress) progress = new ups::detail::CallbackProgress(callback, user_data);
+        progress->SetPhase("Meshing");
+        IMeshTools_Parameters meshParams;
+        meshParams.Deflection = params->linear_deflection;
+        meshParams.Angle = params->angular_deflection;
+        meshParams.Relative = params->relative != 0;
+        meshParams.InParallel = true;
+        BRepMesh_IncrementalMesh mesher(document->shape, meshParams, progress->Start());
+        if (progress->IsCancelled())
+        {
+            // Leave no half-meshed faces behind.
+            BRepTools::Clean(document->shape);
+            return Fail(UPS_ERROR_CANCELLED, "Tessellation was cancelled.");
+        }
         if (!mesher.IsDone())
         {
             return Fail(UPS_ERROR_OPERATION, "Tessellation failed.");
@@ -134,6 +154,7 @@ extern "C" UPS_API ups_status ups_document_tessellate(
             AppendFace(*mesh, TopoDS::Face(document->faces(index)), index - 1);
         }
 
+        progress->ReportDone();
         *out_mesh = mesh.release();
         return UPS_OK;
     });

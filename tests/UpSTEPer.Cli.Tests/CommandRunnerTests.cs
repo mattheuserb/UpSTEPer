@@ -16,6 +16,17 @@ public class CommandRunnerTests
     }
 
     [Fact]
+    public void Run_Cancelled_PrintsCancelledAndReturns130()
+    {
+        using var error = new StringWriter();
+
+        var exitCode = CommandRunner.Run(error, () => throw new OperationCanceledException());
+
+        Assert.Equal(CommandRunner.Cancelled, exitCode);
+        Assert.Equal("cancelled", error.ToString().Trim());
+    }
+
+    [Fact]
     public void Run_Success_ReturnsBodyExitCode()
     {
         using var error = new StringWriter();

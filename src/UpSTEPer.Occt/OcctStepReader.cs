@@ -7,7 +7,7 @@ namespace UpSTEPer.Occt;
 public sealed class OcctStepReader : IStepReader
 {
     /// <inheritdoc />
-    public IStepDocument Load(string path)
+    public IStepDocument Load(string path, IProgress<OperationProgress>? progress = null, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
@@ -17,11 +17,24 @@ public sealed class OcctStepReader : IStepReader
             throw new FileNotFoundException("STEP file not found.", fullPath);
         }
 
-        var status = NativeMethods.DocumentLoadStep(fullPath, out var handle);
-        if (status != NativeStatus.Ok)
+        cancellationToken.ThrowIfCancellationRequested();
+        using var nativeProgress = new NativeProgress(progress, cancellationToken);
+        DocumentSafeHandle handle;
+        NativeStatus status;
+        unsafe
+        {
+            status = NativeMethods.DocumentLoadStepWithProgress(fullPath, NativeProgress.Callback, nativeProgress.UserData, out handle);
+        }
+
+        try
+        {
+            // Also throws when the progress handler failed although loading itself completed.
+            nativeProgress.ThrowIfFailed(status, $"Loading '{fullPath}'");
+        }
+        catch
         {
             handle.Dispose();
-            NativeError.ThrowIfFailed(status, $"Loading '{fullPath}'");
+            throw;
         }
 
         return new OcctStepDocument(handle, fullPath);

@@ -14,7 +14,7 @@ public sealed class DxfExportTests : IDisposable
     public void CableGland_StandardViews_ProduceValidDxfWithTrueCircles()
     {
         TestFiles.RequireNativeLibrary();
-        using (var document = new OcctStepReader().Load(TestFiles.CableGland))
+        using (var document = new OcctStepReader().Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken))
         {
             var views = DrawingBuilder.Build(document, DrawingBuilder.StandardViews, ProjectionOptions.Default);
             DxfExporter.Write(_path, views);
@@ -36,7 +36,7 @@ public sealed class DxfExportTests : IDisposable
     public void Export_HasNoFrameTitleBlockOrPaperSpaceContent()
     {
         TestFiles.RequireNativeLibrary();
-        using (var document = new OcctStepReader().Load(TestFiles.CableGland))
+        using (var document = new OcctStepReader().Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken))
         {
             DxfExporter.Write(_path, DrawingBuilder.Build(document, [ViewDirection.Front], ProjectionOptions.Default));
         }
@@ -51,7 +51,7 @@ public sealed class DxfExportTests : IDisposable
     public void Cleanup_RemovesHiddenEdgesCoveredByVisibleOnes()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = new OcctStepReader().Load(TestFiles.CableGland);
+        using var document = new OcctStepReader().Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
         var raw = document.Project(ViewDirection.Top, ProjectionOptions.Default);
 
         var cleaned = HiddenLineCleanup.RemoveCoveredHidden(raw);

@@ -16,6 +16,7 @@ add_library(upsteper_native SHARED
     src/error.cpp
     src/document.cpp
     src/mesh.cpp
+    src/progress.cpp
     src/appearance.cpp
     src/step_export.cpp
     src/messages.cpp

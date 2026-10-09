@@ -8,7 +8,7 @@ public class EdgeTessellationTests
     public void TessellateEdges_CableGland_ProducesConsistentLines()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = new OcctStepReader().Load(TestFiles.CableGland);
+        using var document = new OcctStepReader().Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
         var edges = document.TessellateEdges(TessellationOptions.Default);
 
@@ -21,7 +21,7 @@ public class EdgeTessellationTests
     public void TessellateEdges_SkipsCylinderSeams()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = new OcctStepReader().Load(TestFiles.CableGland);
+        using var document = new OcctStepReader().Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
         var drawnEdges = document.TessellateEdges(TessellationOptions.Default).SegmentEdgeIds.ToArray().Distinct().Count();
 
@@ -33,7 +33,7 @@ public class EdgeTessellationTests
     public void TessellateEdges_FinerDeflection_ProducesMoreSegments()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = new OcctStepReader().Load(TestFiles.CableGland);
+        using var document = new OcctStepReader().Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
         var coarse = document.TessellateEdges(TessellationOptions.Coarse).SegmentCount;
         var fine = document.TessellateEdges(TessellationOptions.Fine).SegmentCount;

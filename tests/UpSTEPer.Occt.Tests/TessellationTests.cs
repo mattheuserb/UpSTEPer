@@ -10,9 +10,9 @@ public class TessellationTests
     public void Tessellate_CoversEveryFace()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
-        var mesh = document.Tessellate(TessellationOptions.Default);
+        var mesh = document.Tessellate(TessellationOptions.Default, cancellationToken: TestContext.Current.CancellationToken);
 
         var facesWithTriangles = mesh.TriangleFaceIds.ToArray().Distinct().Order().ToArray();
         Assert.Equal(Enumerable.Range(0, document.Statistics.FaceCount), facesWithTriangles);
@@ -22,9 +22,9 @@ public class TessellationTests
     public void Tessellate_ProducesValidIndicesAndUnitNormals()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
-        var mesh = document.Tessellate(TessellationOptions.Default);
+        var mesh = document.Tessellate(TessellationOptions.Default, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.All(mesh.Indices.ToArray(), index => Assert.True(index < mesh.VertexCount));
         var normals = mesh.Normals.Span;
@@ -40,10 +40,10 @@ public class TessellationTests
     {
         TestFiles.RequireNativeLibrary();
 
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
-        var coarse = document.Tessellate(TessellationOptions.Coarse);
-        var fine = document.Tessellate(TessellationOptions.Fine);
+        var coarse = document.Tessellate(TessellationOptions.Coarse, cancellationToken: TestContext.Current.CancellationToken);
+        var fine = document.Tessellate(TessellationOptions.Fine, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.True(fine.TriangleCount > coarse.TriangleCount, $"fine={fine.TriangleCount}, coarse={coarse.TriangleCount}");
     }
@@ -52,11 +52,11 @@ public class TessellationTests
     public void Tessellate_CoarserAfterFiner_ReplacesTriangulation()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.CableGland);
-        var coarse = document.Tessellate(TessellationOptions.Coarse);
-        var fine = document.Tessellate(TessellationOptions.Fine);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
+        var coarse = document.Tessellate(TessellationOptions.Coarse, cancellationToken: TestContext.Current.CancellationToken);
+        var fine = document.Tessellate(TessellationOptions.Fine, cancellationToken: TestContext.Current.CancellationToken);
 
-        var coarseAgain = document.Tessellate(TessellationOptions.Coarse);
+        var coarseAgain = document.Tessellate(TessellationOptions.Coarse, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.True(coarseAgain.TriangleCount < fine.TriangleCount, $"fine={fine.TriangleCount}, coarse again={coarseAgain.TriangleCount}");
         Assert.Equal(coarse.TriangleCount, coarseAgain.TriangleCount);
@@ -66,10 +66,10 @@ public class TessellationTests
     public void Bounds_ContainTheMesh()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
         var bounds = document.Bounds;
-        var positions = document.Tessellate(TessellationOptions.Default).Positions.ToArray();
+        var positions = document.Tessellate(TessellationOptions.Default, cancellationToken: TestContext.Current.CancellationToken).Positions.ToArray();
 
         Assert.NotNull(bounds);
         Assert.InRange(bounds.Diagonal, 10, 1000);
@@ -89,9 +89,9 @@ public class TessellationTests
     public void Tessellate_ForModel_StaysWithinReasonableTriangleCount(DisplayQuality quality)
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
-        var mesh = document.Tessellate(TessellationOptions.ForModel(quality, document.Bounds));
+        var mesh = document.Tessellate(TessellationOptions.ForModel(quality, document.Bounds), cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.InRange(mesh.TriangleCount, 1_000, 500_000);
     }

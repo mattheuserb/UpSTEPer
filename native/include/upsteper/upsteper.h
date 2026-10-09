@@ -44,6 +44,7 @@ typedef enum ups_status
     UPS_ERROR_OPERATION = 4,      /* a geometric algorithm failed */
     UPS_ERROR_BUFFER_TOO_SMALL = 5,
     UPS_ERROR_FILE_WRITE = 6,     /* output file cannot be written */
+    UPS_ERROR_CANCELLED = 7,      /* the progress callback requested cancellation; no output was produced */
     UPS_ERROR_INTERNAL = 99
 } ups_status;
 
@@ -55,6 +56,19 @@ UPS_API const char* ups_version(void);
 
 /** Version of the linked Open CASCADE Technology, e.g. "7.9.1". */
 UPS_API const char* ups_occt_version(void);
+
+/* -------------------------------------------------------------- progress -- */
+
+/**
+ * Progress report of a long operation; return non-zero to cancel it.
+ *   fraction  overall progress 0..1, never decreasing within one operation
+ *   phase     short English label ("Reading", "Transferring", "Meshing"); valid during the call
+ * Calls are serialised but may come from any thread (OCCT meshes in parallel), and are
+ * throttled to roughly 20 per second. Cancellation is not immediate: OCCT checks it between
+ * work items, and not at all while a STEP file is parsed (only before transfer starts).
+ * The callback must not call back into this library and must not throw or longjmp.
+ */
+typedef int32_t (*ups_progress_callback)(void* user_data, double fraction, const char* phase);
 
 /* -------------------------------------------------------------- document -- */
 
@@ -92,6 +106,13 @@ typedef struct ups_color
  * structure (OCCT XDE). On success *out_document receives a new handle.
  */
 UPS_API ups_status ups_document_load_step(const char* utf8_path, ups_document** out_document);
+
+/**
+ * Like ups_document_load_step, reporting progress to callback (may be NULL). Returns
+ * UPS_ERROR_CANCELLED, with *out_document NULL, when the callback requested cancellation.
+ */
+UPS_API ups_status ups_document_load_step_with_progress(
+    const char* utf8_path, ups_progress_callback callback, void* user_data, ups_document** out_document);
 
 UPS_API void ups_document_free(ups_document* document);
 
@@ -269,6 +290,14 @@ typedef struct ups_mesh_info
  */
 UPS_API ups_status ups_document_tessellate(
     ups_document* document, const ups_tessellation_params* params, ups_mesh** out_mesh);
+
+/**
+ * Like ups_document_tessellate, reporting progress to callback (may be NULL). On
+ * UPS_ERROR_CANCELLED *out_mesh is NULL and the document keeps no partial triangulation.
+ */
+UPS_API ups_status ups_document_tessellate_with_progress(
+    ups_document* document, const ups_tessellation_params* params,
+    ups_progress_callback callback, void* user_data, ups_mesh** out_mesh);
 
 UPS_API void ups_mesh_free(ups_mesh* mesh);
 

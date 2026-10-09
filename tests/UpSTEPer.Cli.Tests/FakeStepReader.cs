@@ -11,9 +11,16 @@ internal sealed class FakeStepReader : IStepReader
 
     public List<string> LoadedPaths { get; } = [];
 
-    public IStepDocument Load(string path)
+    public IProgress<OperationProgress>? LastProgress { get; private set; }
+
+    public CancellationToken LastCancellationToken { get; private set; }
+
+    public IStepDocument Load(string path, IProgress<OperationProgress>? progress = null, CancellationToken cancellationToken = default)
     {
         LoadedPaths.Add(path);
+        LastProgress = progress;
+        LastCancellationToken = cancellationToken;
+        cancellationToken.ThrowIfCancellationRequested();
         return _load(path);
     }
 }
@@ -65,7 +72,7 @@ internal sealed class FakeStepDocument : IStepDocument
 
     public EdgeData TessellateEdges(TessellationOptions options) => EdgeData.Empty;
 
-    public MeshData Tessellate(TessellationOptions options)
+    public MeshData Tessellate(TessellationOptions options, IProgress<OperationProgress>? progress = null, CancellationToken cancellationToken = default)
     {
         LastOptions = options;
         return new MeshData(new float[27], new float[27], [0, 1, 2, 3, 4, 5, 6, 7, 8], [0, 1, 2]);

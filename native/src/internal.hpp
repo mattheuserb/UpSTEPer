@@ -3,6 +3,7 @@
 
 #include <upsteper/upsteper.h>
 
+#include <Message_ProgressIndicator.hxx>
 #include <NCollection_IndexedDataMap.hxx>
 #include <NCollection_IndexedMap.hxx>
 #include <NCollection_List.hxx>
@@ -15,6 +16,7 @@
 #include <TopLoc_Location.hxx>
 #include <TopoDS_Shape.hxx>
 
+#include <chrono>
 #include <exception>
 #include <functional>
 #include <mutex>
@@ -103,6 +105,40 @@ void MakeOccurrenceUnique(ups_document& document, const PartInstance& instance);
 
 // Recomputes ups_document::faceColors from the XDE colour attributes (instances.cpp).
 void ResolveFaceColors(ups_document& document);
+
+// ---- Progress (progress.cpp) ------------------------------------------------------------------
+
+// Forwards OCCT progress to a ups_progress_callback and turns its answer into UserBreak().
+// Thread-safe: OCCT calls Show/UserBreak from parallel workers (e.g. BRepMesh).
+class CallbackProgress : public Message_ProgressIndicator
+{
+public:
+    // callback may be null: then nothing is reported and nothing is cancelled.
+    CallbackProgress(ups_progress_callback callback, void* userData);
+
+    // Sets the label passed with following reports and reports immediately.
+    void SetPhase(const char* phase);
+
+    // True once the callback asked to cancel.
+    bool IsCancelled() const;
+
+    // Reports completion (fraction 1) once the operation succeeded.
+    void ReportDone();
+
+    bool UserBreak() override;
+    void Show(const Message_ProgressScope& scope, const bool isForce) override;
+
+private:
+    void Report(bool force, bool done = false);
+
+    ups_progress_callback myCallback;
+    void* myUserData;
+    const char* myPhase = "";
+    double myLastFraction = 0.0;
+    std::chrono::steady_clock::time_point myLastReport{};
+    bool myCancelled = false;
+    mutable std::mutex myMutex;
+};
 
 // Silences OCCT console output once per process (see messages.cpp). Call before using
 // OCCT readers or writers.

@@ -5,5 +5,7 @@
              RequestedThemeVariant="Light">
   <Application.Styles>
     <FluentTheme />
+    <!-- The colour picker controls ship in their own package and need their theme included. -->
+    <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
   </Application.Styles>
 </Application>

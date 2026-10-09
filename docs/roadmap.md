@@ -60,7 +60,8 @@ Linux and macOS from CI-built binaries.
   for it ("make independent", ADR 0009), ids stay stable, save → reload tested
 - [x] AP242 output option: "Save as" file type in the app, `paint --schema ap242` in the CLI;
   `info --tree` prints the body ids `paint --body` expects
-- [ ] Custom colour picker (any RGB) in the app
+- [x] Custom colour picker (any RGB) in the app: "Custom..." flyout with `ColorView`; picked colours
+  join the palette (up to 6, per session)
 
 ## M3 — DXF export (2D views)
 

@@ -92,6 +92,8 @@ Never reference OCCT or native types from Core. UI projects (planned) depend on 
   system `0.05` would otherwise become 5.
 - OCCT console output is silenced in the native layer (`messages.cpp`); set `UPS_OCCT_VERBOSE=1`
   to see it when debugging import/export problems.
+- Progress callbacks (`ups_progress_callback`) can arrive on OCCT worker threads (parallel
+  meshing); keep handlers thread-safe and never let an exception unwind into native code (ADR 0010).
 - Never call OCCT STEP readers/writers or create/close XDE documents without holding
   `ups::detail::TranslatorMutex()` (global OCCT state; concurrent use crashes).
 - `dotnet test` on .NET 10 requires the MTP runner (`global.json` → `test.runner`); do not

@@ -29,8 +29,9 @@ internal static partial class NativeMethods
     [LibraryImport(LibraryName, EntryPoint = "ups_occt_version")]
     internal static partial nint OcctVersion();
 
-    [LibraryImport(LibraryName, EntryPoint = "ups_document_load_step", StringMarshalling = StringMarshalling.Utf8)]
-    internal static partial NativeStatus DocumentLoadStep(string utf8Path, out DocumentSafeHandle document);
+    [LibraryImport(LibraryName, EntryPoint = "ups_document_load_step_with_progress", StringMarshalling = StringMarshalling.Utf8)]
+    internal static unsafe partial NativeStatus DocumentLoadStepWithProgress(
+        string utf8Path, delegate* unmanaged[Cdecl]<nint, double, byte*, int> callback, nint userData, out DocumentSafeHandle document);
 
     [LibraryImport(LibraryName, EntryPoint = "ups_document_free")]
     internal static partial void DocumentFree(nint document);
@@ -106,9 +107,13 @@ internal static partial class NativeMethods
         int* segmentEdges,
         long segmentEdgesCapacity);
 
-    [LibraryImport(LibraryName, EntryPoint = "ups_document_tessellate")]
-    internal static partial NativeStatus DocumentTessellate(
-        DocumentSafeHandle document, in NativeTessellationParams parameters, out MeshSafeHandle mesh);
+    [LibraryImport(LibraryName, EntryPoint = "ups_document_tessellate_with_progress")]
+    internal static unsafe partial NativeStatus DocumentTessellateWithProgress(
+        DocumentSafeHandle document,
+        in NativeTessellationParams parameters,
+        delegate* unmanaged[Cdecl]<nint, double, byte*, int> callback,
+        nint userData,
+        out MeshSafeHandle mesh);
 
     [LibraryImport(LibraryName, EntryPoint = "ups_mesh_free")]
     internal static partial void MeshFree(nint mesh);
@@ -139,6 +144,7 @@ internal enum NativeStatus
     Operation = 4,
     BufferTooSmall = 5,
     FileWrite = 6,
+    Cancelled = 7,
     Internal = 99,
 }
 

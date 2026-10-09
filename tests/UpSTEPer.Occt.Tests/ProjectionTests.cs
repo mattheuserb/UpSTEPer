@@ -14,7 +14,7 @@ public class ProjectionTests(ITestOutputHelper output)
     public void Project_CableGland_KeepsCirclesAnalytic(ViewDirection direction)
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
         var view = document.Project(direction, ProjectionOptions.Default);
 
@@ -34,7 +34,7 @@ public class ProjectionTests(ITestOutputHelper output)
     public void Project_ViewsAgreeOnSharedDimensions()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
         var front = document.Project(ViewDirection.Front, ProjectionOptions.Default).GetBounds();
         var top = document.Project(ViewDirection.Top, ProjectionOptions.Default).GetBounds();
@@ -50,7 +50,7 @@ public class ProjectionTests(ITestOutputHelper output)
     public void Project_WithoutHidden_HasNoHiddenLines()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
         var view = document.Project(ViewDirection.Front, ProjectionOptions.Default with { IncludeHidden = false });
 
@@ -62,7 +62,7 @@ public class ProjectionTests(ITestOutputHelper output)
     public void Project_InvalidDeflection_Throws()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Throws<ArgumentException>(() => document.Project(ViewDirection.Front, ProjectionOptions.Default with { Deflection = 0 }));
     }

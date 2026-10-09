@@ -16,7 +16,7 @@ public sealed class AssemblyColoringTests : IDisposable
     public void ColorFace_InSharedInstance_ChangesOnlyThatFace()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.TestAssembly);
+        using var document = _reader.Load(TestFiles.TestAssembly, cancellationToken: TestContext.Current.CancellationToken);
         var (left, right) = PinBodies(document);
         var face = FacesOf(document, left)[0];
         var before = Snapshot(document);
@@ -34,7 +34,7 @@ public sealed class AssemblyColoringTests : IDisposable
     public void ColorBody_InSharedInstance_ChangesOnlyThatBody()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.TestAssembly);
+        using var document = _reader.Load(TestFiles.TestAssembly, cancellationToken: TestContext.Current.CancellationToken);
         var (left, right) = PinBodies(document);
 
         document.SetColor(ColorTarget.Of(left), _red);
@@ -47,7 +47,7 @@ public sealed class AssemblyColoringTests : IDisposable
     public void Colouring_KeepsIdsTopologyAndTree()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.TestAssembly);
+        using var document = _reader.Load(TestFiles.TestAssembly, cancellationToken: TestContext.Current.CancellationToken);
         var statistics = document.Statistics;
         var bodiesBefore = Enumerable.Range(0, statistics.FaceCount).Select(i => document.GetBodyOfFace(new FaceId(i))).ToList();
         var (left, _) = PinBodies(document);
@@ -63,7 +63,7 @@ public sealed class AssemblyColoringTests : IDisposable
     public void ClearColour_InInstance_RestoresInheritedColour()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.TestAssembly);
+        using var document = _reader.Load(TestFiles.TestAssembly, cancellationToken: TestContext.Current.CancellationToken);
         var (left, _) = PinBodies(document);
         var face = FacesOf(document, left)[0];
         var original = document.GetFaceColor(face);
@@ -80,7 +80,7 @@ public sealed class AssemblyColoringTests : IDisposable
     {
         TestFiles.RequireNativeLibrary();
         int faceCount;
-        using (var document = _reader.Load(TestFiles.TestAssembly))
+        using (var document = _reader.Load(TestFiles.TestAssembly, cancellationToken: TestContext.Current.CancellationToken))
         {
             faceCount = document.Statistics.FaceCount;
             var (left, _) = PinBodies(document);
@@ -88,7 +88,7 @@ public sealed class AssemblyColoringTests : IDisposable
             document.SaveStep(_path);
         }
 
-        using var reloaded = _reader.Load(_path);
+        using var reloaded = _reader.Load(_path, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(faceCount, reloaded.Statistics.FaceCount);
         Assert.Equal(7, reloaded.Statistics.SolidCount);

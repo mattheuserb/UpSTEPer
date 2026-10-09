@@ -11,7 +11,7 @@ namespace UpSTEPer.Cli;
 /// </summary>
 internal static class ExportDxfCommand
 {
-    public static Command Create(IStepReader reader, TextWriter output, TextWriter error)
+    public static Command Create(IStepReader reader, TextWriter output, TextWriter error, IProgress<OperationProgress>? progress = null)
     {
         var inputArgument = new Argument<FileInfo>("input") { Description = "STEP file to read." };
         var outputArgument = new Argument<FileInfo>("output") { Description = "DXF file to write (overwritten)." };
@@ -38,7 +38,7 @@ internal static class ExportDxfCommand
             gapOption,
         };
 
-        command.SetAction(parseResult => CommandRunner.Run(error, () =>
+        command.SetAction((parseResult, cancellationToken) => Task.FromResult(CommandRunner.Run(error, () =>
         {
             var views = ParseViews(parseResult.GetValue(viewsOption)!);
             var options = ProjectionOptions.Default with
@@ -49,7 +49,7 @@ internal static class ExportDxfCommand
             var input = parseResult.GetValue(inputArgument)!.FullName;
             var outputPath = parseResult.GetValue(outputArgument)!.FullName;
 
-            using var document = reader.Load(input);
+            using var document = reader.Load(input, progress, cancellationToken);
             var arranged = DrawingBuilder.Build(document, views, options, parseResult.GetValue(gapOption));
             DxfExporter.Write(outputPath, arranged);
 
@@ -60,7 +60,7 @@ internal static class ExportDxfCommand
 
             output.WriteLine($"Saved {outputPath}");
             return 0;
-        }));
+        })));
 
         return command;
     }

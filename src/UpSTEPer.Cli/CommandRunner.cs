@@ -8,11 +8,19 @@ internal static class CommandRunner
     /// <summary>Exit code for invalid input (missing or unreadable file, bad geometry, bad arguments).</summary>
     public const int InputError = 2;
 
+    /// <summary>Exit code after the user cancelled (Ctrl+C), as shells report for SIGINT.</summary>
+    public const int Cancelled = 130;
+
     public static int Run(TextWriter error, Func<int> body)
     {
         try
         {
             return body();
+        }
+        catch (OperationCanceledException)
+        {
+            error.WriteLine("cancelled");
+            return Cancelled;
         }
         // Expected failures caused by user input: missing/unwritable files, invalid STEP, ids out of
         // range, malformed values. Everything else is a bug and must surface with a stack trace.

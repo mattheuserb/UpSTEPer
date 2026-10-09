@@ -38,7 +38,9 @@ Linux and macOS from CI-built binaries.
 - [x] Display quality (coarse / normal / fine) in the toolbar: re-meshes in the background and keeps
   colours, selection and camera; chord tolerance scales with the model size (bounding box
   diagonal), the previous triangulation is discarded (`BRepTools::Clean`)
-- [ ] Progress and cancellation for long loads; DI/logging (Microsoft.Extensions)
+- [x] Progress and cancellation for loading and meshing: native callback (ADR 0010), progress bar
+  and Cancel (Esc) in the app, progress line and Ctrl+C in the CLI
+- [ ] DI/logging (Microsoft.Extensions)
 - [ ] Hover highlight (needs a BVH for picking performance)
 
 ## M2 — Colouring

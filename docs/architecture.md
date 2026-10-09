@@ -73,8 +73,9 @@ OCCT objects are not safe for concurrent access. Rules:
    reading/writing and document creation/destruction with one mutex (`TranslatorMutex`).
    `ConcurrencyTests` guards this; without it parallel loads crashed with an access violation.
 3. OCCT may parallelise internally (e.g. meshing with `isInParallel`), which is safe.
-4. Planned: long operations accept `CancellationToken` and report `IProgress<T>` (mapped to
-   OCCT's `Message_ProgressIndicator`).
+4. Loading and meshing accept `CancellationToken` and report `IProgress<OperationProgress>`
+   through a native callback mapped to OCCT's `Message_ProgressIndicator` (ADR 0010). The
+   callback may run on OCCT worker threads; handlers must be thread-safe.
 
 ## Colours (M2)
 

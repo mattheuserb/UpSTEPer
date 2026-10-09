@@ -76,11 +76,21 @@ internal sealed class FakeDocument(bool twoBodies = false) : IStepDocument
 
     public List<TessellationOptions> TessellationRequests { get; } = [];
 
+    /// <summary>Gets or sets a value indicating whether the next Tessellate call behaves as if cancelled.</summary>
+    public bool CancelNextTessellation { get; set; }
+
     public EdgeData TessellateEdges(TessellationOptions options) => EdgeData.Empty;
 
-    public MeshData Tessellate(TessellationOptions options)
+    public MeshData Tessellate(TessellationOptions options, IProgress<OperationProgress>? progress = null, CancellationToken cancellationToken = default)
     {
         TessellationRequests.Add(options);
+        if (CancelNextTessellation)
+        {
+            CancelNextTessellation = false;
+            throw new OperationCanceledException();
+        }
+
+        progress?.Report(new OperationProgress(1, "Meshing"));
         return new(new float[18], new float[18], [0, 1, 2, 3, 4, 5], [0, 1]);
     }
 
@@ -92,8 +102,18 @@ internal sealed class FakeReader(Func<string, IStepDocument>? load = null, bool 
 {
     public List<FakeDocument> Documents { get; } = [];
 
-    public IStepDocument Load(string path)
+    /// <summary>Gets or sets a value indicating whether Load waits until it is cancelled.</summary>
+    public bool BlockUntilCancelled { get; set; }
+
+    public IStepDocument Load(string path, IProgress<OperationProgress>? progress = null, CancellationToken cancellationToken = default)
     {
+        if (BlockUntilCancelled)
+        {
+            cancellationToken.WaitHandle.WaitOne(TimeSpan.FromSeconds(10));
+            cancellationToken.ThrowIfCancellationRequested();
+            throw new TimeoutException("The test never cancelled the load.");
+        }
+
         if (load is not null)
         {
             return load(path);

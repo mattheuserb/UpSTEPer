@@ -16,7 +16,7 @@ public sealed class ColoringTests : IDisposable
     public void GetBodyOfFace_EveryFaceBelongsToTheSingleBody()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
         for (var i = 0; i < document.Statistics.FaceCount; i++)
         {
@@ -28,7 +28,7 @@ public sealed class ColoringTests : IDisposable
     public void GetAssignedColor_FileColourIsOnBodyNotOnFaces()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Null(document.GetAssignedColor(ColorTarget.Of(_face)));
         var bodyColor = document.GetAssignedColor(ColorTarget.Of(_body));
@@ -40,7 +40,7 @@ public sealed class ColoringTests : IDisposable
     public void SetColor_Face_ChangesOnlyThatFace_AndClearingRestoresBodyColour()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
         var original = document.GetFaceColor(_face);
 
         document.SetColor(ColorTarget.Of(_face), _red);
@@ -59,7 +59,7 @@ public sealed class ColoringTests : IDisposable
     public void SetColor_Body_ColoursFacesWithoutOwnColour()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
         var faceCount = document.Statistics.FaceCount;
         document.SetColor(ColorTarget.Of(_face), _red);
 
@@ -75,7 +75,7 @@ public sealed class ColoringTests : IDisposable
         TestFiles.RequireNativeLibrary();
         var path = TempPath();
         int faceCount;
-        using (var document = _reader.Load(TestFiles.CableGland))
+        using (var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken))
         {
             faceCount = document.Statistics.FaceCount;
             document.SetColor(ColorTarget.Of(_face), _red);
@@ -83,7 +83,7 @@ public sealed class ColoringTests : IDisposable
             document.SaveStep(path);
         }
 
-        using var reloaded = _reader.Load(path);
+        using var reloaded = _reader.Load(path, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(faceCount, reloaded.Statistics.FaceCount);
         Assert.Equal(1, reloaded.Statistics.SolidCount);
@@ -95,7 +95,7 @@ public sealed class ColoringTests : IDisposable
     public void SaveStep_UnwritablePath_ThrowsIOException()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
         var path = Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}", "out.stp");
 
         Assert.Throws<IOException>(() => document.SaveStep(path));
@@ -108,7 +108,7 @@ public sealed class ColoringTests : IDisposable
     public void SetColor_UnknownTarget_Throws(ColorTargetKind kind, int id)
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Throws<ArgumentOutOfRangeException>(() => document.SetColor(new ColorTarget(kind, id), _red));
     }

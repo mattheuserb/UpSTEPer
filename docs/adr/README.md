@@ -14,3 +14,4 @@ We record significant decisions in the [MADR](https://adr.github.io/madr/) forma
 | [0007](0007-tiered-repair.md) | Tiered geometry repair | Accepted |
 | [0008](0008-cli-first-testing.md) | CLI parity and test strategy | Accepted |
 | [0009](0009-instance-colouring.md) | Colouring faces and bodies inside assembly instances | Accepted |
+| [0010](0010-progress-and-cancellation.md) | Progress reporting and cancellation across the C ABI | Accepted |

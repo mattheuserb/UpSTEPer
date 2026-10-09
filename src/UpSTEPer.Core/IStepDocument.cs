@@ -73,7 +73,10 @@ public interface IStepDocument : IDisposable
 
     /// <summary>Triangulates the model for display, replacing any previous triangulation.</summary>
     /// <param name="options">Tessellation quality.</param>
+    /// <param name="progress">Receives progress reports, possibly from other threads; may be <see langword="null"/>.</param>
+    /// <param name="cancellationToken">Cancels meshing; the document keeps no partial triangulation then.</param>
     /// <returns>The mesh.</returns>
     /// <exception cref="GeometryOperationException">Tessellation failed.</exception>
-    MeshData Tessellate(TessellationOptions options);
+    /// <exception cref="OperationCanceledException">Meshing was cancelled.</exception>
+    MeshData Tessellate(TessellationOptions options, IProgress<OperationProgress>? progress = null, CancellationToken cancellationToken = default);
 }

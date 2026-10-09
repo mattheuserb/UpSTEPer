@@ -10,7 +10,7 @@ public class ModelTreeTests
     public void SinglePart_IsOnePartWithOneNamedBody()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
         var root = Assert.Single(document.GetModelTree());
 
@@ -25,7 +25,7 @@ public class ModelTreeTests
     public void Assembly_HasExpectedStructureAndNames()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.TestAssembly);
+        using var document = _reader.Load(TestFiles.TestAssembly, cancellationToken: TestContext.Current.CancellationToken);
 
         var top = Assert.Single(document.GetModelTree());
 
@@ -48,7 +48,7 @@ public class ModelTreeTests
     public void Assembly_EveryBodyIsMappedToAUniqueBodyId()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.TestAssembly);
+        using var document = _reader.Load(TestFiles.TestAssembly, cancellationToken: TestContext.Current.CancellationToken);
 
         var bodies = document.GetModelTree().SelectMany(n => n.GetBodies()).ToList();
 
@@ -61,7 +61,7 @@ public class ModelTreeTests
     public void Assembly_FacesBelongToTheBodiesListedInTheTree()
     {
         TestFiles.RequireNativeLibrary();
-        using var document = _reader.Load(TestFiles.TestAssembly);
+        using var document = _reader.Load(TestFiles.TestAssembly, cancellationToken: TestContext.Current.CancellationToken);
 
         var treeBodies = document.GetModelTree().SelectMany(n => n.GetBodies()).ToHashSet();
         var faceBodies = Enumerable.Range(0, document.Statistics.FaceCount)

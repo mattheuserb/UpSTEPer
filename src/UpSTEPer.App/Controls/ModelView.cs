@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
@@ -139,6 +140,17 @@ internal sealed class ModelView : OpenGlControlBase
         {
             RequestNextFrameRendering();
         }
+    }
+
+    /// <inheritdoc />
+    public override void Render(DrawingContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        // Avalonia only hit-tests what a control draws itself. The GL image lives in a separate
+        // composition visual, so without this transparent fill no pointer input reaches the view.
+        context.FillRectangle(Brushes.Transparent, new Rect(Bounds.Size));
+        base.Render(context);
     }
 
     /// <inheritdoc />

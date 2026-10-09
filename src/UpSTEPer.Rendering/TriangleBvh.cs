@@ -150,12 +150,70 @@ public sealed class TriangleBvh
 
         var axis = extent.X >= extent.Y && extent.X >= extent.Z ? 0 : extent.Y >= extent.Z ? 1 : 2;
         var half = count / 2;
-        Array.Sort(triangles, start, count, Comparer<int>.Create((p, q) => centroids[p][axis].CompareTo(centroids[q][axis])));
+
+        // Only "left <= median <= right" matters for the split: a selection is O(n) per level,
+        // where a full sort was O(n log n) (16 s instead of ~1 s for 7.8 million triangles).
+        SelectNth(triangles, centroids, axis, start, start + count - 1, start + half);
 
         BuildNode(nodes, triangles, bounds, centroids, start, half);
         var right = BuildNode(nodes, triangles, bounds, centroids, start + half, count - half);
         nodes[index] = new Node(nodeBounds, right, 0);
         return index;
+    }
+
+    // Quickselect (Hoare partition, median-of-three pivot): afterwards items[nth] holds the element
+    // a sort would put there, with no larger key before it and no smaller key after it.
+    internal static void SelectNth(int[] items, Vector3[] centroids, int axis, int left, int right, int nth)
+    {
+        while (right > left)
+        {
+            var a = Key(items[left]);
+            var b = Key(items[left + ((right - left) / 2)]);
+            var c = Key(items[right]);
+            var pivot = MathF.Max(MathF.Min(a, b), MathF.Min(MathF.Max(a, b), c));
+
+            var i = left;
+            var j = right;
+            while (i <= j)
+            {
+                while (Key(items[i]) < pivot)
+                {
+                    i++;
+                }
+
+                while (Key(items[j]) > pivot)
+                {
+                    j--;
+                }
+
+                if (i <= j)
+                {
+                    (items[i], items[j]) = (items[j], items[i]);
+                    i++;
+                    j--;
+                }
+            }
+
+            if (nth <= j)
+            {
+                right = j;
+            }
+            else if (nth >= i)
+            {
+                left = i;
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        float Key(int triangle) => axis switch
+        {
+            0 => centroids[triangle].X,
+            1 => centroids[triangle].Y,
+            _ => centroids[triangle].Z,
+        };
     }
 
     private static Vector3 Vertex(ReadOnlySpan<float> positions, uint index)

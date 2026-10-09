@@ -54,6 +54,30 @@ public class TriangleBvhTests
         }
     }
 
+    [Theory]
+    [InlineData(1, 1000)]
+    [InlineData(2, 1000)]
+    [InlineData(3, 7)]
+    [InlineData(4, 2)]
+    public void SelectNth_PartitionsAroundTheNthKey(uint seed, int count)
+    {
+        // Few distinct values (many duplicates) and arbitrary sub-ranges, as in the BVH build.
+        var random = new Lcg(seed);
+        var centroids = Enumerable.Range(0, count).Select(_ => new Vector3(0, MathF.Floor(random.NextSingle() * 10), 0)).ToArray();
+        var items = Enumerable.Range(0, count).ToArray();
+        var left = count / 10;
+        var right = count - 1 - (count / 10);
+        var nth = left + ((right - left) / 2);
+
+        TriangleBvh.SelectNth(items, centroids, axis: 1, left, right, nth);
+
+        var pivot = centroids[items[nth]].Y;
+        Assert.All(items[left..nth], i => Assert.True(centroids[i].Y <= pivot));
+        Assert.All(items[(nth + 1)..(right + 1)], i => Assert.True(centroids[i].Y >= pivot));
+        Assert.Equal(Enumerable.Range(0, count), items.Order()); // a permutation, nothing lost
+        Assert.Equal(Enumerable.Range(0, left), items[..left]); // outside the range untouched
+    }
+
     [Fact]
     public void Pick_EmptyMesh_ReturnsNull()
     {

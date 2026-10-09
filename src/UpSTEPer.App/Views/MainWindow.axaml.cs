@@ -53,6 +53,17 @@ internal sealed partial class MainWindow : Window
         }
     }
 
+    private void OnUseCustomColorClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel viewModel)
+        {
+            var color = CustomColorView.Color;
+            viewModel.UseCustomColor(ColorRgb.FromBytes(color.R, color.G, color.B));
+        }
+
+        CustomColorButton.Flyout?.Hide();
+    }
+
     private async void OnExportDxfClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not MainViewModel { HasDocument: true } viewModel)

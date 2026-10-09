@@ -54,6 +54,19 @@
           </ListBox.ItemTemplate>
         </ListBox>
 
+        <Button x:Name="CustomColorButton" Content="Custom..." Margin="0,0,12,0" VerticalAlignment="Center"
+                ToolTip.Tip="Pick any colour; it is added to the palette and becomes the active colour">
+          <Button.Flyout>
+            <Flyout Placement="BottomEdgeAlignedLeft">
+              <StackPanel Spacing="8">
+                <ColorView x:Name="CustomColorView" Color="#3366CC"
+                           IsAlphaEnabled="False" IsAlphaVisible="False" IsAccentColorsVisible="False" />
+                <Button Content="Use colour" HorizontalAlignment="Right" Click="OnUseCustomColorClick" />
+              </StackPanel>
+            </Flyout>
+          </Button.Flyout>
+        </Button>
+
         <Button Content="Colour face" Command="{Binding ColorFaceCommand}" Margin="0,0,6,0" />
         <Button Content="Colour body" Command="{Binding ColorBodyCommand}" Margin="0,0,6,0"
                 ToolTip.Tip="Colours the bodies selected in the model tree, or the body of the selected face" />

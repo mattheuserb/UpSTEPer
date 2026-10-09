@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -42,8 +43,11 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         SelectedPaletteEntry = Palette[0];
     }
 
-    /// <summary>Gets the colours offered in the toolbar.</summary>
-    public IReadOnlyList<PaletteEntry> Palette { get; } = PaletteEntry.Default;
+    /// <summary>Gets the maximum number of picked colours kept in the palette.</summary>
+    public const int MaxCustomColors = 6;
+
+    /// <summary>Gets the colours offered in the toolbar: the RAL defaults, then colours picked by the user.</summary>
+    public ObservableCollection<PaletteEntry> Palette { get; } = [.. PaletteEntry.Default];
 
     /// <summary>Gets or sets the scene shown in the 3D view.</summary>
     [ObservableProperty]
@@ -390,6 +394,31 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     /// <summary>Switches between perspective and orthographic projection.</summary>
     [RelayCommand]
     private void ToggleProjection() => IsOrthographic = !IsOrthographic;
+
+    /// <summary>
+    /// Adds a colour picked by the user to the palette (after the RAL colours; the oldest picked
+    /// colour drops out beyond <see cref="MaxCustomColors"/>) and makes it the active colour.
+    /// </summary>
+    /// <param name="color">The picked colour.</param>
+    public void UseCustomColor(ColorRgb color)
+    {
+        // Same hex = same entry: picking a colour twice must not fill the palette with duplicates.
+        var existing = Palette.FirstOrDefault(entry => entry.Hex == color.ToHex());
+        if (existing is not null)
+        {
+            SelectedPaletteEntry = existing;
+            return;
+        }
+
+        var entry = PaletteEntry.Custom(color);
+        Palette.Add(entry);
+        if (Palette.Count - PaletteEntry.Default.Count > MaxCustomColors)
+        {
+            Palette.RemoveAt(PaletteEntry.Default.Count);
+        }
+
+        SelectedPaletteEntry = entry;
+    }
 
     /// <summary>Gives the selected face the selected palette colour.</summary>
     [RelayCommand(CanExecute = nameof(CanEditFace))]

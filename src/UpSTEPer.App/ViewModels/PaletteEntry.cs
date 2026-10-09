@@ -24,4 +24,9 @@ internal sealed record PaletteEntry(string Name, ColorRgb Color)
 
     /// <summary>Gets the colour as <c>#RRGGBB</c> (bindable as a brush in XAML).</summary>
     public string Hex => Color.ToHex();
+
+    /// <summary>Creates an entry for a colour picked by the user.</summary>
+    /// <param name="color">The colour.</param>
+    /// <returns>The entry, named after its hex value.</returns>
+    public static PaletteEntry Custom(ColorRgb color) => new($"Custom {color.ToHex()}", color);
 }

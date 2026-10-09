@@ -25,6 +25,8 @@ internal sealed class FakeDocument(bool twoBodies = false) : IStepDocument
 
     public string? SavedPath { get; private set; }
 
+    public StepSchema? SavedSchema { get; private set; }
+
     public Exception? SaveFailure { get; set; }
 
     public bool IsDisposed { get; private set; }
@@ -61,7 +63,7 @@ internal sealed class FakeDocument(bool twoBodies = false) : IStepDocument
         }
     }
 
-    public void SaveStep(string path)
+    public void SaveStep(string path, StepSchema schema = StepSchema.Ap214)
     {
         if (SaveFailure is not null)
         {
@@ -69,6 +71,7 @@ internal sealed class FakeDocument(bool twoBodies = false) : IStepDocument
         }
 
         SavedPath = path;
+        SavedSchema = schema;
     }
 
     public UpSTEPer.Core.Drawing.ProjectedView Project(UpSTEPer.Core.Drawing.ViewDirection direction, UpSTEPer.Core.Drawing.ProjectionOptions options) =>

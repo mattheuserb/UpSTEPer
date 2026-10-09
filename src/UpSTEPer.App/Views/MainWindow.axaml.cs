@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using UpSTEPer.App.Controls;
 using UpSTEPer.App.ViewModels;
+using UpSTEPer.Core;
 
 namespace UpSTEPer.App.Views;
 
@@ -14,6 +15,16 @@ internal sealed partial class MainWindow : Window
     private static readonly FilePickerFileType _stepFileType = new("STEP files")
     {
         Patterns = ["*.stp", "*.step", "*.STP", "*.STEP"],
+    };
+
+    private static readonly FilePickerFileType _stepAp214FileType = new("STEP AP214 (widest support)")
+    {
+        Patterns = ["*.stp", "*.step"],
+    };
+
+    private static readonly FilePickerFileType _stepAp242FileType = new("STEP AP242")
+    {
+        Patterns = ["*.stp", "*.step"],
     };
 
     /// <summary>Initializes a new instance of the <see cref="MainWindow"/> class.</summary>
@@ -71,18 +82,20 @@ internal sealed partial class MainWindow : Window
             return;
         }
 
-        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        // Both protocols use .stp, so the chosen file type selects the schema.
+        var result = await StorageProvider.SaveFilePickerWithResultAsync(new FilePickerSaveOptions
         {
             Title = "Save STEP file",
             DefaultExtension = "stp",
             SuggestedFileName = "model.stp",
-            FileTypeChoices = [_stepFileType],
+            FileTypeChoices = [_stepAp214FileType, _stepAp242FileType],
             ShowOverwritePrompt = true,
         }).ConfigureAwait(true);
 
-        if (file?.TryGetLocalPath() is { } path)
+        if (result.File?.TryGetLocalPath() is { } path)
         {
-            await viewModel.SaveAsync(path).ConfigureAwait(true);
+            var schema = result.SelectedFileType == _stepAp242FileType ? StepSchema.Ap242 : StepSchema.Ap214;
+            await viewModel.SaveAsync(path, schema).ConfigureAwait(true);
         }
     }
 }

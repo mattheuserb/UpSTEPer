@@ -111,13 +111,17 @@ internal sealed class OcctStepDocument : IStepDocument
         NativeError.ThrowIfFailed(status, $"Colouring {target}");
     }
 
-    public void SaveStep(string path)
+    public void SaveStep(string path, StepSchema schema = StepSchema.Ap214)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         ThrowIfDisposed();
+        if (!Enum.IsDefined(schema))
+        {
+            throw new ArgumentOutOfRangeException(nameof(schema), schema, "Unknown STEP schema.");
+        }
 
         var fullPath = Path.GetFullPath(path);
-        NativeError.ThrowIfFailed(NativeMethods.DocumentSaveStep(_handle, fullPath), $"Saving '{fullPath}'");
+        NativeError.ThrowIfFailed(NativeMethods.DocumentSaveStepAs(_handle, fullPath, (NativeStepSchema)schema), $"Saving '{fullPath}'");
     }
 
     public ProjectedView Project(ViewDirection direction, ProjectionOptions options)

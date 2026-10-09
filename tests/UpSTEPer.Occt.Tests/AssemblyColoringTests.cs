@@ -75,8 +75,10 @@ public sealed class AssemblyColoringTests : IDisposable
         Assert.Null(document.GetAssignedColor(ColorTarget.Of(face)));
     }
 
-    [Fact]
-    public void SaveAndReload_KeepsInstanceColours()
+    [Theory]
+    [InlineData(StepSchema.Ap214)]
+    [InlineData(StepSchema.Ap242)]
+    public void SaveAndReload_KeepsInstanceColours(StepSchema schema)
     {
         TestFiles.RequireNativeLibrary();
         int faceCount;
@@ -85,7 +87,7 @@ public sealed class AssemblyColoringTests : IDisposable
             faceCount = document.Statistics.FaceCount;
             var (left, _) = PinBodies(document);
             document.SetColor(ColorTarget.Of(left), _red);
-            document.SaveStep(_path);
+            document.SaveStep(_path, schema);
         }
 
         using var reloaded = _reader.Load(_path, cancellationToken: TestContext.Current.CancellationToken);

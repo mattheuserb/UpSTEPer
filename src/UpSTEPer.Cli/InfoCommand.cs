@@ -15,11 +15,17 @@ internal static class InfoCommand
         var angularOption = Options.InvariantDouble(
             "--angular-deflection", "Tessellation angular tolerance in radians.", TessellationOptions.Default.AngularDeflectionRadians);
 
+        var treeOption = new Option<bool>("--tree")
+        {
+            Description = "Also print the model tree with body ids (the ids `paint --body` expects).",
+        };
+
         var command = new Command("info", "Print topology, colour and mesh statistics of a STEP file.")
         {
             fileArgument,
             linearOption,
             angularOption,
+            treeOption,
         };
 
         // The cancellation token is signalled by Ctrl+C; the native kernel polls it.
@@ -27,7 +33,7 @@ internal static class InfoCommand
         {
             var file = parseResult.GetValue(fileArgument)!;
             var options = new TessellationOptions(parseResult.GetValue(linearOption), parseResult.GetValue(angularOption));
-            return Run(reader, output, file.FullName, options, progress, cancellationToken);
+            return Run(reader, output, file.FullName, options, parseResult.GetValue(treeOption), progress, cancellationToken);
         })));
 
         return command;
@@ -38,6 +44,7 @@ internal static class InfoCommand
         TextWriter output,
         string path,
         TessellationOptions options,
+        bool printTree,
         IProgress<OperationProgress>? progress,
         CancellationToken cancellationToken)
     {
@@ -61,10 +68,27 @@ internal static class InfoCommand
             output.WriteLine($"  {group.Key,-8} {group.Count()} faces");
         }
 
+        if (printTree)
+        {
+            output.WriteLine("Tree:");
+            PrintTree(output, document.GetModelTree(), depth: 1);
+        }
+
         var mesh = document.Tessellate(options, progress, cancellationToken);
         output.WriteLine(string.Create(
             CultureInfo.InvariantCulture,
             $"Mesh:      {mesh.TriangleCount} triangles, {mesh.VertexCount} vertices (linear {options.LinearDeflection} mm, angular {options.AngularDeflectionRadians} rad)"));
         return 0;
+    }
+
+    // "  Assembly  Pin assembly (left)" / "    Body  Pin  [body 3]", two spaces per level.
+    private static void PrintTree(TextWriter output, IEnumerable<ModelNode> nodes, int depth)
+    {
+        foreach (var node in nodes)
+        {
+            var body = node.Body is { } id ? $"  [body {id.Value}]" : string.Empty;
+            output.WriteLine($"{new string(' ', depth * 2)}{node.Kind,-8}  {node.DisplayName}{body}");
+            PrintTree(output, node.Children, depth + 1);
+        }
     }
 }

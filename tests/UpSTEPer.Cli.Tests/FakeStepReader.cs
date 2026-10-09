@@ -49,7 +49,13 @@ internal sealed class FakeStepDocument : IStepDocument
     public ColorRgb? GetFaceColor(FaceId faceId) =>
         AssignedColors.TryGetValue(ColorTarget.Of(faceId), out var assigned) ? assigned : faceId.Value < 2 ? _red : null;
 
-    public IReadOnlyList<ModelNode> GetModelTree() => [];
+    public IReadOnlyList<ModelNode> GetModelTree() =>
+    [
+        new ModelNode("Bracket", ModelNodeKind.Assembly, null,
+        [
+            new ModelNode("Plate", ModelNodeKind.Part, null, [new ModelNode(string.Empty, ModelNodeKind.Body, new BodyId(0), [])]),
+        ]),
+    ];
 
     public BodyId? GetBodyOfFace(FaceId faceId) => new BodyId(0);
 
@@ -65,7 +71,13 @@ internal sealed class FakeStepDocument : IStepDocument
         AssignedColors[target] = color;
     }
 
-    public void SaveStep(string path) => SavedPath = path;
+    public StepSchema? SavedSchema { get; private set; }
+
+    public void SaveStep(string path, StepSchema schema = StepSchema.Ap214)
+    {
+        SavedPath = path;
+        SavedSchema = schema;
+    }
 
     public UpSTEPer.Core.Drawing.ProjectedView Project(UpSTEPer.Core.Drawing.ViewDirection direction, UpSTEPer.Core.Drawing.ProjectionOptions options) =>
         new(direction, []);

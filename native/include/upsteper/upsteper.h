@@ -189,6 +189,15 @@ UPS_API ups_status ups_document_set_color(
 /** Writes the document as STEP (AP214) including colours, names and layers. */
 UPS_API ups_status ups_document_save_step(ups_document* document, const char* utf8_path);
 
+typedef enum ups_step_schema
+{
+    UPS_STEP_AP214 = 0, /* AP214 IS (automotive_design): the most widely read schema */
+    UPS_STEP_AP242 = 1  /* AP242 DIS (managed model based 3D engineering) */
+} ups_step_schema;
+
+/** Like ups_document_save_step, choosing the application protocol of the file. */
+UPS_API ups_status ups_document_save_step_as(ups_document* document, const char* utf8_path, ups_step_schema schema);
+
 /* ------------------------------------------------------------ model tree -- */
 
 typedef struct ups_tree ups_tree;

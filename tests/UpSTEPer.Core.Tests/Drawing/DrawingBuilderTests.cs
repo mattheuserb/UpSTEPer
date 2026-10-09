@@ -66,7 +66,7 @@ public class DrawingBuilderTests
 
         public void SetColor(ColorTarget target, ColorRgb? color) => throw new NotSupportedException();
 
-        public void SaveStep(string path) => throw new NotSupportedException();
+        public void SaveStep(string path, StepSchema schema = StepSchema.Ap214) => throw new NotSupportedException();
 
         public EdgeData TessellateEdges(TessellationOptions options) => EdgeData.Empty;
 

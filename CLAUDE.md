@@ -18,8 +18,8 @@ dotnet build                       # whole solution (UpSTEPer.slnx); warnings ar
 dotnet test                        # Microsoft Testing Platform (configured in global.json)
 dotnet test --project tests/UpSTEPer.Core.Tests          # one project
 dotnet run --project src/UpSTEPer.Cli -- runtime         # is the native library loadable?
-dotnet run --project src/UpSTEPer.Cli -- info <file.stp> [--verbose] # load + stats + colours + mesh; --verbose logs details to stderr
-dotnet run --project src/UpSTEPer.Cli -- paint <in.stp> <out.stp> --face 80=#FF0000 --body 0=#3366CC   # colour + save
+dotnet run --project src/UpSTEPer.Cli -- info <file.stp> [--tree] [--verbose] # stats + colours + mesh; --tree: model tree with body ids
+dotnet run --project src/UpSTEPer.Cli -- paint <in.stp> <out.stp> --face 80=#FF0000 --body 0=#3366CC [--schema ap242]   # colour + save
 dotnet run --project src/UpSTEPer.Cli -- export-dxf <in.stp> <out.dxf> [--views front,top,left,iso]  # 2D views
 dotnet run --project src/UpSTEPer.App -- <file.stp>       # desktop viewer
 dotnet run --project src/UpSTEPer.App -- <file.stp> --screenshot out.png [--select-face N] [--view front|top|iso|...] [--ortho] [--quality coarse|normal|fine] [--hover-face N]   # render 1 frame to PNG and exit

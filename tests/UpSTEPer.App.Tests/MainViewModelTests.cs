@@ -178,8 +178,21 @@ public class MainViewModelTests
 
         Assert.True(saved);
         Assert.Equal("painted.stp", reader.Documents[0].SavedPath);
+        Assert.Equal(StepSchema.Ap214, reader.Documents[0].SavedSchema);
         Assert.False(viewModel.IsDirty);
         Assert.Equal("painted.stp - UpSTEPer", viewModel.Title);
+    }
+
+    [Fact]
+    public async Task SaveAsync_Ap242_PassesSchemaAndReportsIt()
+    {
+        var reader = new FakeReader();
+        using var viewModel = await LoadedAsync(reader);
+
+        await viewModel.SaveAsync("painted.stp", StepSchema.Ap242);
+
+        Assert.Equal(StepSchema.Ap242, reader.Documents[0].SavedSchema);
+        Assert.Equal("Saved painted.stp (Ap242)", viewModel.Status);
     }
 
     [Fact]

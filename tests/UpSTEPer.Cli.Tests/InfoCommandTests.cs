@@ -27,6 +27,25 @@ public sealed class InfoCommandTests : IDisposable
     }
 
     [Fact]
+    public void Info_Tree_PrintsStructureWithBodyIds()
+    {
+        var reader = new FakeStepReader(path => new FakeStepDocument(path));
+
+        Invoke(reader, "info", "model.stp", "--tree");
+
+        var text = _output.ToString();
+        Assert.Contains($"Tree:{Environment.NewLine}  Assembly  Bracket{Environment.NewLine}    Part      Plate{Environment.NewLine}      Body      (BODY)  [body 0]", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Info_WithoutTree_PrintsNoTree()
+    {
+        Invoke(new FakeStepReader(path => new FakeStepDocument(path)), "info", "model.stp");
+
+        Assert.DoesNotContain("Tree:", _output.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Info_PassesFullPathAndTessellationOptions()
     {
         FakeStepDocument? document = null;

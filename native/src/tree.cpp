@@ -20,9 +20,7 @@ struct ups_tree
 using ups::detail::Fail;
 using ups::detail::Guarded;
 
-namespace
-{
-std::string NameOf(const TDF_Label& label)
+std::string ups::detail::NameOf(const TDF_Label& label)
 {
     Handle(TDataStd_Name) name;
     if (label.IsNull() || !label.FindAttribute(TDataStd_Name::GetID(), name))
@@ -32,6 +30,10 @@ std::string NameOf(const TDF_Label& label)
     // Without a replacement character the extended string is converted to UTF-8.
     return TCollection_AsciiString(name->Get()).ToCString();
 }
+
+namespace
+{
+using ups::detail::NameOf;
 
 class TreeBuilder
 {

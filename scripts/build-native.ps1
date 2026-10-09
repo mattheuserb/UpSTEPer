@@ -14,13 +14,22 @@
 .PARAMETER VcpkgRoot
     vcpkg checkout. Defaults to $env:VCPKG_ROOT. Use a short path without spaces (e.g. C:\vcpkg).
 
+.PARAMETER Tools
+    Also build the developer tools (test data generators under native/tools). The CMake option
+    UPS_BUILD_TOOLS is set explicitly on every run, so it never lingers in the CMake cache.
+
 .EXAMPLE
     ./scripts/build-native.ps1 -VcpkgRoot C:\vcpkg
+
+.EXAMPLE
+    ./scripts/build-native.ps1 -VcpkgRoot C:\vcpkg -Tools
+    native/build/win-x64/upsteper_make_damaged_parts.exe examples/generated/damaged-parts.stp
 #>
 [CmdletBinding()]
 param(
     [string] $Preset = 'win-x64',
-    [string] $VcpkgRoot = $env:VCPKG_ROOT
+    [string] $VcpkgRoot = $env:VCPKG_ROOT,
+    [switch] $Tools
 )
 
 $ErrorActionPreference = 'Stop'
@@ -53,7 +62,8 @@ function Invoke-Step([string] $Name, [scriptblock] $Command) {
 
 Push-Location (Join-Path $PSScriptRoot '..\native')
 try {
-    Invoke-Step 'Configure' { cmake --preset $Preset }
+    $toolsOption = if ($Tools) { 'ON' } else { 'OFF' }
+    Invoke-Step 'Configure' { cmake --preset $Preset "-DUPS_BUILD_TOOLS=$toolsOption" }
     Invoke-Step 'Build' { cmake --build --preset $Preset }
     Invoke-Step 'Install' { cmake --install "build/$Preset" }
 }

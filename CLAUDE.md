@@ -20,12 +20,13 @@ dotnet test --project tests/UpSTEPer.Core.Tests          # one project
 dotnet run --project src/UpSTEPer.Cli -- runtime         # is the native library loadable?
 dotnet run --project src/UpSTEPer.Cli -- info <file.stp> [--tree] [--verbose] # stats + colours + mesh; --tree: model tree with body ids
 dotnet run --project src/UpSTEPer.Cli -- paint <in.stp> <out.stp> --face 80=#FF0000 --body 0=#3366CC [--schema ap242]   # colour + save
+dotnet run --project src/UpSTEPer.Cli -- check <file.stp>   # defects per part (gaps, invalid, canonical splines, mergeable faces); exit 3 if any
 dotnet run --project src/UpSTEPer.Cli -- export-dxf <in.stp> <out.dxf> [--views front,top,left,iso]  # 2D views
 dotnet run --project src/UpSTEPer.App -- <file.stp>       # desktop viewer
 dotnet run --project src/UpSTEPer.App -- <file.stp> --screenshot out.png [--select-face N] [--view front|top|iso|...] [--ortho] [--quality coarse|normal|fine] [--hover-face N]   # render 1 frame to PNG and exit
 
 # Native bridge (needs C++ toolchain, CMake >= 3.24, Ninja, VCPKG_ROOT) — see docs/development.md
-powershell -File scripts/build-native.ps1 -VcpkgRoot C:\vcpkg   # Windows: sets up MSVC env itself
+powershell -File scripts/build-native.ps1 -VcpkgRoot C:\vcpkg [-Tools]   # Windows: sets up MSVC env itself; -Tools: test data generators
 cd native && cmake --preset <win-x64|linux-x64|osx-arm64> && cmake --build --preset <preset> && cmake --install build/<preset>
 ```
 

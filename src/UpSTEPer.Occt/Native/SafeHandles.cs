@@ -47,6 +47,21 @@ internal sealed class TreeSafeHandle : SafeHandleZeroOrMinusOneIsInvalid
     }
 }
 
+/// <summary>Owns an <c>ups_check*</c>; released with <c>ups_check_free</c>.</summary>
+internal sealed class CheckSafeHandle : SafeHandleZeroOrMinusOneIsInvalid
+{
+    public CheckSafeHandle()
+        : base(ownsHandle: true)
+    {
+    }
+
+    protected override bool ReleaseHandle()
+    {
+        NativeMethods.CheckFree(handle);
+        return true;
+    }
+}
+
 /// <summary>Owns an <c>ups_lines*</c>; released with <c>ups_lines_free</c>.</summary>
 internal sealed class LinesSafeHandle : SafeHandleZeroOrMinusOneIsInvalid
 {

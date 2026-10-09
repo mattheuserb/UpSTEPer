@@ -24,6 +24,12 @@ public interface IStepDocument : IDisposable
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="faceId"/> does not exist.</exception>
     ColorRgb? GetFaceColor(FaceId faceId);
 
+    /// <summary>Checks every part definition for typical defects (read-only).</summary>
+    /// <param name="tolerance">Tolerance (mm) for recognising canonical geometry and small edges.</param>
+    /// <returns>One entry per part definition, in document order.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is not positive.</exception>
+    IReadOnlyList<PartCheck> Check(double tolerance = 0.01);
+
     /// <summary>Gets the product structure: assemblies, parts and their bodies, with names.</summary>
     /// <returns>The top-level nodes.</returns>
     IReadOnlyList<ModelNode> GetModelTree();

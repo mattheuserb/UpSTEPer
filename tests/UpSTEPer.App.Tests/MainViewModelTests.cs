@@ -388,6 +388,21 @@ public class MainViewModelTests
             });
     }
 
+    [Fact]
+    public async Task HoveredFace_DescribesFaceInStatusBar()
+    {
+        using var viewModel = await LoadedAsync(new FakeReader());
+
+        viewModel.HoveredFace = new FaceId(0);
+        Assert.Equal("Face 0: #FF0000", viewModel.HoverInfo);
+
+        viewModel.HoveredFace = new FaceId(1);
+        Assert.Equal("Face 1: no colour", viewModel.HoverInfo);
+
+        viewModel.HoveredFace = null;
+        Assert.Empty(viewModel.HoverInfo);
+    }
+
     private static async Task<MainViewModel> LoadedAsync(FakeReader reader)
     {
         var viewModel = new MainViewModel(reader);

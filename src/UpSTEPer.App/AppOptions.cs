@@ -14,19 +14,21 @@ namespace UpSTEPer.App;
 /// <param name="View">A standard view to show after loading.</param>
 /// <param name="Orthographic">Whether to start with the orthographic projection.</param>
 /// <param name="Quality">The display quality to load the model with.</param>
+/// <param name="HoverFace">A face to show as hovered after loading (verifies the hover highlight).</param>
 internal sealed record AppOptions(
     string? FilePath,
     string? ScreenshotPath,
     int? SelectFace,
     ViewDirection? View = null,
     bool Orthographic = false,
-    DisplayQuality Quality = DisplayQuality.Normal)
+    DisplayQuality Quality = DisplayQuality.Normal,
+    int? HoverFace = null)
 {
     /// <summary>Gets options for a plain start without arguments.</summary>
     public static AppOptions Default { get; } = new(null, null, null);
 
     /// <summary>
-    /// Parses <c>[file] [--screenshot &lt;png&gt;] [--select-face &lt;id&gt;] [--view &lt;front|back|left|right|top|bottom|iso&gt;] [--ortho] [--quality &lt;coarse|normal|fine&gt;]</c>.
+    /// Parses <c>[file] [--screenshot &lt;png&gt;] [--select-face &lt;id&gt;] [--view &lt;front|back|left|right|top|bottom|iso&gt;] [--ortho] [--quality &lt;coarse|normal|fine&gt;] [--hover-face &lt;id&gt;]</c>.
     /// </summary>
     /// <param name="args">The command-line arguments.</param>
     /// <returns>The options.</returns>
@@ -38,6 +40,7 @@ internal sealed record AppOptions(
         string? file = null;
         string? screenshot = null;
         int? selectFace = null;
+        int? hoverFace = null;
         ViewDirection? view = null;
         var orthographic = false;
         var quality = DisplayQuality.Normal;
@@ -49,9 +52,12 @@ internal sealed record AppOptions(
                     screenshot = Value(args, ++i, "--screenshot requires a file path.");
                     break;
                 case "--select-face":
-                    selectFace = int.TryParse(Value(args, ++i, "--select-face requires a face id."), NumberStyles.None, CultureInfo.InvariantCulture, out var id)
-                        ? id
-                        : throw new ArgumentException("--select-face requires a non-negative integer.", nameof(args));
+                    selectFace = ParseFaceId(Value(args, ++i, "--select-face requires a face id."))
+                        ?? throw new ArgumentException("--select-face requires a non-negative integer.", nameof(args));
+                    break;
+                case "--hover-face":
+                    hoverFace = ParseFaceId(Value(args, ++i, "--hover-face requires a face id."))
+                        ?? throw new ArgumentException("--hover-face requires a non-negative integer.", nameof(args));
                     break;
                 case "--view":
                     view = ParseName<ViewDirection>(Value(args, ++i, "--view requires a view name."))
@@ -70,12 +76,12 @@ internal sealed record AppOptions(
             }
         }
 
-        if ((screenshot is not null || selectFace is not null) && file is null)
+        if ((screenshot is not null || selectFace is not null || hoverFace is not null) && file is null)
         {
-            throw new ArgumentException("--screenshot and --select-face require a STEP file.", nameof(args));
+            throw new ArgumentException("--screenshot, --select-face and --hover-face require a STEP file.", nameof(args));
         }
 
-        return new AppOptions(file, screenshot, selectFace, view, orthographic, quality);
+        return new AppOptions(file, screenshot, selectFace, view, orthographic, quality, hoverFace);
     }
 
     // Names only: Enum.TryParse would also accept numbers such as "1".
@@ -84,6 +90,9 @@ internal sealed record AppOptions(
         name.Length > 0 && name.All(char.IsAsciiLetter) && Enum.TryParse<T>(name, ignoreCase: true, out var value)
             ? value
             : null;
+
+    private static int? ParseFaceId(string text) =>
+        int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var id) ? id : null;
 
     private static string Value(IReadOnlyList<string> args, int index, string error) =>
         index < args.Count ? args[index] : throw new ArgumentException(error, nameof(args));

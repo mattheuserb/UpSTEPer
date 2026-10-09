@@ -44,7 +44,7 @@ marshalling trivial, keeps OCCT types out of .NET, and is easy to test. See ADR 
 |---|---|---|
 | Document | `IStepDocument` / `ups_document` | Owns an OCCT XDE document (shapes, names, colours, assemblies). |
 | Face id | `FaceId` | 0-based index into the document's face map. Valid until topology changes (ADR 0005). |
-| Mesh | `MeshData` / `ups_mesh` | Display-only triangulation; vertices duplicated per face; `TriangleFaceIds` enables picking/colouring per face. |
+| Mesh | `MeshData` / `ups_mesh` | Display-only triangulation; vertices duplicated per face; `TriangleFaceIds` enables picking/colouring per face. `SceneData` adds a `TriangleBvh` for picking (built off the UI thread) and `FaceVertexRanges` for recolouring single faces. |
 | Tessellation options | `TessellationOptions` | Display quality only — never changes the model. |
 
 ## Memory ownership

@@ -85,6 +85,14 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial IReadOnlySet<FaceId> HighlightedFaces { get; set; } = _noFaces;
 
+    /// <summary>Gets or sets the face under the pointer in the 3D view.</summary>
+    [ObservableProperty]
+    public partial FaceId? HoveredFace { get; set; }
+
+    /// <summary>Gets or sets the description of the face under the pointer shown in the status bar.</summary>
+    [ObservableProperty]
+    public partial string HoverInfo { get; set; } = string.Empty;
+
     /// <summary>Gets or sets the description of the selection shown in the status bar.</summary>
     [ObservableProperty]
     public partial string SelectionInfo { get; set; } = string.Empty;
@@ -282,13 +290,18 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         var (progress, cancellationToken) = BeginOperation($"Meshing ({quality})");
         try
         {
-            var (mesh, edges) = await _session.RunAsync(document =>
+            // Colour edits are disabled while busy, so the scene cannot change in the meantime.
+            var current = Scene;
+            var (mesh, scene) = await _session.RunAsync(document =>
             {
                 var options = TessellationOptions.ForModel(quality, document.Bounds);
-                return (document.Tessellate(options, progress, cancellationToken), document.TessellateEdges(options));
+                var mesh = document.Tessellate(options, progress, cancellationToken);
+
+                // Builds the picking hierarchy, so keep it off the UI thread.
+                return (mesh, current.WithGeometry(mesh, document.TessellateEdges(options)));
             }).ConfigureAwait(true);
 
-            Scene = Scene?.WithGeometry(mesh, edges);
+            Scene = scene;
             _meshedQuality = quality;
             Status = string.Create(CultureInfo.CurrentCulture, $"{quality} display quality: {mesh.TriangleCount:N0} triangles");
             LogRemeshed(_logger, quality, mesh.TriangleCount, watch.ElapsedMilliseconds);
@@ -504,6 +517,9 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     }
 
     partial void OnIsDirtyChanged(bool value) => UpdateTitle();
+
+    partial void OnHoveredFaceChanged(FaceId? value) =>
+        HoverInfo = value is { } face ? $"Face {face.Value}: {Scene?.GetFaceColor(face)?.ToHex() ?? "no colour"}" : string.Empty;
 
     partial void OnSceneChanged(SceneData? value) => UpdateTitle();
 

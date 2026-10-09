@@ -58,6 +58,61 @@ public class SceneDataTests
     }
 
     [Fact]
+    public void GetDisplayColor_HighlightBeatsHover_HoverTintsModelColour()
+    {
+        var red = ColorRgb.FromHex("#FF0000");
+        var scene = SceneData.Create(_mesh, face => face.Value == 0 ? red : null);
+        var face0 = new FaceId(0);
+        var face1 = new FaceId(1);
+
+        Assert.Equal(red, scene.GetDisplayColor(face0, new HashSet<FaceId>(), hovered: face1));
+        Assert.Equal(SceneData.HighlightColor, scene.GetDisplayColor(face0, new HashSet<FaceId> { face0 }, hovered: face0));
+
+        var tinted = scene.GetDisplayColor(face0, new HashSet<FaceId>(), hovered: face0);
+        var tint = SceneData.HoverTint;
+        var amount = SceneData.HoverTintAmount;
+        Assert.Equal(red.R + ((tint.R - red.R) * amount), tinted.R, 5);
+        Assert.Equal(red.B + ((tint.B - red.B) * amount), tinted.B, 5);
+
+        var grey = VertexColors.Default;
+        Assert.Equal(grey.G + ((tint.G - grey.G) * amount), scene.GetDisplayColor(face1, new HashSet<FaceId>(), face1).G, 5);
+    }
+
+    [Fact]
+    public void GetVertexColors_WithHover_TintsOnlyThatFace()
+    {
+        var scene = SceneData.Create(_mesh, _ => null);
+        var hovered = new FaceId(1);
+
+        var colors = scene.GetVertexColors(new HashSet<FaceId>(), hovered).ToArray();
+
+        var tinted = scene.GetDisplayColor(hovered, new HashSet<FaceId>(), hovered);
+        var grey = VertexColors.Default;
+        Assert.Equal([grey.R, grey.G, grey.B], colors[..3]);
+        Assert.Equal([tinted.R, tinted.G, tinted.B], colors[9..12]);
+    }
+
+    [Fact]
+    public void Pick_HitsTheClosestFace_AlsoAfterColourChanges()
+    {
+        var scene = SceneData.Create(_mesh, _ => null);
+        var downwards = new Ray(new Vector3(0.2f, 0.2f, 10f), -Vector3.UnitZ);
+
+        Assert.Equal(new FaceId(1), scene.Pick(downwards)?.Face); // face 1 lies at z = 5, above face 0
+        Assert.Equal(new FaceId(1), scene.WithFaceColors(_ => null).Pick(downwards)?.Face);
+        Assert.Null(scene.Pick(new Ray(new Vector3(5f, 5f, 10f), -Vector3.UnitZ)));
+    }
+
+    [Fact]
+    public void FaceVertexRanges_DescribeTheMesh()
+    {
+        var scene = SceneData.Create(_mesh, _ => null);
+
+        Assert.True(scene.FaceVertexRanges.TryGetRange(new FaceId(1), out var first, out var count));
+        Assert.Equal((3, 3), (first, count));
+    }
+
+    [Fact]
     public void Create_ComputesBounds()
     {
         var scene = SceneData.Create(_mesh, _ => null);

@@ -36,7 +36,15 @@ public class AppOptionsTests
         Assert.Equal(DisplayQuality.Normal, AppOptions.Parse(["model.stp"]).Quality);
     }
 
+    [Fact]
+    public void Parse_HoverFace()
+    {
+        Assert.Equal(7, AppOptions.Parse(["model.stp", "--hover-face", "7"]).HoverFace);
+    }
+
     [Theory]
+    [InlineData("model.stp", "--hover-face", "x")]
+    [InlineData("--hover-face", "3")]
     [InlineData("model.stp", "--quality")]
     [InlineData("model.stp", "--quality", "ultra")]
     [InlineData("model.stp", "--quality", "2")]

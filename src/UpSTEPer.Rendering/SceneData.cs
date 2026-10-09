@@ -2,7 +2,13 @@ using UpSTEPer.Core;
 
 namespace UpSTEPer.Rendering;
 
-/// <summary>Everything the renderer needs for one model: mesh, colours and bounds.</summary>
+/// <summary>
+/// Everything the renderer needs for one model: mesh, colours, bounds, and the picking hierarchy.
+/// </summary>
+/// <remarks>
+/// Creating an instance for a new mesh builds a <see cref="TriangleBvh"/> (tens of milliseconds for
+/// 10⁵ triangles), so do it off the UI thread; <see cref="WithFaceColors"/> reuses it.
+/// </remarks>
 public sealed class SceneData
 {
     private readonly ColorRgb?[] _faceColors;
@@ -11,9 +17,14 @@ public sealed class SceneData
     // Identifies the model across re-meshing and colour edits (see IsSameModel).
     private readonly object _model;
 
-    private SceneData(MeshData mesh, ColorRgb?[] faceColors, BoundingBox bounds, EdgeData edges, object model)
+    // Per-mesh acceleration structures, shared by scenes with the same mesh.
+    private readonly TriangleBvh _bvh;
+
+    private SceneData(MeshData mesh, ColorRgb?[] faceColors, BoundingBox bounds, EdgeData edges, object model, TriangleBvh bvh, FaceVertexRanges ranges)
     {
         _model = model;
+        _bvh = bvh;
+        FaceVertexRanges = ranges;
         Mesh = mesh;
         _faceColors = faceColors;
         _vertexColors = VertexColors.Build(mesh, GetFaceColor);
@@ -26,6 +37,18 @@ public sealed class SceneData
 
     /// <summary>Gets the colour used to highlight the selected face.</summary>
     public static ColorRgb HighlightColor { get; } = ColorRgb.FromHex("#FF8C1A");
+
+    /// <summary>
+    /// Gets the tint mixed into the colour of the face under the pointer: blue reads well on grey
+    /// and coloured faces alike and cannot be confused with the orange selection.
+    /// </summary>
+    public static ColorRgb HoverTint { get; } = ColorRgb.FromHex("#4DA3FF");
+
+    /// <summary>Gets the share of <see cref="HoverTint"/> in the colour of the face under the pointer (0..1).</summary>
+    public static float HoverTintAmount => 0.5f;
+
+    /// <summary>Gets the vertex range of every face, for updating the colours of single faces.</summary>
+    public FaceVertexRanges FaceVertexRanges { get; }
 
     /// <summary>Gets the display mesh.</summary>
     public MeshData Mesh { get; }
@@ -42,7 +65,14 @@ public sealed class SceneData
     {
         ArgumentNullException.ThrowIfNull(mesh);
         ArgumentNullException.ThrowIfNull(faceColor);
-        return new SceneData(mesh, ReadFaceColors(mesh, faceColor), BoundingBox.FromPositions(mesh.Positions.Span), edges ?? EdgeData.Empty, new object());
+        return new SceneData(
+            mesh,
+            ReadFaceColors(mesh, faceColor),
+            BoundingBox.FromPositions(mesh.Positions.Span),
+            edges ?? EdgeData.Empty,
+            new object(),
+            TriangleBvh.Build(mesh),
+            FaceVertexRanges.Build(mesh));
     }
 
     /// <summary>
@@ -54,7 +84,7 @@ public sealed class SceneData
     public SceneData WithFaceColors(Func<FaceId, ColorRgb?> faceColor)
     {
         ArgumentNullException.ThrowIfNull(faceColor);
-        return new SceneData(Mesh, ReadFaceColors(Mesh, faceColor), Bounds, Edges, _model);
+        return new SceneData(Mesh, ReadFaceColors(Mesh, faceColor), Bounds, Edges, _model, _bvh, FaceVertexRanges);
     }
 
     /// <summary>
@@ -68,7 +98,14 @@ public sealed class SceneData
     {
         ArgumentNullException.ThrowIfNull(mesh);
         ArgumentNullException.ThrowIfNull(edges);
-        return new SceneData(mesh, ReadFaceColors(mesh, GetFaceColor), BoundingBox.FromPositions(mesh.Positions.Span), edges, _model);
+        return new SceneData(
+            mesh,
+            ReadFaceColors(mesh, GetFaceColor),
+            BoundingBox.FromPositions(mesh.Positions.Span),
+            edges,
+            _model,
+            TriangleBvh.Build(mesh),
+            FaceVertexRanges.Build(mesh));
     }
 
     /// <summary>
@@ -85,16 +122,49 @@ public sealed class SceneData
     public ColorRgb? GetFaceColor(FaceId face) =>
         face.Value >= 0 && face.Value < _faceColors.Length ? _faceColors[face.Value] : null;
 
-    /// <summary>Gets vertex colours with the <paramref name="highlighted"/> faces drawn in <see cref="HighlightColor"/>.</summary>
-    /// <param name="highlighted">The faces to highlight; empty for none.</param>
-    /// <returns>RGB per vertex.</returns>
-    public ReadOnlyMemory<float> GetVertexColors(IReadOnlySet<FaceId> highlighted)
+    /// <summary>Returns the face under <paramref name="ray"/> (closest hit), or <see langword="null"/>.</summary>
+    /// <param name="ray">The pick ray in model space.</param>
+    /// <returns>The hit, or <see langword="null"/>.</returns>
+    public PickResult? Pick(Ray ray) => _bvh.Pick(ray);
+
+    /// <summary>
+    /// Gets the colour a face is drawn in: <see cref="HighlightColor"/> when highlighted, otherwise
+    /// its model colour (or <see cref="VertexColors.Default"/>), tinted with <see cref="HoverTint"/>
+    /// when it is under the pointer.
+    /// </summary>
+    /// <param name="face">The face.</param>
+    /// <param name="highlighted">The highlighted faces (selection).</param>
+    /// <param name="hovered">The face under the pointer, if any.</param>
+    /// <returns>The display colour.</returns>
+    public ColorRgb GetDisplayColor(FaceId face, IReadOnlySet<FaceId> highlighted, FaceId? hovered)
     {
         ArgumentNullException.ThrowIfNull(highlighted);
-        return highlighted.Count == 0
-            ? _vertexColors
-            : VertexColors.Build(Mesh, f => highlighted.Contains(f) ? HighlightColor : GetFaceColor(f));
+        if (highlighted.Contains(face))
+        {
+            return HighlightColor;
+        }
+
+        var color = GetFaceColor(face) ?? VertexColors.Default;
+        return face == hovered ? Mix(color, HoverTint, HoverTintAmount) : color;
     }
+
+    /// <summary>
+    /// Gets vertex colours with the <paramref name="highlighted"/> faces drawn in <see cref="HighlightColor"/>
+    /// and the <paramref name="hovered"/> face tinted (see <see cref="GetDisplayColor"/>).
+    /// </summary>
+    /// <param name="highlighted">The faces to highlight; empty for none.</param>
+    /// <param name="hovered">The face under the pointer, or <see langword="null"/>.</param>
+    /// <returns>RGB per vertex.</returns>
+    public ReadOnlyMemory<float> GetVertexColors(IReadOnlySet<FaceId> highlighted, FaceId? hovered = null)
+    {
+        ArgumentNullException.ThrowIfNull(highlighted);
+        return highlighted.Count == 0 && hovered is null
+            ? _vertexColors
+            : VertexColors.Build(Mesh, f => GetDisplayColor(f, highlighted, hovered));
+    }
+
+    private static ColorRgb Mix(ColorRgb color, ColorRgb tint, float amount) =>
+        new(color.R + ((tint.R - color.R) * amount), color.G + ((tint.G - color.G) * amount), color.B + ((tint.B - color.B) * amount));
 
     private static ColorRgb?[] ReadFaceColors(MeshData mesh, Func<FaceId, ColorRgb?> faceColor)
     {

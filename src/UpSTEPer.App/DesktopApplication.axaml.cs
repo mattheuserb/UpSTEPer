@@ -72,6 +72,12 @@ internal sealed partial class DesktopApplication : Application
                         viewModel.SelectedFace = new FaceId(face);
                     }
 
+                    viewModel.IsOrthographic |= _options.Orthographic;
+                    if (loaded && _options.View is { } view)
+                    {
+                        window.ModelView.ShowView(view);
+                    }
+
                     window.ModelView.ScreenshotPath = _options.ScreenshotPath;
                 };
             }

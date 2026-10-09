@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
@@ -10,8 +11,10 @@ using Avalonia.Media.Imaging;
 using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
 using Avalonia.Threading;
+using CommunityToolkit.Mvvm.Input;
 using Silk.NET.OpenGL;
 using UpSTEPer.Core;
+using UpSTEPer.Core.Drawing;
 using UpSTEPer.Rendering;
 using AvaloniaPixelFormat = Avalonia.Platform.PixelFormat;
 using GlPixelFormat = Silk.NET.OpenGL.PixelFormat;
@@ -20,7 +23,7 @@ namespace UpSTEPer.App.Controls;
 
 /// <summary>
 /// Interactive 3D view of a <see cref="SceneData"/>: left drag rotates, right or middle drag pans,
-/// the wheel zooms, double-click fits the model.
+/// the wheel zooms, double-click fits the model; standard views via <see cref="ShowViewCommand"/>.
 /// </summary>
 [ExcludeFromCodeCoverage(Justification = "Needs a GPU context; exercised by the viewer screenshot smoke test in CI.")]
 [SuppressMessage(
@@ -45,6 +48,10 @@ internal sealed class ModelView : OpenGlControlBase
     public static readonly StyledProperty<bool> ShowEdgesProperty =
         AvaloniaProperty.Register<ModelView, bool>(nameof(ShowEdges), defaultValue: true);
 
+    /// <summary>Defines the <see cref="IsOrthographic"/> property.</summary>
+    public static readonly StyledProperty<bool> IsOrthographicProperty =
+        AvaloniaProperty.Register<ModelView, bool>(nameof(IsOrthographic));
+
     // A press and release closer than this (in DIPs) is a click, not a drag.
     private const double ClickTolerance = 4;
 
@@ -57,6 +64,9 @@ internal sealed class ModelView : OpenGlControlBase
     private Point _pressPosition;
     private bool _isOrbiting;
     private bool _isPanning;
+
+    /// <summary>Initializes a new instance of the <see cref="ModelView"/> class.</summary>
+    public ModelView() => ShowViewCommand = new RelayCommand<ViewDirection>(ShowView);
 
     /// <summary>Raised on the UI thread after <see cref="ScreenshotPath"/> has been written.</summary>
     public event EventHandler? ScreenshotSaved;
@@ -91,6 +101,19 @@ internal sealed class ModelView : OpenGlControlBase
         get => GetValue(ShowEdgesProperty);
         set => SetValue(ShowEdgesProperty, value);
     }
+
+    /// <summary>Gets or sets a value indicating whether the view uses a parallel (orthographic) projection.</summary>
+    public bool IsOrthographic
+    {
+        get => GetValue(IsOrthographicProperty);
+        set => SetValue(IsOrthographicProperty, value);
+    }
+
+    /// <summary>Gets the command that shows the model from a standard direction (parameter: <see cref="ViewDirection"/>).</summary>
+    public ICommand ShowViewCommand { get; }
+
+    /// <summary>Gets the camera (for tests).</summary>
+    internal OrbitCamera Camera => _camera;
 
     /// <summary>
     /// Gets or sets a PNG path. When set, the first frame showing a scene is saved there once.
@@ -140,6 +163,24 @@ internal sealed class ModelView : OpenGlControlBase
         {
             RequestNextFrameRendering();
         }
+        else if (change.Property == IsOrthographicProperty)
+        {
+            _camera.IsOrthographic = IsOrthographic;
+            RequestNextFrameRendering();
+        }
+    }
+
+    /// <summary>Shows the whole model from a standard direction.</summary>
+    /// <param name="view">The view direction.</param>
+    public void ShowView(ViewDirection view)
+    {
+        _camera.SetView(view);
+        if (Scene is { } scene)
+        {
+            _camera.FitTo(scene.Bounds);
+        }
+
+        RequestNextFrameRendering();
     }
 
     /// <inheritdoc />

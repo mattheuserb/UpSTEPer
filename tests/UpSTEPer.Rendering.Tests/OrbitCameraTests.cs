@@ -1,4 +1,5 @@
 using System.Numerics;
+using UpSTEPer.Core.Drawing;
 
 namespace UpSTEPer.Rendering.Tests;
 
@@ -50,15 +51,137 @@ public class OrbitCameraTests
     }
 
     [Fact]
-    public void Orbit_ClampsPitchBelowPoles()
+    public void Orbit_ClampsPitchAtPoles()
     {
         var camera = new OrbitCamera();
 
         camera.Orbit(0, 100_000);
-        Assert.True(camera.Pitch < MathF.PI / 2f);
+        Assert.Equal(MathF.PI / 2f, camera.Pitch);
 
         camera.Orbit(0, -200_000);
-        Assert.True(camera.Pitch > -MathF.PI / 2f);
+        Assert.Equal(-MathF.PI / 2f, camera.Pitch);
+    }
+
+    // Expected orientation from native/src/drawing.cpp (MakeProjection): normal towards the
+    // viewer and the drawing's x direction; screen up is normal × x.
+    [Theory]
+    [InlineData(ViewDirection.Front, 0, -1, 0, 1, 0, 0)]
+    [InlineData(ViewDirection.Top, 0, 0, 1, 1, 0, 0)]
+    [InlineData(ViewDirection.Left, -1, 0, 0, 0, -1, 0)]
+    [InlineData(ViewDirection.Right, 1, 0, 0, 0, 1, 0)]
+    [InlineData(ViewDirection.Back, 0, 1, 0, -1, 0, 0)]
+    [InlineData(ViewDirection.Bottom, 0, 0, -1, 1, 0, 0)]
+    [InlineData(ViewDirection.Iso, 1, -1, 1, 1, 1, 0)]
+    public void SetView_MatchesDrawingExportOrientation(ViewDirection view, float nx, float ny, float nz, float xx, float xy, float xz)
+    {
+        var camera = new OrbitCamera();
+        var towardsViewer = Vector3.Normalize(new Vector3(nx, ny, nz));
+        var right = Vector3.Normalize(new Vector3(xx, xy, xz));
+
+        camera.SetView(view);
+
+        AssertClose(towardsViewer, -camera.Forward);
+        AssertClose(right, camera.Right);
+        AssertClose(Vector3.Cross(towardsViewer, right), camera.Up);
+    }
+
+    [Fact]
+    public void SetView_UndefinedValue_Throws()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => new OrbitCamera().SetView((ViewDirection)99));
+    }
+
+    [Fact]
+    public void ResetOrientation_IsIsometric()
+    {
+        var camera = new OrbitCamera();
+        camera.Orbit(123, 45);
+
+        camera.ResetOrientation();
+
+        AssertClose(Vector3.Normalize(new Vector3(1, -1, 1)), -camera.Forward);
+    }
+
+    [Fact]
+    public void GetViewProjection_TopView_ShowsPlusYUpAndPlusXRight()
+    {
+        var camera = new OrbitCamera();
+        camera.FitTo(_box);
+        camera.SetView(ViewDirection.Top);
+        var viewProjection = camera.GetViewProjection(1f);
+
+        var above = ToNdc(camera.Target + Vector3.UnitY, viewProjection);
+        var right = ToNdc(camera.Target + Vector3.UnitX, viewProjection);
+
+        Assert.True(above.Y > 0);
+        Assert.Equal(0f, above.X, 4);
+        Assert.True(right.X > 0);
+        Assert.Equal(0f, right.Y, 4);
+    }
+
+    [Fact]
+    public void Pan_TopView_MovesTargetWithinXyPlane()
+    {
+        var camera = new OrbitCamera();
+        camera.FitTo(_box);
+        camera.SetView(ViewDirection.Top);
+        var before = camera.Target;
+
+        camera.Pan(30, 10, 600);
+
+        var moved = camera.Target - before;
+        Assert.True(moved.Length() > 0);
+        Assert.Equal(0f, moved.Z, 4);
+    }
+
+    [Fact]
+    public void GetViewProjection_Orthographic_IgnoresDepth()
+    {
+        var camera = new OrbitCamera { IsOrthographic = true };
+        camera.FitTo(_box);
+        camera.SetView(ViewDirection.Front);
+        var viewProjection = camera.GetViewProjection(4f / 3f);
+
+        var nearPoint = ToNdc(new Vector3(20, -20, 40), viewProjection);
+        var farPoint = ToNdc(new Vector3(20, 20, 40), viewProjection);
+
+        Assert.Equal(nearPoint.X, farPoint.X, 4);
+        Assert.Equal(nearPoint.Y, farPoint.Y, 4);
+    }
+
+    [Fact]
+    public void FitTo_Orthographic_ShowsWholeBoxAfterZoomingIn()
+    {
+        var camera = new OrbitCamera { IsOrthographic = true };
+        camera.FitTo(_box);
+        var viewProjection = camera.GetViewProjection(4f / 3f);
+        foreach (var corner in Corners(_box))
+        {
+            var ndc = ToNdc(corner, viewProjection);
+            Assert.InRange(ndc.X, -1f, 1f);
+            Assert.InRange(ndc.Y, -1f, 1f);
+            Assert.InRange(ndc.Z, 0f, 1f);
+        }
+
+        // Zoomed in to the limit, nothing is clipped in depth.
+        camera.Zoom(1000);
+        viewProjection = camera.GetViewProjection(4f / 3f);
+        Assert.All(Corners(_box), corner => Assert.InRange(ToNdc(corner, viewProjection).Z, 0f, 1f));
+    }
+
+    [Fact]
+    public void CreateRay_Orthographic_IsParallelToViewDirection()
+    {
+        var camera = new OrbitCamera { IsOrthographic = true };
+        camera.FitTo(_box);
+
+        var center = camera.CreateRay(400, 300, 800, 600);
+        var corner = camera.CreateRay(10, 590, 800, 600);
+
+        AssertClose(camera.Forward, center.Direction);
+        AssertClose(camera.Forward, corner.Direction);
+        Assert.Equal(0f, Vector3.Dot(corner.Origin - center.Origin, camera.Forward), 3);
+        Assert.True(Vector3.Distance(corner.Origin, center.Origin) > 1f);
     }
 
     [Fact]
@@ -131,6 +254,15 @@ public class OrbitCameraTests
 
         Assert.True(Vector3.Dot(ray.Direction, right) > 0);
     }
+
+    private static Vector3 ToNdc(Vector3 point, Matrix4x4 viewProjection)
+    {
+        var clip = Vector4.Transform(new Vector4(point, 1f), viewProjection);
+        return new Vector3(clip.X, clip.Y, clip.Z) / clip.W;
+    }
+
+    private static void AssertClose(Vector3 expected, Vector3 actual) =>
+        Assert.True(Vector3.Distance(expected, actual) < 1e-5f, $"Expected {expected}, got {actual}.");
 
     private static IEnumerable<Vector3> Corners(BoundingBox box)
     {

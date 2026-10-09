@@ -1,4 +1,5 @@
 using System.Globalization;
+using UpSTEPer.Core.Drawing;
 
 namespace UpSTEPer.App;
 
@@ -9,12 +10,17 @@ namespace UpSTEPer.App;
 /// and exits (exit code 0 on success). Used to verify rendering without looking at the window.
 /// </param>
 /// <param name="SelectFace">A face to select after loading (verifies the selection highlight).</param>
-internal sealed record AppOptions(string? FilePath, string? ScreenshotPath, int? SelectFace)
+/// <param name="View">A standard view to show after loading.</param>
+/// <param name="Orthographic">Whether to start with the orthographic projection.</param>
+internal sealed record AppOptions(
+    string? FilePath, string? ScreenshotPath, int? SelectFace, ViewDirection? View = null, bool Orthographic = false)
 {
     /// <summary>Gets options for a plain start without arguments.</summary>
     public static AppOptions Default { get; } = new(null, null, null);
 
-    /// <summary>Parses <c>[file] [--screenshot &lt;png&gt;] [--select-face &lt;id&gt;]</c>.</summary>
+    /// <summary>
+    /// Parses <c>[file] [--screenshot &lt;png&gt;] [--select-face &lt;id&gt;] [--view &lt;front|back|left|right|top|bottom|iso&gt;] [--ortho]</c>.
+    /// </summary>
     /// <param name="args">The command-line arguments.</param>
     /// <returns>The options.</returns>
     /// <exception cref="ArgumentException">The arguments are malformed.</exception>
@@ -25,6 +31,8 @@ internal sealed record AppOptions(string? FilePath, string? ScreenshotPath, int?
         string? file = null;
         string? screenshot = null;
         int? selectFace = null;
+        ViewDirection? view = null;
+        var orthographic = false;
         for (var i = 0; i < args.Count; i++)
         {
             switch (args[i])
@@ -37,6 +45,13 @@ internal sealed record AppOptions(string? FilePath, string? ScreenshotPath, int?
                         ? id
                         : throw new ArgumentException("--select-face requires a non-negative integer.", nameof(args));
                     break;
+                case "--view":
+                    view = ParseView(Value(args, ++i, "--view requires a view name."))
+                        ?? throw new ArgumentException("--view must be front, back, left, right, top, bottom or iso.", nameof(args));
+                    break;
+                case "--ortho":
+                    orthographic = true;
+                    break;
                 default:
                     file = args[i];
                     break;
@@ -48,8 +63,14 @@ internal sealed record AppOptions(string? FilePath, string? ScreenshotPath, int?
             throw new ArgumentException("--screenshot and --select-face require a STEP file.", nameof(args));
         }
 
-        return new AppOptions(file, screenshot, selectFace);
+        return new AppOptions(file, screenshot, selectFace, view, orthographic);
     }
+
+    // Names only: Enum.TryParse would also accept numbers such as "1".
+    private static ViewDirection? ParseView(string name) =>
+        name.Length > 0 && name.All(char.IsAsciiLetter) && Enum.TryParse<ViewDirection>(name, ignoreCase: true, out var view)
+            ? view
+            : null;
 
     private static string Value(IReadOnlyList<string> args, int index, string error) =>
         index < args.Count ? args[index] : throw new ArgumentException(error, nameof(args));

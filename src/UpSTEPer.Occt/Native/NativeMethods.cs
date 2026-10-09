@@ -256,6 +256,7 @@ internal struct NativeTessellationParams
 {
     public double LinearDeflection;
     public double AngularDeflection;
+    public double MinSize;
     public int Relative;
 }
 

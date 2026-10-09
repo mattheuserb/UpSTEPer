@@ -198,6 +198,7 @@ internal sealed class OcctStepDocument : IStepDocument
         {
             LinearDeflection = options.LinearDeflection,
             AngularDeflection = options.AngularDeflectionRadians,
+            MinSize = options.MinSize ?? 0,
             Relative = options.IsRelative ? 1 : 0,
         };
 

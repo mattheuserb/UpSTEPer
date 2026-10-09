@@ -21,10 +21,10 @@ public class TessellationOptionsTests
     }
 
     [Theory]
-    [InlineData(DisplayQuality.Coarse, 0.2, 0.5)]
-    [InlineData(DisplayQuality.Normal, 0.05, 0.2)]
-    [InlineData(DisplayQuality.Fine, 0.01, 0.05)]
-    public void ForModel_ScalesChordToleranceWithModelSize(DisplayQuality quality, double linearAt100, double angular)
+    [InlineData(DisplayQuality.Coarse, 0.2, 0.5, 0.2)]
+    [InlineData(DisplayQuality.Normal, 0.05, 0.2, 0.1)]
+    [InlineData(DisplayQuality.Fine, 0.01, 0.1, 0.05)]
+    public void ForModel_ScalesToleranceAndMinSizeWithModelSize(DisplayQuality quality, double linearAt100, double angular, double minSizeAt100)
     {
         // Diagonal of a 60 x 80 x 0 box: 100 mm.
         var options = TessellationOptions.ForModel(quality, new ModelBounds(0, 0, 0, 60, 80, 0));
@@ -33,7 +33,18 @@ public class TessellationOptionsTests
         Assert.Equal(linearAt100, options.LinearDeflection, 9);
         Assert.Equal(linearAt100 * 100, large.LinearDeflection, 6);
         Assert.Equal(angular, options.AngularDeflectionRadians);
+        Assert.Equal(minSizeAt100, options.MinSize!.Value, 9);
+        Assert.Equal(minSizeAt100 * 100, large.MinSize!.Value, 6);
         Assert.False(options.IsRelative);
+    }
+
+    [Fact]
+    public void MinSize_DefaultsToKernelChoice_AndRejectsInvalidValues()
+    {
+        Assert.Null(TessellationOptions.Default.MinSize);
+        Assert.Equal(0.5, (TessellationOptions.Default with { MinSize = 0.5 }).MinSize);
+        Assert.Throws<ArgumentOutOfRangeException>(() => TessellationOptions.Default with { MinSize = 0 });
+        Assert.Throws<ArgumentOutOfRangeException>(() => TessellationOptions.Default with { MinSize = double.NaN });
     }
 
     [Fact]

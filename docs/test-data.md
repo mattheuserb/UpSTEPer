@@ -61,6 +61,17 @@ ignored. Nothing in the test suite requires them; they are for performance measu
   AP203). Originally "Scania V8 XT Turbo Engine" by Ivo Jardim on GrabCAD, Autodesk Inventor.
 - Licence: none stated; GrabCAD library terms apply. Use locally only, never commit.
 - Download: `curl -L -o examples/local/Scania-Engine-V8-XT-Turbo.step <url above>`
+- Content: 1,295 solids, 71,873 faces, 184,576 edges, 2,593 tree nodes; 2.47 m diagonal.
+
+Measurements (2026-10-09, Windows 11, 11th Gen Intel(R) Core(TM) i9-11900H @ 2.50GHz, 32 GB RAM, OCCT 8.0.1, Release build):
+
+| Step | Time | Result |
+|---|---|---|
+| Load (read 13 s + transfer 46 s) | 59 s | 0.5 GB working set |
+| Bounds from edges | 0.35 s | 2,474 mm (`AddOptimal`: same, 141 s; `Add` on faces: 11,825 mm) |
+| Coarse / Normal / Fine | 7.6 / 8.4 / 11.9 s | 1.3 / 2.7 / 6.9 million triangles |
+| Normal without minimum size | 12.9 s | 12.1 million triangles (old Fine: 100 million, 140 s, 7.5 GB) |
+| BVH build (7.8 million triangles) | 1.8 s | picking 21 µs (brute force 82 ms) |
 
 ## Wanted
 

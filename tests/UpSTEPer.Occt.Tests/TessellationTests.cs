@@ -4,6 +4,18 @@ namespace UpSTEPer.Occt.Tests;
 
 public class TessellationTests
 {
+    private static double Diagonal(float[] positions)
+    {
+        var (min, max) = (new double[] { double.MaxValue, double.MaxValue, double.MaxValue }, new double[] { double.MinValue, double.MinValue, double.MinValue });
+        for (var i = 0; i < positions.Length; i++)
+        {
+            min[i % 3] = Math.Min(min[i % 3], positions[i]);
+            max[i % 3] = Math.Max(max[i % 3], positions[i]);
+        }
+
+        return Math.Sqrt(Enumerable.Range(0, 3).Sum(axis => (max[axis] - min[axis]) * (max[axis] - min[axis])));
+    }
+
     private readonly OcctStepReader _reader = new();
 
     [Fact]
@@ -79,6 +91,35 @@ public class TessellationTests
             Assert.InRange(positions[i], bounds.MinX - tolerance, bounds.MaxX + tolerance);
             Assert.InRange(positions[i + 1], bounds.MinY - tolerance, bounds.MaxY + tolerance);
             Assert.InRange(positions[i + 2], bounds.MinZ - tolerance, bounds.MaxZ + tolerance);
+        }
+    }
+
+    [Fact]
+    public void Tessellate_LargerMinSize_ProducesFewerTriangles()
+    {
+        TestFiles.RequireNativeLibrary();
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
+        var fine = TessellationOptions.Fine;
+
+        var unlimited = document.Tessellate(fine, cancellationToken: TestContext.Current.CancellationToken);
+        var limited = document.Tessellate(fine with { MinSize = 1.0 }, cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(limited.TriangleCount < unlimited.TriangleCount / 2, $"unlimited={unlimited.TriangleCount}, limited={limited.TriangleCount}");
+    }
+
+    [Fact]
+    public void Bounds_MatchTheMeshTightly()
+    {
+        // The box comes from the edges; it must not be inflated by surface control points.
+        TestFiles.RequireNativeLibrary();
+        foreach (var file in new[] { TestFiles.CableGland, TestFiles.TestAssembly })
+        {
+            using var document = _reader.Load(file, cancellationToken: TestContext.Current.CancellationToken);
+            var bounds = document.Bounds!;
+            var positions = document.Tessellate(TessellationOptions.Fine, cancellationToken: TestContext.Current.CancellationToken).Positions.ToArray();
+
+            var meshDiagonal = Diagonal(positions);
+            Assert.InRange(bounds.Diagonal, meshDiagonal * 0.99, meshDiagonal * 1.01);
         }
     }
 

@@ -1,9 +1,10 @@
 using System.Numerics;
+using UpSTEPer.Core.Drawing;
 
 namespace UpSTEPer.Rendering;
 
 /// <summary>
-/// A perspective camera orbiting a target point, with Z as the up axis (CAD convention).
+/// A camera orbiting a target point, with Z as the up axis (CAD convention); perspective or orthographic.
 /// </summary>
 /// <remarks>
 /// Matrices follow System.Numerics conventions (row vectors). Uploaded to OpenGL without
@@ -11,8 +12,13 @@ namespace UpSTEPer.Rendering;
 /// </remarks>
 public sealed class OrbitCamera
 {
-    private const float MaxPitch = (MathF.PI / 2f) - 0.01f;
+    // The poles are reachable (exact top and bottom views): Up is derived from yaw and pitch,
+    // so it never becomes parallel to the view direction.
+    private const float MaxPitch = MathF.PI / 2f;
     private const float RadiansPerPixel = 0.01f;
+
+    // Elevation of the isometric view direction (1, -1, 1): atan(1 / sqrt(2)), about 35.26°.
+    private static readonly float _isoPitch = MathF.Atan(1f / MathF.Sqrt(2f));
 
     private float _radius = BoundingBox.Unit.Radius;
 
@@ -26,10 +32,16 @@ public sealed class OrbitCamera
     public float Distance { get; private set; } = 3f;
 
     /// <summary>Gets the rotation around the Z axis in radians.</summary>
-    public float Yaw { get; private set; } = -MathF.PI / 3f;
+    public float Yaw { get; private set; } = -MathF.PI / 4f;
 
     /// <summary>Gets the elevation above the XY plane in radians.</summary>
-    public float Pitch { get; private set; } = MathF.PI / 6f;
+    public float Pitch { get; private set; } = _isoPitch;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the projection is orthographic (parallel, no
+    /// perspective). The visible height at the target is the same in both projections.
+    /// </summary>
+    public bool IsOrthographic { get; set; }
 
     /// <summary>Gets the camera position.</summary>
     public Vector3 Position => Target + (Distance * Forward * -1f);
@@ -45,6 +57,20 @@ public sealed class OrbitCamera
         }
     }
 
+    /// <summary>Gets the unit screen-up direction, perpendicular to <see cref="Forward"/>.</summary>
+    public Vector3 Up
+    {
+        get
+        {
+            var (sinYaw, cosYaw) = MathF.SinCos(Yaw);
+            var (sinPitch, cosPitch) = MathF.SinCos(Pitch);
+            return new Vector3(-sinPitch * cosYaw, -sinPitch * sinYaw, cosPitch);
+        }
+    }
+
+    /// <summary>Gets the unit screen-right direction.</summary>
+    public Vector3 Right => Vector3.Cross(Forward, Up);
+
     /// <summary>Frames <paramref name="bounds"/> so the whole model is visible, keeping the view direction.</summary>
     /// <param name="bounds">The model bounds.</param>
     public void FitTo(BoundingBox bounds)
@@ -54,11 +80,28 @@ public sealed class OrbitCamera
         Distance = _radius / MathF.Sin(FieldOfView / 2f) * 1.1f;
     }
 
-    /// <summary>Resets to the default isometric-like view direction.</summary>
-    public void ResetOrientation()
+    /// <summary>Resets to the default view direction (<see cref="ViewDirection.Iso"/>).</summary>
+    public void ResetOrientation() => SetView(ViewDirection.Iso);
+
+    /// <summary>
+    /// Looks at the target from a standard direction, oriented like the 2D views of the drawing
+    /// export (front: X right, Z up; top: X right, Y up; iso: from front-right-top).
+    /// </summary>
+    /// <param name="view">The view direction.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="view"/> is not defined.</exception>
+    public void SetView(ViewDirection view)
     {
-        Yaw = -MathF.PI / 3f;
-        Pitch = MathF.PI / 6f;
+        (Yaw, Pitch) = view switch
+        {
+            ViewDirection.Front => (-MathF.PI / 2f, 0f),
+            ViewDirection.Back => (MathF.PI / 2f, 0f),
+            ViewDirection.Left => (MathF.PI, 0f),
+            ViewDirection.Right => (0f, 0f),
+            ViewDirection.Top => (-MathF.PI / 2f, MaxPitch),
+            ViewDirection.Bottom => (-MathF.PI / 2f, -MaxPitch),
+            ViewDirection.Iso => (-MathF.PI / 4f, _isoPitch),
+            _ => throw new ArgumentOutOfRangeException(nameof(view), view, "Unknown view direction."),
+        };
     }
 
     /// <summary>Rotates around the target by a mouse movement.</summary>
@@ -83,10 +126,8 @@ public sealed class OrbitCamera
     /// <param name="viewportHeight">Viewport height in pixels.</param>
     public void Pan(float deltaX, float deltaY, float viewportHeight)
     {
-        var unitsPerPixel = 2f * Distance * MathF.Tan(FieldOfView / 2f) / MathF.Max(viewportHeight, 1f);
-        var right = Vector3.Normalize(Vector3.Cross(Forward, Vector3.UnitZ));
-        var up = Vector3.Cross(right, Forward);
-        Target += ((-deltaX * right) + (deltaY * up)) * unitsPerPixel;
+        var unitsPerPixel = VisibleHeight / MathF.Max(viewportHeight, 1f);
+        Target += ((-deltaX * Right) + (deltaY * Up)) * unitsPerPixel;
     }
 
     /// <summary>Creates the ray through a viewport position, for picking.</summary>
@@ -117,12 +158,27 @@ public sealed class OrbitCamera
     /// <returns>The matrix.</returns>
     public Matrix4x4 GetViewProjection(float aspectRatio)
     {
-        var view = Matrix4x4.CreateLookAt(Position, Target, Vector3.UnitZ);
-        var near = MathF.Max(Distance - (_radius * 2f), Distance * 0.01f);
+        var view = Matrix4x4.CreateLookAt(Position, Target, Up);
+        var aspect = MathF.Max(aspectRatio, 1e-3f);
         var far = Distance + (_radius * 2f);
-        var projection = Matrix4x4.CreatePerspectiveFieldOfView(FieldOfView, MathF.Max(aspectRatio, 1e-3f), near, far);
+        Matrix4x4 projection;
+        if (IsOrthographic)
+        {
+            // No perspective, so the near plane may lie behind the camera: the whole model stays
+            // visible however far the view is zoomed in.
+            projection = Matrix4x4.CreateOrthographic(VisibleHeight * aspect, VisibleHeight, Distance - (_radius * 2f), far);
+        }
+        else
+        {
+            var near = MathF.Max(Distance - (_radius * 2f), Distance * 0.01f);
+            projection = Matrix4x4.CreatePerspectiveFieldOfView(FieldOfView, aspect, near, far);
+        }
+
         return view * projection;
     }
+
+    // Height of the visible area in the plane through the target, perpendicular to the view.
+    private float VisibleHeight => 2f * Distance * MathF.Tan(FieldOfView / 2f);
 
     private static Vector3 Unproject(Vector4 ndc, Matrix4x4 inverseViewProjection)
     {

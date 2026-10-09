@@ -33,6 +33,10 @@ internal static partial class NativeMethods
     internal static unsafe partial NativeStatus DocumentLoadStepWithProgress(
         string utf8Path, delegate* unmanaged[Cdecl]<nint, double, byte*, int> callback, nint userData, out DocumentSafeHandle document);
 
+    [LibraryImport(LibraryName, EntryPoint = "ups_set_message_handler")]
+    internal static unsafe partial NativeStatus SetMessageHandler(
+        delegate* unmanaged[Cdecl]<nint, NativeMessageLevel, byte*, void> callback, nint userData, NativeMessageLevel minLevel);
+
     [LibraryImport(LibraryName, EntryPoint = "ups_document_free")]
     internal static partial void DocumentFree(nint document);
 
@@ -146,6 +150,16 @@ internal enum NativeStatus
     FileWrite = 6,
     Cancelled = 7,
     Internal = 99,
+}
+
+/// <summary>Mirrors <c>ups_message_level</c>.</summary>
+internal enum NativeMessageLevel
+{
+    Trace = 0,
+    Info = 1,
+    Warning = 2,
+    Alarm = 3,
+    Fail = 4,
 }
 
 /// <summary>Mirrors <c>ups_target_kind</c>.</summary>

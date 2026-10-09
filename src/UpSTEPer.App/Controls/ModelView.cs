@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Windows.Input;
@@ -12,6 +11,8 @@ using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Silk.NET.OpenGL;
 using UpSTEPer.Core;
 using UpSTEPer.Core.Drawing;
@@ -30,7 +31,7 @@ namespace UpSTEPer.App.Controls;
     "Reliability",
     "CA1001:Types that own disposable fields should be disposable",
     Justification = "GL resources can only be released with the GL context current, which Avalonia guarantees in OnOpenGlDeinit; a Dispose() could not release them.")]
-internal sealed class ModelView : OpenGlControlBase
+internal sealed partial class ModelView : OpenGlControlBase
 {
     /// <summary>Defines the <see cref="Scene"/> property.</summary>
     public static readonly StyledProperty<SceneData?> SceneProperty =
@@ -111,6 +112,9 @@ internal sealed class ModelView : OpenGlControlBase
 
     /// <summary>Gets the command that shows the model from a standard direction (parameter: <see cref="ViewDirection"/>).</summary>
     public ICommand ShowViewCommand { get; }
+
+    /// <summary>Gets or sets the logger for OpenGL diagnostics (set by the composition root).</summary>
+    public ILogger Logger { get; set; } = NullLogger.Instance;
 
     /// <summary>Gets the camera (for tests).</summary>
     internal OrbitCamera Camera => _camera;
@@ -200,14 +204,12 @@ internal sealed class ModelView : OpenGlControlBase
     {
         ArgumentNullException.ThrowIfNull(gl);
         _gl = GL.GetApi(gl.GetProcAddress);
-        Trace.TraceInformation(
-            "OpenGL context {0} {1}.{2}: {3} | {4} | GLSL {5}",
-            GlVersion.Type,
-            GlVersion.Major,
-            GlVersion.Minor,
-            _gl.GetStringS(StringName.Version),
-            _gl.GetStringS(StringName.Renderer),
-            _gl.GetStringS(StringName.ShadingLanguageVersion));
+        // Logged once per context; reading the strings is cheap compared to creating the context.
+        var context = $"{GlVersion.Type} {GlVersion.Major}.{GlVersion.Minor}";
+        var version = _gl.GetStringS(StringName.Version);
+        var renderer = _gl.GetStringS(StringName.Renderer);
+        var shadingLanguage = _gl.GetStringS(StringName.ShadingLanguageVersion);
+        LogGlContext(Logger, context, version, renderer, shadingLanguage);
 
         try
         {
@@ -217,7 +219,7 @@ internal sealed class ModelView : OpenGlControlBase
         catch (InvalidOperationException exception)
         {
             // Shader compile/link errors: report instead of silently showing nothing.
-            Trace.TraceError("Renderer initialisation failed: {0}", exception.Message);
+            LogRendererFailed(Logger, exception);
             Dispatcher.UIThread.Post(() => RenderingFailed?.Invoke(this, new RenderingFailedEventArgs(exception.Message)));
         }
     }
@@ -363,6 +365,12 @@ internal sealed class ModelView : OpenGlControlBase
         _camera.Zoom((float)e.Delta.Y);
         RequestNextFrameRendering();
     }
+
+    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "OpenGL context {Context}: {Version} | {Renderer} | GLSL {ShadingLanguage}")]
+    private static partial void LogGlContext(ILogger logger, string context, string version, string renderer, string shadingLanguage);
+
+    [LoggerMessage(EventId = 2, Level = LogLevel.Error, Message = "Renderer initialisation failed")]
+    private static partial void LogRendererFailed(ILogger logger, Exception exception);
 
     private unsafe void SaveScreenshot(string path, int width, int height)
     {

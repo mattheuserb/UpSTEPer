@@ -58,6 +58,12 @@ Never reference OCCT or native types from Core. UI projects (planned) depend on 
 4. Expose it through a Core interface; translate status codes with `NativeError.ThrowIfFailed`.
 5. Add an integration test in `tests/UpSTEPer.Occt.Tests` using a file from `examples/`.
 
+## Tools
+
+- `.mcp.json` registers the Avalonia documentation MCP server (`avalonia-docs`,
+  https://docs-mcp.avaloniaui.net/mcp). Consult it for Avalonia APIs and behaviour (Avalonia 12 changed
+  much) before guessing or decompiling; approve it once when Claude Code asks.
+
 ## Conventions
 
 - .NET: Framework Design Guidelines; file-scoped namespaces; nullable enabled; XML docs on all

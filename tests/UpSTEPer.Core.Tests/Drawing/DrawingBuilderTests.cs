@@ -60,6 +60,8 @@ public class DrawingBuilderTests
 
         public IReadOnlyList<ModelNode> GetModelTree() => [];
 
+        public IReadOnlyList<PartCheck> Check(double tolerance = 0.01) => [];
+
         public BodyId? GetBodyOfFace(FaceId faceId) => null;
 
         public ColorRgb? GetAssignedColor(ColorTarget target) => null;

@@ -15,6 +15,12 @@ internal static class TestFiles
     public static string TestAssembly => Path.Combine(_repoRoot.Value, "examples", "generated", "test-assembly.stp");
 
     /// <summary>
+    /// Generated parts with one defect each (native/tools/make_damaged_parts.cpp): Healthy box,
+    /// Unsewn box (loose faces, gap), Split cylinder (side in 4 faces), Spline cylinder (B-splines).
+    /// </summary>
+    public static string DamagedParts => Path.Combine(_repoRoot.Value, "examples", "generated", "damaged-parts.stp");
+
+    /// <summary>
     /// Skips the current test when upsteper_native has not been built. When the environment
     /// variable <c>UPS_REQUIRE_NATIVE=1</c> is set (CI), a missing library fails the test instead.
     /// </summary>

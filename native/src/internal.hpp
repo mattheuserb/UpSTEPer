@@ -103,6 +103,9 @@ bool FindOccurrence(const ups_document& document, const TopoDS_Shape& located, P
 // so it can be coloured without affecting other occurrences. Keeps all face and body ids.
 void MakeOccurrenceUnique(ups_document& document, const PartInstance& instance);
 
+// UTF-8 name of a label (TDataStd_Name), empty when unnamed (tree.cpp).
+std::string NameOf(const TDF_Label& label);
+
 // Recomputes ups_document::faceColors from the XDE colour attributes (instances.cpp).
 void ResolveFaceColors(ups_document& document);
 

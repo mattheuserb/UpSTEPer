@@ -16,6 +16,7 @@ add_library(upsteper_native SHARED
     src/error.cpp
     src/document.cpp
     src/mesh.cpp
+    src/check.cpp
     src/progress.cpp
     src/appearance.cpp
     src/step_export.cpp
@@ -52,6 +53,9 @@ if(UPS_BUILD_TOOLS)
     add_executable(upsteper_make_test_assembly tools/make_test_assembly.cpp)
     target_include_directories(upsteper_make_test_assembly PRIVATE ${OpenCASCADE_INCLUDE_DIR})
     target_link_libraries(upsteper_make_test_assembly PRIVATE ${OpenCASCADE_LIBRARIES})
+    add_executable(upsteper_make_damaged_parts tools/make_damaged_parts.cpp)
+    target_include_directories(upsteper_make_damaged_parts PRIVATE ${OpenCASCADE_INCLUDE_DIR})
+    target_link_libraries(upsteper_make_damaged_parts PRIVATE ${OpenCASCADE_LIBRARIES})
 endif()
 
 # Locate OCCT and its dependencies next to our library at runtime.

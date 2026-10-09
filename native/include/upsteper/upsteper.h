@@ -229,6 +229,40 @@ UPS_API ups_status ups_tree_get_info(const ups_tree* tree, int32_t* out_node_cou
 UPS_API ups_status ups_tree_copy(
     const ups_tree* tree, ups_tree_node* nodes, int64_t nodes_capacity, char* names, int64_t names_capacity);
 
+/* ----------------------------------------------------------------- check -- */
+
+typedef struct ups_check ups_check;
+
+/** Defects found in one part definition (counted once, however often it is placed). */
+typedef struct ups_part_check
+{
+    int32_t solid_count;
+    int32_t face_count;
+    int32_t free_edges;      /* edges bounding only one face: gaps or open shells (sewing) */
+    int32_t invalid_shapes;  /* faces, edges, vertices BRepCheck reports invalid (>= 1 if invalid) */
+    int32_t spline_faces;    /* faces on B-spline or Bezier surfaces */
+    int32_t canonical_faces; /* of those: planes, cylinders, cones, spheres within tolerance */
+    int32_t mergeable_faces; /* faces that disappear when same-surface neighbours are merged */
+    int32_t small_edges;     /* edges shorter than the tolerance */
+    int32_t failed_checks;   /* sub-checks that threw (broken geometry); the others still ran */
+    int32_t name_offset;     /* UTF-8 part name in the names buffer (not zero-terminated) */
+    int32_t name_length;     /* in bytes; 0 = unnamed */
+} ups_part_check;
+
+/**
+ * Checks every part definition for typical defects (read-only). tolerance (mm) is used for
+ * canonical recognition and small edges; 0.01 is a sensible default. Spline recognition and
+ * face merging are tried on copies and can take a while on large models.
+ */
+UPS_API ups_status ups_document_check(const ups_document* document, double tolerance, ups_check** out_check);
+
+UPS_API void ups_check_free(ups_check* check);
+
+UPS_API ups_status ups_check_get_info(const ups_check* check, int32_t* out_part_count, int32_t* out_names_length);
+
+UPS_API ups_status ups_check_copy(
+    const ups_check* check, ups_part_check* parts, int64_t parts_capacity, char* names, int64_t names_capacity);
+
 /* --------------------------------------------------------------- drawing -- */
 
 typedef struct ups_drawing ups_drawing;

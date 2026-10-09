@@ -57,6 +57,10 @@ internal sealed class FakeStepDocument : IStepDocument
         ]),
     ];
 
+    public IReadOnlyList<PartCheck> CheckResult { get; set; } = [];
+
+    public IReadOnlyList<PartCheck> Check(double tolerance = 0.01) => CheckResult;
+
     public BodyId? GetBodyOfFace(FaceId faceId) => new BodyId(0);
 
     public ColorRgb? GetAssignedColor(ColorTarget target) => AssignedColors.GetValueOrDefault(target);

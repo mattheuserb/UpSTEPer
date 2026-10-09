@@ -80,6 +80,9 @@ Linux and macOS from CI-built binaries.
 
 ## M4 — Repair, tiers 1–2
 
+- [x] Generated test file with one defect per part (`examples/generated/damaged-parts.stp`)
+- [x] Check per part definition (free edges, invalid shapes, canonical splines, mergeable faces,
+  small edges; failures isolated per sub-check): native `ups_document_check`, CLI `check`
 - Healing pipeline with a change report; canonical recognition of spline geometry
 - Colour preservation through `BRepTools_History`
 - CLI: `upsteper repair <in> <out> --report`

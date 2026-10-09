@@ -18,6 +18,7 @@ var rootCommand = new RootCommand("UpSTEPer - view, colour, repair and convert S
 {
     InfoCommand.Create(reader, Console.Out, Console.Error, progress),
     PaintCommand.Create(reader, Console.Out, Console.Error, progress),
+    CheckCommand.Create(reader, Console.Out, Console.Error, progress),
     ExportDxfCommand.Create(reader, Console.Out, Console.Error, progress),
     RuntimeCommand.Create(Console.Out),
 };

@@ -85,6 +85,19 @@ internal static partial class NativeMethods
     [LibraryImport(LibraryName, EntryPoint = "ups_document_get_tree")]
     internal static partial NativeStatus DocumentGetTree(DocumentSafeHandle document, out TreeSafeHandle tree);
 
+    [LibraryImport(LibraryName, EntryPoint = "ups_document_check")]
+    internal static partial NativeStatus DocumentCheck(DocumentSafeHandle document, double tolerance, out CheckSafeHandle check);
+
+    [LibraryImport(LibraryName, EntryPoint = "ups_check_free")]
+    internal static partial void CheckFree(nint check);
+
+    [LibraryImport(LibraryName, EntryPoint = "ups_check_get_info")]
+    internal static partial NativeStatus CheckGetInfo(CheckSafeHandle check, out int partCount, out int namesLength);
+
+    [LibraryImport(LibraryName, EntryPoint = "ups_check_copy")]
+    internal static unsafe partial NativeStatus CheckCopy(
+        CheckSafeHandle check, NativePartCheck* parts, long partsCapacity, byte* names, long namesCapacity);
+
     [LibraryImport(LibraryName, EntryPoint = "ups_tree_free")]
     internal static partial void TreeFree(nint tree);
 
@@ -177,6 +190,23 @@ internal enum NativeTargetKind
 {
     Face = 0,
     Body = 1,
+}
+
+/// <summary>Mirrors <c>ups_tree_node</c>.</summary>
+[StructLayout(LayoutKind.Sequential)]
+internal struct NativePartCheck
+{
+    public int SolidCount;
+    public int FaceCount;
+    public int FreeEdges;
+    public int InvalidShapes;
+    public int SplineFaces;
+    public int CanonicalFaces;
+    public int MergeableFaces;
+    public int SmallEdges;
+    public int FailedChecks;
+    public int NameOffset;
+    public int NameLength;
 }
 
 /// <summary>Mirrors <c>ups_tree_node</c>.</summary>

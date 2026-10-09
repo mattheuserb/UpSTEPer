@@ -47,6 +47,8 @@ internal sealed class FakeDocument(bool twoBodies = false) : IStepDocument
         ]
         : [new ModelNode("Fake part", ModelNodeKind.Part, null, [new ModelNode("Fake part", ModelNodeKind.Body, new BodyId(0), [])])];
 
+    public IReadOnlyList<PartCheck> Check(double tolerance = 0.01) => [];
+
     public BodyId? GetBodyOfFace(FaceId faceId) => new BodyId(twoBodies ? faceId.Value : 0);
 
     public ColorRgb? GetAssignedColor(ColorTarget target) => _assigned.TryGetValue(target, out var color) ? color : null;

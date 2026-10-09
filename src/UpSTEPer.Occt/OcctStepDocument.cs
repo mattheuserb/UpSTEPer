@@ -1,3 +1,4 @@
+using System.Text;
 using UpSTEPer.Core;
 using UpSTEPer.Core.Drawing;
 using UpSTEPer.Occt.Native;
@@ -48,6 +49,43 @@ internal sealed class OcctStepDocument : IStepDocument
         NativeError.ThrowIfFailed(status, "Reading face colour");
 
         return hasColor != 0 ? ToColor(color) : null;
+    }
+
+    public IReadOnlyList<PartCheck> Check(double tolerance = 0.01)
+    {
+        ThrowIfDisposed();
+        if (!double.IsFinite(tolerance) || tolerance <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(tolerance), tolerance, "Tolerance must be a positive, finite number.");
+        }
+
+        NativeError.ThrowIfFailed(NativeMethods.DocumentCheck(_handle, tolerance, out var check), "Checking the model");
+        using (check)
+        {
+            NativeError.ThrowIfFailed(NativeMethods.CheckGetInfo(check, out var partCount, out var namesLength), "Reading check info");
+            var parts = new NativePartCheck[partCount];
+            var names = new byte[namesLength];
+            unsafe
+            {
+                fixed (NativePartCheck* partsPtr = parts)
+                fixed (byte* namesPtr = names)
+                {
+                    NativeError.ThrowIfFailed(NativeMethods.CheckCopy(check, partsPtr, parts.Length, namesPtr, names.Length), "Copying check results");
+                }
+            }
+
+            return [.. parts.Select(p => new PartCheck(
+                Encoding.UTF8.GetString(names, p.NameOffset, p.NameLength),
+                p.SolidCount,
+                p.FaceCount,
+                p.FreeEdges,
+                p.InvalidShapes,
+                p.SplineFaces,
+                p.CanonicalFaces,
+                p.MergeableFaces,
+                p.SmallEdges,
+                p.FailedChecks))];
+        }
     }
 
     public IReadOnlyList<ModelNode> GetModelTree()
@@ -288,7 +326,7 @@ internal sealed class OcctStepDocument : IStepDocument
         ModelNode Create(int index)
         {
             var node = nodes[index];
-            var name = System.Text.Encoding.UTF8.GetString(names, node.NameOffset, node.NameLength);
+            var name = Encoding.UTF8.GetString(names, node.NameOffset, node.NameLength);
             var body = node.Kind == (int)ModelNodeKind.Body && node.BodyId >= 0 ? new BodyId(node.BodyId) : (BodyId?)null;
             return new ModelNode(name, (ModelNodeKind)node.Kind, body, [.. children[index].Select(Create)]);
         }

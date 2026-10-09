@@ -10,6 +10,9 @@ namespace UpSTEPer.Core;
 /// </remarks>
 public sealed record TessellationOptions
 {
+    // Smallest chord tolerance ForModel uses (mm), so tiny or empty models stay cheap to mesh.
+    private const double MinimumModelDeflection = 1e-3;
+
     /// <summary>Initializes a new instance of the <see cref="TessellationOptions"/> class.</summary>
     /// <param name="linearDeflection">Maximum chord deviation in model units (mm), or a ratio when <paramref name="isRelative"/>.</param>
     /// <param name="angularDeflectionRadians">Maximum angle between adjacent segments, in radians.</param>
@@ -30,6 +33,30 @@ public sealed record TessellationOptions
 
     /// <summary>Gets a high display quality (~3° per segment).</summary>
     public static TessellationOptions Fine { get; } = new(0.01, 0.05);
+
+    /// <summary>
+    /// Gets display options for a model: the chord tolerance scales with the model size, so a
+    /// quality level looks alike on a 3 mm part and a 3 m assembly (without the triangle count
+    /// of a fixed millimetre tolerance exploding on large models).
+    /// </summary>
+    /// <param name="quality">The quality level.</param>
+    /// <param name="bounds">The model bounds, or <see langword="null"/> when unknown (uses the fixed presets).</param>
+    /// <returns>The options.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="quality"/> is not defined.</exception>
+    public static TessellationOptions ForModel(DisplayQuality quality, ModelBounds? bounds)
+    {
+        var (fixedPreset, sizeFactor) = quality switch
+        {
+            DisplayQuality.Coarse => (Coarse, 2e-3),
+            DisplayQuality.Normal => (Default, 5e-4),
+            DisplayQuality.Fine => (Fine, 1e-4),
+            _ => throw new ArgumentOutOfRangeException(nameof(quality), quality, "Unknown display quality."),
+        };
+
+        return bounds is null
+            ? fixedPreset
+            : new TessellationOptions(Math.Max(bounds.Diagonal * sizeFactor, MinimumModelDeflection), fixedPreset.AngularDeflectionRadians);
+    }
 
     /// <summary>Gets the maximum chord deviation.</summary>
     public double LinearDeflection { get; }

@@ -84,6 +84,13 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial bool IsOrthographic { get; set; }
 
+    /// <summary>Gets the display quality levels offered in the toolbar.</summary>
+    public IReadOnlyList<DisplayQuality> DisplayQualities { get; } = Enum.GetValues<DisplayQuality>();
+
+    /// <summary>Gets or sets how finely the model is triangulated; changing it re-meshes the open model.</summary>
+    [ObservableProperty]
+    public partial DisplayQuality DisplayQuality { get; set; } = DisplayQuality.Normal;
+
     /// <summary>Gets or sets the colour applied by the colour commands.</summary>
     [ObservableProperty]
     public partial PaletteEntry SelectedPaletteEntry { get; set; }
@@ -99,9 +106,10 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         var fileName = Path.GetFileName(path);
         IsBusy = true;
         Status = $"Loading {fileName} ...";
+        var quality = DisplayQuality;
         try
         {
-            var loaded = await Task.Run(() => LoadDocument(path)).ConfigureAwait(true);
+            var loaded = await Task.Run(() => LoadDocument(path, quality)).ConfigureAwait(true);
 
             _session?.Dispose();
             _session = new DocumentSession(loaded.Document);
@@ -206,6 +214,41 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     /// <inheritdoc />
     public void Dispose() => _session?.Dispose();
+
+    /// <summary>Triangulates the open model again with the current <see cref="DisplayQuality"/>, keeping colours, selection and view.</summary>
+    [RelayCommand]
+    private async Task RemeshAsync()
+    {
+        if (_session is null || Scene is null)
+        {
+            return;
+        }
+
+        var quality = DisplayQuality;
+        IsBusy = true;
+        Status = $"Meshing with {quality} display quality ...";
+        try
+        {
+            var (mesh, edges) = await _session.RunAsync(document =>
+            {
+                var options = TessellationOptions.ForModel(quality, document.Bounds);
+                return (document.Tessellate(options), document.TessellateEdges(options));
+            }).ConfigureAwait(true);
+
+            Scene = Scene?.WithGeometry(mesh, edges);
+            Status = string.Create(CultureInfo.CurrentCulture, $"{quality} display quality: {mesh.TriangleCount:N0} triangles");
+        }
+        catch (GeometryOperationException exception)
+        {
+            Status = $"Error: {exception.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    partial void OnDisplayQualityChanged(DisplayQuality value) => RemeshCommand.Execute(null);
 
     /// <summary>Switches between perspective and orthographic projection.</summary>
     [RelayCommand]
@@ -385,13 +428,14 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             _ => string.Empty,
         };
 
-    private LoadedModel LoadDocument(string path)
+    private LoadedModel LoadDocument(string path, DisplayQuality quality)
     {
         var document = _reader.Load(path);
         try
         {
-            var mesh = document.Tessellate(TessellationOptions.Default);
-            var edges = document.TessellateEdges(TessellationOptions.Default);
+            var options = TessellationOptions.ForModel(quality, document.Bounds);
+            var mesh = document.Tessellate(options);
+            var edges = document.TessellateEdges(options);
             var faceBodies = Enumerable.Range(0, document.Statistics.FaceCount)
                 .Select(i => document.GetBodyOfFace(new FaceId(i))?.Value ?? -1)
                 .ToArray();

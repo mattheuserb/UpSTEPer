@@ -21,6 +21,8 @@ internal sealed class FakeDocument(bool twoBodies = false) : IStepDocument
 
     public ModelStatistics Statistics { get; } = new(twoBodies ? 2 : 1, twoBodies ? 2 : 1, 2, 6, 4);
 
+    public ModelBounds? Bounds { get; } = new(0, 0, 0, 1, 1, 1);
+
     public string? SavedPath { get; private set; }
 
     public Exception? SaveFailure { get; set; }
@@ -72,10 +74,15 @@ internal sealed class FakeDocument(bool twoBodies = false) : IStepDocument
     public UpSTEPer.Core.Drawing.ProjectedView Project(UpSTEPer.Core.Drawing.ViewDirection direction, UpSTEPer.Core.Drawing.ProjectionOptions options) =>
         new(direction, []);
 
+    public List<TessellationOptions> TessellationRequests { get; } = [];
+
     public EdgeData TessellateEdges(TessellationOptions options) => EdgeData.Empty;
 
-    public MeshData Tessellate(TessellationOptions options) =>
-        new(new float[18], new float[18], [0, 1, 2, 3, 4, 5], [0, 1]);
+    public MeshData Tessellate(TessellationOptions options)
+    {
+        TessellationRequests.Add(options);
+        return new(new float[18], new float[18], [0, 1, 2, 3, 4, 5], [0, 1]);
+    }
 
     public void Dispose() => IsDisposed = true;
 }

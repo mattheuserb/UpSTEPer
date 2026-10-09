@@ -69,6 +69,17 @@ typedef struct ups_document_stats
     int32_t vertex_count;
 } ups_document_stats;
 
+typedef struct ups_bounds
+{
+    double min_x; /* mm */
+    double min_y;
+    double min_z;
+    double max_x;
+    double max_y;
+    double max_z;
+    int32_t is_void; /* non-zero: the model has no geometry; the coordinates are then 0 */
+} ups_bounds;
+
 typedef struct ups_color
 {
     float r; /* 0..1, sRGB */
@@ -85,6 +96,13 @@ UPS_API ups_status ups_document_load_step(const char* utf8_path, ups_document** 
 UPS_API void ups_document_free(ups_document* document);
 
 UPS_API ups_status ups_document_get_stats(const ups_document* document, ups_document_stats* out_stats);
+
+/**
+ * Axis-aligned bounding box of the model from its exact geometry (not a mesh). It may be
+ * slightly larger than the model (tolerances, spline control points); good for scaling
+ * display tolerances and views, not for measuring.
+ */
+UPS_API ups_status ups_document_get_bounds(const ups_document* document, ups_bounds* out_bounds);
 
 /**
  * Colour of a face (0-based face id, identical to the ids in ups_mesh).
@@ -246,7 +264,8 @@ typedef struct ups_mesh_info
 
 /**
  * Triangulates every face of the document for display. Vertices are not shared
- * between faces, so per-face normals and per-face picking stay exact.
+ * between faces, so per-face normals and per-face picking stay exact. An existing
+ * triangulation is discarded first, so a coarser call after a finer one is coarser.
  */
 UPS_API ups_status ups_document_tessellate(
     ups_document* document, const ups_tessellation_params* params, ups_mesh** out_mesh);

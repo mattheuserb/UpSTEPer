@@ -1,7 +1,9 @@
 // STEP import via OCCT XDE (names, colours, assembly structure).
 #include "internal.hpp"
 
+#include <BRepBndLib.hxx>
 #include <BRep_Builder.hxx>
+#include <Bnd_Box.hxx>
 #include <IFSelect_ReturnStatus.hxx>
 #include <STEPCAFControl_Reader.hxx>
 
@@ -104,6 +106,29 @@ extern "C" UPS_API ups_status ups_document_get_stats(const ups_document* documen
         out_stats->face_count = static_cast<int32_t>(document->faces.Extent());
         out_stats->edge_count = count(TopAbs_EDGE);
         out_stats->vertex_count = count(TopAbs_VERTEX);
+        return UPS_OK;
+    });
+}
+
+extern "C" UPS_API ups_status ups_document_get_bounds(const ups_document* document, ups_bounds* out_bounds)
+{
+    return Guarded([&]() -> ups_status {
+        if (document == nullptr || out_bounds == nullptr)
+        {
+            return Fail(UPS_ERROR_INVALID_ARGUMENT, "Document and output pointer must not be null.");
+        }
+
+        *out_bounds = ups_bounds{};
+        Bnd_Box box;
+        BRepBndLib::Add(document->shape, box, /*useTriangulation*/ false);
+        if (box.IsVoid())
+        {
+            out_bounds->is_void = 1;
+            return UPS_OK;
+        }
+
+        box.Get(out_bounds->min_x, out_bounds->min_y, out_bounds->min_z,
+                out_bounds->max_x, out_bounds->max_y, out_bounds->max_z);
         return UPS_OK;
     });
 }

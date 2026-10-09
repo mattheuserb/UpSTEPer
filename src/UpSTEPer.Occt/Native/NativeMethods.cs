@@ -38,6 +38,9 @@ internal static partial class NativeMethods
     [LibraryImport(LibraryName, EntryPoint = "ups_document_get_stats")]
     internal static partial NativeStatus DocumentGetStats(DocumentSafeHandle document, out NativeDocumentStats stats);
 
+    [LibraryImport(LibraryName, EntryPoint = "ups_document_get_bounds")]
+    internal static partial NativeStatus DocumentGetBounds(DocumentSafeHandle document, out NativeBounds bounds);
+
     [LibraryImport(LibraryName, EntryPoint = "ups_document_get_face_color")]
     internal static partial NativeStatus DocumentGetFaceColor(
         DocumentSafeHandle document, int faceId, out NativeColor color, out int hasColor);
@@ -203,6 +206,19 @@ internal struct NativeDocumentStats
     public int FaceCount;
     public int EdgeCount;
     public int VertexCount;
+}
+
+/// <summary>Mirrors <c>ups_bounds</c>.</summary>
+[StructLayout(LayoutKind.Sequential)]
+internal struct NativeBounds
+{
+    public double MinX;
+    public double MinY;
+    public double MinZ;
+    public double MaxX;
+    public double MaxY;
+    public double MaxZ;
+    public int IsVoid;
 }
 
 /// <summary>Mirrors <c>ups_color</c>.</summary>

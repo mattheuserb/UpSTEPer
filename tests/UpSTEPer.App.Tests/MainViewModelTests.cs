@@ -254,6 +254,50 @@ public class MainViewModelTests
         Assert.True(reader.Documents[0].IsDisposed);
     }
 
+    [Fact]
+    public async Task LoadAsync_MeshesWithSelectedQualityScaledToModel()
+    {
+        var reader = new FakeReader();
+        using var viewModel = new MainViewModel(reader) { DisplayQuality = DisplayQuality.Fine };
+
+        await viewModel.LoadAsync("fake.stp");
+
+        var bounds = reader.Documents[0].Bounds;
+        Assert.Equal([TessellationOptions.ForModel(DisplayQuality.Fine, bounds)], reader.Documents[0].TessellationRequests);
+    }
+
+    [Fact]
+    public async Task DisplayQuality_Changed_RemeshesAndKeepsModelColoursAndSelection()
+    {
+        var reader = new FakeReader();
+        using var viewModel = await LoadedAsync(reader);
+        var before = viewModel.Scene!;
+        viewModel.SelectedFace = new FaceId(1);
+
+        viewModel.DisplayQuality = DisplayQuality.Coarse;
+        await viewModel.RemeshCommand.ExecutionTask!;
+
+        var document = reader.Documents[0];
+        Assert.Equal(TessellationOptions.ForModel(DisplayQuality.Coarse, document.Bounds), document.TessellationRequests[^1]);
+        Assert.NotSame(before, viewModel.Scene);
+        Assert.True(viewModel.Scene!.IsSameModel(before));
+        Assert.Equal(FakeDocument.FileRed, viewModel.Scene.GetFaceColor(new FaceId(0)));
+        Assert.Equal(new FaceId(1), viewModel.SelectedFace);
+        Assert.Contains("Coarse", viewModel.Status, StringComparison.Ordinal);
+        Assert.False(viewModel.IsBusy);
+    }
+
+    [Fact]
+    public void DisplayQuality_ChangedWithoutModel_DoesNothing()
+    {
+        using var viewModel = new MainViewModel(new FakeReader());
+
+        viewModel.DisplayQuality = DisplayQuality.Fine;
+
+        Assert.Null(viewModel.Scene);
+        Assert.False(viewModel.IsBusy);
+    }
+
     private static async Task<MainViewModel> LoadedAsync(FakeReader reader)
     {
         var viewModel = new MainViewModel(reader);

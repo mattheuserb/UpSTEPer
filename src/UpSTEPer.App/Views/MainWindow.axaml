@@ -76,6 +76,9 @@
                 ToolTip.Tip="Num 0" Margin="0,0,4,0" />
         <CheckBox Content="Orthographic" IsChecked="{Binding IsOrthographic}" VerticalAlignment="Center" Margin="12,0,0,0"
                   ToolTip.Tip="Parallel projection without perspective (Num 5)" />
+        <ComboBox ItemsSource="{Binding DisplayQualities}" SelectedItem="{Binding DisplayQuality}" IsEnabled="{Binding !IsBusy}"
+                  VerticalAlignment="Center" Margin="16,0,0,0" MinWidth="100"
+                  ToolTip.Tip="Display quality: how finely curved faces are triangulated (the model itself is not changed)" />
       </WrapPanel>
     </Border>
     <Border DockPanel.Dock="Bottom" Padding="8,4" BorderThickness="0,1,0,0" BorderBrush="#D0D4D9">

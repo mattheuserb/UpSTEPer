@@ -27,6 +27,37 @@ public class SceneDataTests
     }
 
     [Fact]
+    public void WithGeometry_KeepsFaceColoursAndModelIdentity()
+    {
+        var red = ColorRgb.FromHex("#FF0000");
+        var scene = SceneData.Create(_mesh, face => face.Value == 0 ? red : null);
+        var finer = new MeshData(
+            positions: [0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 5, 1, 0, 5, 0, 1, 5],
+            normals: new float[18],
+            indices: [0, 1, 2, 3, 4, 5],
+            triangleFaceIds: [0, 1]);
+
+        var remeshed = scene.WithGeometry(finer, EdgeData.Empty);
+
+        Assert.Same(finer, remeshed.Mesh);
+        Assert.Equal(red, remeshed.GetFaceColor(new FaceId(0)));
+        Assert.Null(remeshed.GetFaceColor(new FaceId(1)));
+        Assert.Equal(new Vector3(2, 2, 5), remeshed.Bounds.Max);
+        Assert.True(remeshed.IsSameModel(scene));
+        Assert.True(scene.WithFaceColors(_ => null).IsSameModel(remeshed));
+    }
+
+    [Fact]
+    public void IsSameModel_SeparatelyCreatedScenes_IsFalse()
+    {
+        var first = SceneData.Create(_mesh, _ => null);
+        var second = SceneData.Create(_mesh, _ => null);
+
+        Assert.False(first.IsSameModel(second));
+        Assert.False(first.IsSameModel(null));
+    }
+
+    [Fact]
     public void Create_ComputesBounds()
     {
         var scene = SceneData.Create(_mesh, _ => null);

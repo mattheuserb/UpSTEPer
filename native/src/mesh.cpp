@@ -4,6 +4,7 @@
 
 #include <BRepLib_ToolTriangulatedShape.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
+#include <BRepTools.hxx>
 #include <BRep_Tool.hxx>
 #include <Poly_Triangulation.hxx>
 #include <TopLoc_Location.hxx>
@@ -118,6 +119,8 @@ extern "C" UPS_API ups_status ups_document_tessellate(
         }
         *out_mesh = nullptr;
 
+        // BRepMesh keeps an existing finer triangulation; discard it so coarser settings apply.
+        BRepTools::Clean(document->shape);
         BRepMesh_IncrementalMesh mesher(document->shape, params->linear_deflection, params->relative != 0,
                                         params->angular_deflection, /*isInParallel*/ true);
         if (!mesher.IsDone())

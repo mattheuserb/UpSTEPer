@@ -22,7 +22,7 @@ dotnet run --project src/UpSTEPer.Cli -- info <file.stp> # load + stats + colour
 dotnet run --project src/UpSTEPer.Cli -- paint <in.stp> <out.stp> --face 80=#FF0000 --body 0=#3366CC   # colour + save
 dotnet run --project src/UpSTEPer.Cli -- export-dxf <in.stp> <out.dxf> [--views front,top,left,iso]  # 2D views
 dotnet run --project src/UpSTEPer.App -- <file.stp>       # desktop viewer
-dotnet run --project src/UpSTEPer.App -- <file.stp> --screenshot out.png [--select-face N] [--view front|top|iso|...] [--ortho]   # render 1 frame to PNG and exit
+dotnet run --project src/UpSTEPer.App -- <file.stp> --screenshot out.png [--select-face N] [--view front|top|iso|...] [--ortho] [--quality coarse|normal|fine]   # render 1 frame to PNG and exit
 
 # Native bridge (needs C++ toolchain, CMake >= 3.24, Ninja, VCPKG_ROOT) — see docs/development.md
 powershell -File scripts/build-native.ps1 -VcpkgRoot C:\vcpkg   # Windows: sets up MSVC env itself
@@ -80,8 +80,9 @@ Never reference OCCT or native types from Core. UI projects (planned) depend on 
 - "Circles look like polygons" is usually **display tessellation**, not a bad file. Check the
   STEP entities first (`CIRCLE`, `CYLINDRICAL_SURFACE` present ⇒ geometry is exact). See
   `docs/test-data.md`.
-- `BRepMesh_IncrementalMesh` keeps an existing finer triangulation; re-meshing coarser requires
-  clearing it (`BRepTools::Clean`) first.
+- `BRepMesh_IncrementalMesh` keeps an existing finer triangulation; `ups_document_tessellate`
+  therefore clears it (`BRepTools::Clean`) first. Display quality scales the chord tolerance with
+  the model size (`TessellationOptions.ForModel`); fixed millimetre values explode on large models.
 - Face ids are indices into a `ShapeIndexedMap` and become invalid after any topology change;
   see `docs/adr/0005-topology-identity.md`.
 - Windows native build: `Enter-VsDevShell` overwrites `VCPKG_ROOT` with the VS-bundled vcpkg;

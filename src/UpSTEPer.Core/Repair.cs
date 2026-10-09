@@ -1,6 +1,6 @@
 namespace UpSTEPer.Core;
 
-/// <summary>Healing steps of <see cref="IStepDocument.Repair"/> (repair tier 1, ADR 0007).</summary>
+/// <summary>Steps of <see cref="IStepDocument.Repair"/> (repair tiers 1 and 2, ADR 0007).</summary>
 [Flags]
 public enum RepairSteps
 {
@@ -16,13 +16,22 @@ public enum RepairSteps
     /// <summary>Merge neighbouring faces that lie on the same surface.</summary>
     MergeFaces = 4,
 
-    /// <summary>All healing steps.</summary>
-    All = Fix | Sew | MergeFaces,
+    /// <summary>
+    /// Replace spline faces that are planes, cylinders, cones or spheres within the tolerance by the
+    /// exact surface (tier 2); runs before merging, so split pieces of one cylinder can merge.
+    /// </summary>
+    Canonical = 8,
+
+    /// <summary>All steps.</summary>
+    All = Fix | Sew | MergeFaces | Canonical,
 }
 
 /// <summary>Options for <see cref="IStepDocument.Repair"/>.</summary>
 /// <param name="Steps">The healing steps to run.</param>
-/// <param name="Tolerance">Tolerance in mm: gaps up to this size are sewn, faces within it merged.</param>
+/// <param name="Tolerance">
+/// Tolerance in mm: gaps up to this size are sewn, faces within it merged, splines within it
+/// replaced by exact surfaces.
+/// </param>
 public sealed record RepairOptions(RepairSteps Steps = RepairSteps.All, double Tolerance = 0.05)
 {
     /// <summary>Gets the default options: all steps, 0.05 mm.</summary>
@@ -43,9 +52,11 @@ public sealed record RepairOptions(RepairSteps Steps = RepairSteps.All, double T
 /// <param name="InvalidAfter">Invalid sub-shapes after repair.</param>
 /// <param name="ColourConflicts">Merged faces whose sources had different colours; the colour covering the largest area won.</param>
 /// <param name="Reverted">
-/// Whether a step made the part worse (more invalid sub-shapes or free edges) and was discarded;
-/// the other steps still ran.
+/// Whether a step made the part worse (more invalid sub-shapes, free edges or inside-out solids, or a
+/// volume change above 1 %) and was discarded; the other steps still ran.
 /// </param>
+/// <param name="CanonicalFaces">Spline faces replaced by planes, cylinders, cones or spheres.</param>
+/// <param name="MaxDeviation">Largest distance (mm) between a replaced spline and its exact surface.</param>
 public sealed record PartRepair(
     string Name,
     bool Changed,
@@ -59,7 +70,9 @@ public sealed record PartRepair(
     int InvalidBefore,
     int InvalidAfter,
     int ColourConflicts,
-    bool Reverted = false)
+    bool Reverted = false,
+    int CanonicalFaces = 0,
+    double MaxDeviation = 0)
 {
     /// <summary>Gets the name, or a placeholder for unnamed parts.</summary>
     public string DisplayName => string.IsNullOrWhiteSpace(Name) ? "(unnamed part)" : Name;

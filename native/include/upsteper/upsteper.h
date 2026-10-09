@@ -271,7 +271,9 @@ typedef enum ups_repair_step
 {
     UPS_REPAIR_FIX = 1,         /* ShapeFix_Shape: tolerances, orientation, wires, small defects */
     UPS_REPAIR_SEW = 2,         /* sew faces along free edges; closed shells become solids */
-    UPS_REPAIR_MERGE_FACES = 4  /* merge neighbouring faces on the same surface (UnifySameDomain) */
+    UPS_REPAIR_MERGE_FACES = 4, /* merge neighbouring faces on the same surface (UnifySameDomain) */
+    UPS_REPAIR_CANONICAL = 8    /* replace spline faces that are planes, cylinders, cones or spheres
+                                   within the tolerance by the exact surface (tier 2) */
 } ups_repair_step;
 
 typedef struct ups_repair_params
@@ -285,8 +287,9 @@ typedef struct ups_part_repair
 {
     int32_t changed;            /* 1 if the part's geometry was replaced */
     int32_t failed;             /* 1 if a step threw; it was skipped, the other steps still ran */
-    int32_t reverted;           /* 1 if a step made the part worse (more invalid sub-shapes or free
-                                   edges) and was discarded; the other steps still ran */
+    int32_t reverted;           /* 1 if a step made the part worse (more invalid sub-shapes, free
+                                   edges or inside-out solids, or a volume change > 1 %) and was
+                                   discarded; the other steps still ran */
     int32_t faces_before;
     int32_t faces_after;
     int32_t solids_before;
@@ -296,8 +299,10 @@ typedef struct ups_part_repair
     int32_t invalid_before;
     int32_t invalid_after;
     int32_t colour_conflicts;   /* merged faces whose sources had different colours (largest area won) */
+    int32_t canonical_faces;    /* spline faces replaced by planes, cylinders, cones or spheres */
     int32_t name_offset;        /* UTF-8 part name in the names buffer (not zero-terminated) */
     int32_t name_length;
+    double max_deviation;       /* mm; largest distance between a replaced spline and its exact surface */
 } ups_part_repair;
 
 /**

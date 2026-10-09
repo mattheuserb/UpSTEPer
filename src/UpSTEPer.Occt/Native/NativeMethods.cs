@@ -234,8 +234,10 @@ internal struct NativePartRepair
     public int InvalidBefore;
     public int InvalidAfter;
     public int ColourConflicts;
+    public int CanonicalFaces;
     public int NameOffset;
     public int NameLength;
+    public double MaxDeviation;
 }
 
 /// <summary>Mirrors <c>ups_part_check</c>.</summary>

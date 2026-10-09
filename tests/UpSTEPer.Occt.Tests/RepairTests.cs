@@ -12,7 +12,7 @@ public sealed class RepairTests : IDisposable
     private readonly string _path = Path.Combine(Path.GetTempPath(), $"upsteper-repair-{Guid.NewGuid():N}.stp");
 
     [Fact]
-    public void Repair_DamagedParts_SewsMergesAndReports()
+    public void Repair_DamagedParts_SewsMergesConvertsAndReports()
     {
         TestFiles.RequireNativeLibrary();
         using var document = Load(TestFiles.DamagedParts);
@@ -22,7 +22,37 @@ public sealed class RepairTests : IDisposable
         Assert.False(report["Healthy box"].Changed);
         Assert.Equal(new PartRepair("Unsewn box", true, false, 6, 6, 0, 1, 24, 0, 0, 0, 0), report["Unsewn box"]);
         Assert.Equal(new PartRepair("Split cylinder", true, false, 6, 3, 1, 1, 0, 0, 0, 0, 1), report["Split cylinder"]);
-        Assert.False(report["Spline cylinder"].Changed); // canonical recognition is tier 2
+
+        var spline = report["Spline cylinder"];
+        Assert.True(spline.Changed);
+        Assert.Equal(3, spline.CanonicalFaces);
+        Assert.InRange(spline.MaxDeviation, 0, 1e-6); // converted from an exact cylinder
+        Assert.False(spline.Reverted);
+    }
+
+    [Fact]
+    public void Repair_CanonicalOnly_LeavesNoCanonicalSplinesAndKeepsColour()
+    {
+        TestFiles.RequireNativeLibrary();
+        using var document = Load(TestFiles.DamagedParts);
+
+        document.Repair(new RepairOptions(RepairSteps.Canonical), cancellationToken: TestContext.Current.CancellationToken);
+
+        var check = document.Check().Single(p => p.Name == "Spline cylinder");
+        Assert.Equal(0, check.SplineFaces);
+        Assert.Equal(0, check.InvalidShapes);
+        Assert.Equal(1, CountFaces(document, _yellow));
+    }
+
+    [Fact]
+    public void Repair_CanonicalOnHealthyAnalyticModel_ChangesNothing()
+    {
+        TestFiles.RequireNativeLibrary();
+        using var document = Load(TestFiles.CableGland);
+
+        var report = document.Repair(new RepairOptions(RepairSteps.Canonical), cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.All(report, part => Assert.Equal(0, part.CanonicalFaces));
     }
 
     [Fact]
@@ -41,8 +71,8 @@ public sealed class RepairTests : IDisposable
         Assert.Equal(4, document.GetModelTree().Single().Children.Sum(part => part.GetBodies().Count()));
         Assert.Equal(1, CountFaces(document, _red));    // top of the sewn box
         Assert.Equal(1, CountFaces(document, _blue));   // the merged cylinder side: blue covered the largest area
-        Assert.Equal(1, CountFaces(document, _yellow)); // spline cylinder untouched
-        Assert.True(document.Check().Where(p => p.Name != "Spline cylinder").All(p => !p.HasProblems));
+        Assert.Equal(1, CountFaces(document, _yellow)); // spline cylinder side, now an exact cylinder
+        Assert.All(document.Check(), part => Assert.False(part.HasProblems, part.ToString()));
     }
 
     [Fact]
@@ -126,7 +156,7 @@ public sealed class RepairTests : IDisposable
     [Theory]
     [InlineData(RepairSteps.All, 0)]
     [InlineData(RepairSteps.All, double.NaN)]
-    [InlineData((RepairSteps)8, 0.05)]
+    [InlineData((RepairSteps)16, 0.05)]
     public void Repair_InvalidOptions_Throw(RepairSteps steps, double tolerance)
     {
         TestFiles.RequireNativeLibrary();

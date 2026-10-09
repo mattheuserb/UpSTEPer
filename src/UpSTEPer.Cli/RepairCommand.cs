@@ -16,8 +16,8 @@ internal static class RepairCommand
         var outputArgument = new Argument<FileInfo>("output") { Description = "STEP file to write (overwritten)." };
         var stepsOption = new Option<string>("--steps")
         {
-            Description = "Comma-separated steps: fix, sew, merge (merge faces on the same surface). Default: all.",
-            DefaultValueFactory = _ => "fix,sew,merge",
+            Description = "Comma-separated steps: fix, sew, canonical (splines -> planes, cylinders, cones, spheres), merge (faces on the same surface). Default: all.",
+            DefaultValueFactory = _ => "fix,sew,canonical,merge",
         };
         var toleranceOption = Options.InvariantDouble(
             "--tolerance", "Tolerance in mm: gaps up to this size are sewn.", RepairOptions.Default.Tolerance);
@@ -27,7 +27,7 @@ internal static class RepairCommand
             DefaultValueFactory = _ => StepSchema.Ap214,
         };
 
-        var command = new Command("repair", "Heal every part (sew gaps, merge split faces, fix), keep colours, report and save.")
+        var command = new Command("repair", "Heal every part (sew gaps, exact surfaces for splines, merge split faces, fix), keep colours, report and save.")
         {
             inputArgument,
             outputArgument,
@@ -55,7 +55,7 @@ internal static class RepairCommand
         return command;
     }
 
-    /// <summary>Parses <c>fix,sew,merge</c> (case-insensitive).</summary>
+    /// <summary>Parses <c>fix,sew,canonical,merge</c> (case-insensitive).</summary>
     /// <param name="text">The option value.</param>
     /// <returns>The steps.</returns>
     /// <exception cref="FormatException">Unknown or no step.</exception>
@@ -70,17 +70,18 @@ internal static class RepairCommand
                 "FIX" => RepairSteps.Fix,
                 "SEW" => RepairSteps.Sew,
                 "MERGE" => RepairSteps.MergeFaces,
-                _ => throw new FormatException($"Unknown repair step '{name}'; use fix, sew, merge."),
+                "CANONICAL" => RepairSteps.Canonical,
+                _ => throw new FormatException($"Unknown repair step '{name}'; use fix, sew, canonical, merge."),
             };
         }
 
-        return steps != RepairSteps.None ? steps : throw new FormatException("--steps needs at least one of fix, sew, merge.");
+        return steps != RepairSteps.None ? steps : throw new FormatException("--steps needs at least one of fix, sew, canonical, merge.");
     }
 
     private static void WriteReport(TextWriter output, IReadOnlyList<PartRepair> parts)
     {
         var nameWidth = Math.Max(4, parts.Count == 0 ? 0 : parts.Max(p => p.DisplayName.Length));
-        output.WriteLine($"{"Part".PadRight(nameWidth)}  Result     Faces      Solids   Free edges  Invalid   Colour conflicts  Notes");
+        output.WriteLine($"{"Part".PadRight(nameWidth)}  Result     Faces      Solids   Free edges  Invalid   Exact surfaces (max dev.)  Colour conflicts  Notes");
         foreach (var part in parts)
         {
             var result = part.Changed ? "repaired" : "unchanged";
@@ -97,13 +98,16 @@ internal static class RepairCommand
 
             output.WriteLine(string.Create(
                 CultureInfo.InvariantCulture,
-                $"{part.DisplayName.PadRight(nameWidth)}  {result,-9}  {Change(part.FacesBefore, part.FacesAfter),-9}  {Change(part.SolidsBefore, part.SolidsAfter),-7}  {Change(part.FreeEdgesBefore, part.FreeEdgesAfter),-10}  {Change(part.InvalidBefore, part.InvalidAfter),-8}  {part.ColourConflicts,16}  {string.Join(", ", notes)}").TrimEnd());
+                $"{part.DisplayName.PadRight(nameWidth)}  {result,-9}  {Change(part.FacesBefore, part.FacesAfter),-9}  {Change(part.SolidsBefore, part.SolidsAfter),-7}  {Change(part.FreeEdgesBefore, part.FreeEdgesAfter),-10}  {Change(part.InvalidBefore, part.InvalidAfter),-8}  {Exact(part),-25}  {part.ColourConflicts,16}  {string.Join(", ", notes)}").TrimEnd());
         }
 
         output.WriteLine(string.Create(
             CultureInfo.InvariantCulture,
             $"{parts.Count(p => p.Changed)} of {parts.Count} part(s) repaired; steps discarded as worse in {parts.Count(p => p.Reverted)}, failed in {parts.Count(p => p.Failed)}."));
     }
+
+    private static string Exact(PartRepair part) =>
+        part.CanonicalFaces == 0 ? "0" : string.Create(CultureInfo.InvariantCulture, $"{part.CanonicalFaces} ({part.MaxDeviation:0.####} mm)");
 
     private static string Change(int before, int after) =>
         before == after ? before.ToString(CultureInfo.InvariantCulture) : string.Create(CultureInfo.InvariantCulture, $"{before}->{after}");

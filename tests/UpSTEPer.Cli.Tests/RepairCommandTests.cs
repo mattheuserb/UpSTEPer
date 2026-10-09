@@ -26,11 +26,19 @@ public sealed class RepairCommandTests : IDisposable
         Assert.Equal(Path.GetFullPath("out.stp"), _document.SavedPath);
         Assert.Equal(StepSchema.Ap242, _document.SavedSchema);
         var lines = _output.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-        Assert.Matches(@"^Unsewn box\s+repaired\s+6\s+0->1\s+24->0\s+0\s+0$", lines[1]);
-        Assert.Matches(@"^Healthy box\s+unchanged\s+6\s+1\s+0\s+0\s+0$", lines[2]);
+        Assert.Matches(@"^Unsewn box\s+repaired\s+6\s+0->1\s+24->0\s+0\s+0\s+0$", lines[1]);
+        Assert.Matches(@"^Healthy box\s+unchanged\s+6\s+1\s+0\s+0\s+0\s+0$", lines[2]);
         Assert.Matches(@"^Broken\s+unchanged\s+.*\s+a step failed$", lines[3]);
         Assert.Matches(@"^Fragile\s+unchanged\s+.*\s+a step made it worse, discarded$", lines[4]);
         Assert.Equal("1 of 4 part(s) repaired; steps discarded as worse in 1, failed in 1.", lines[5]);
+    }
+
+    [Fact]
+    public void Repair_ExactSurfaces_ShowCountAndDeviation()
+    {
+        Invoke([new PartRepair("Spline cylinder", true, false, 3, 3, 1, 1, 0, 0, 0, 0, 0, CanonicalFaces: 3, MaxDeviation: 0.00012)], "repair", "in.stp", "out.stp");
+
+        Assert.Matches(@"^Spline cylinder\s+repaired\s+3\s+1\s+0\s+0\s+3 \(0\.0001 mm\)\s+0$", _output.ToString().Split(Environment.NewLine)[1]);
     }
 
     [Fact]
@@ -43,7 +51,8 @@ public sealed class RepairCommandTests : IDisposable
 
     [Theory]
     [InlineData("fix", RepairSteps.Fix)]
-    [InlineData("fix,sew,merge", RepairSteps.All)]
+    [InlineData("fix,sew,canonical,merge", RepairSteps.All)]
+    [InlineData("canonical", RepairSteps.Canonical)]
     [InlineData(" Sew ", RepairSteps.Sew)]
     public void ParseSteps_AcceptsNamesCaseInsensitive(string text, RepairSteps expected)
     {

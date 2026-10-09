@@ -21,17 +21,30 @@ ADR 0007 sets the repair tiers, ADR 0005 how colours survive topology changes. I
   (`XCAFDoc_ShapeTool::SetShape`), assemblies are updated (`UpdateAssemblies`), and roots, face
   and body maps and display colours are rebuilt. Face and body ids are renumbered; callers re-read
   statistics, tree, colours and mesh.
-- **Steps** (flags, all by default): `ShapeFix_Shape` (precision and maximum tolerance = repair
-  tolerance), sewing (`BRepBuilderAPI_Sewing`, only for parts with free edges; closed shells become
-  solids), merging faces on the same surface (`ShapeUpgrade_UnifySameDomain`). Default tolerance
-  0.05 mm.
+- **Steps** (flags, all by default), in this order: `ShapeFix_Shape` (precision and maximum
+  tolerance = repair tolerance), sewing (`BRepBuilderAPI_Sewing`, only for parts with free edges;
+  closed shells become solids), canonical recognition (tier 2, below), merging faces on the same
+  surface (`ShapeUpgrade_UnifySameDomain`). Default tolerance 0.05 mm.
+- **Canonical recognition (tier 2)**: B-spline/Bezier faces that `ShapeAnalysis_CanonicalRecognition`
+  identifies as plane, cylinder, cone or sphere within the tolerance get the exact surface. The new
+  face keeps the old wires (shared edges stay shared); `ShapeFix_Shape` then adds the edges'
+  parameter curves on the new surface. The exact surface is oriented like the spline (plane: normal
+  reversed, others: left-handed frame) so the material side does not flip. Edges keep their curves
+  (B-splines stay B-splines) for now. It runs before merging, so pieces of one cylinder can merge.
+  The report gives the number of converted faces and the largest deviation. Faces whose measured
+  deviation (`GetGap`) exceeds the tolerance are skipped although the recognition accepted them
+  (seen on the engine assembly: 0.18 mm at 0.05 mm). If converting a part's faces fails the
+  never-worse rule, the conversion of the whole part is discarded; retrying face by face is future
+  work.
 - **All or nothing**: every part is computed first; only if the whole run completes are the
   results written to the document. Cancellation (between parts) or an unexpected failure leaves the
   model unchanged.
 - **Failures are isolated per step**: if an algorithm throws on a part, that step is skipped for
   the part (reported as failed); its other steps and all other parts are still repaired.
-- **Never worse, per step**: a step whose result has more invalid sub-shapes or more free edges
-  than before the step is discarded (reported as reverted); the other steps still apply. Measured on
+- **Never worse, per step**: a step whose result has more invalid sub-shapes, free edges or
+  inside-out solids (negative volume), or changes the volume of the same solids by more than 1 %,
+  is discarded (reported as reverted); the other steps still apply. The volume rule catches
+  replacement surfaces with the material side flipped, which BRepCheck does not report. Measured on
   the engine assembly: merging faces alone raised invalid sub-shapes from 22 to 40 in 8 of 159
   parts, while ShapeFix alone lowered them to 21; discarding whole parts would also have lost the
   ShapeFix improvement. Steps that change nothing (ShapeFix without `ShapeExtend_DONE`, merging

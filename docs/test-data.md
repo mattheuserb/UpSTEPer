@@ -97,7 +97,8 @@ Measurements (2026-10-09, Windows 11, 11th Gen Intel(R) Core(TM) i9-11900H @ 2.5
 | Normal without minimum size | 12.9 s | 12.1 million triangles (old Fine: 100 million, 140 s, 7.5 GB) |
 | BVH build (7.8 million triangles) | 1.8 s | picking 21 µs (brute force 82 ms) |
 | `check` (159 part definitions) | 91 s incl. load | 36 parts with findings: 1,121 canonical spline faces, 210 mergeable faces, 46 small edges, 22 invalid sub-shapes, 1 failed sub-check |
-| `repair` (all steps) | 178 s incl. load and save | 128 parts changed, 155 faces merged, invalid 22 -> 21; merging discarded as worse in 8 parts, 1 failed step |
+| `repair` (tier 1: fix, sew, merge) | 178 s incl. load and save | 128 parts changed, 155 faces merged, invalid 22 -> 21; merging discarded as worse in 8 parts, 1 failed step |
+| `repair` (all steps incl. canonical) | 280 s incl. load and save | additionally 266 spline faces -> exact surfaces (max. deviation 0.0495 mm at 0.05 mm tolerance); a step discarded as worse in 10 parts |
 
 ## Wanted
 

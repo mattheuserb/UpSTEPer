@@ -1,30 +1,41 @@
-// Healing, repair tier 1 (ADR 0007, ADR 0011): ShapeFix, sewing and merging of faces on the same
-// surface, per part definition, with colours carried over through the algorithms' histories
+// Repair (ADR 0007, ADR 0011): tier 1 healing (ShapeFix, sewing, merging faces on the same surface)
+// and tier 2 canonical recognition (spline faces -> planes, cylinders, cones, spheres), per part definition, with colours carried over through the algorithms' histories
 // (ADR 0005). All parts are computed first (cancellable) and applied to the document only at the
 // end, so a cancelled or failed repair never leaves a half-repaired model behind.
 #include "internal.hpp"
 
+#include <BRepAdaptor_Surface.hxx>
 #include <BRepBuilderAPI_MakeSolid.hxx>
 #include <BRepBuilderAPI_Sewing.hxx>
 #include <BRepGProp.hxx>
 #include <BRepLib.hxx>
+#include <BRepTools.hxx>
 #include <BRepTools_History.hxx>
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
 #include <GProp_GProps.hxx>
+#include <GeomAPI_ProjectPointOnSurf.hxx>
+#include <GeomLProp_SLProps.hxx>
+#include <Geom_ConicalSurface.hxx>
+#include <Geom_CylindricalSurface.hxx>
+#include <Geom_Plane.hxx>
+#include <Geom_SphericalSurface.hxx>
 #include <Message_ProgressScope.hxx>
 #include <ShapeBuild_ReShape.hxx>
 #include <ShapeExtend_Status.hxx>
+#include <ShapeAnalysis_CanonicalRecognition.hxx>
 #include <ShapeFix_Shape.hxx>
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Compound.hxx>
+#include <TopoDS_Iterator.hxx>
 #include <XCAFDoc_ColorTool.hxx>
 #include <XCAFDoc_DocumentTool.hxx>
 #include <XCAFDoc_ShapeTool.hxx>
 
+#include <cmath>
 #include <map>
 #include <string>
 #include <vector>
@@ -180,16 +191,151 @@ TopoDS_Shape SolidsFromClosedShells(const TopoDS_Shape& sewn)
     return pieces == 1 ? single : TopoDS_Shape(result);
 }
 
+// The exact surface a spline face approximates within the tolerance, oriented so its normal points
+// the same way as the spline's (the face's material side must not flip), or null.
+Handle(Geom_Surface) CanonicalSurface(const TopoDS_Face& face, double tolerance, double& gap)
+{
+    const GeomAbs_SurfaceType type = BRepAdaptor_Surface(face, /*restriction*/ false).GetType();
+    if (type != GeomAbs_BSplineSurface && type != GeomAbs_BezierSurface)
+    {
+        return {};
+    }
+
+    ShapeAnalysis_CanonicalRecognition recognition(face);
+    gp_Pln plane;
+    gp_Cylinder cylinder;
+    gp_Cone cone;
+    gp_Sphere sphere;
+    int kind = 0;
+    if (recognition.IsPlane(tolerance, plane))
+    {
+        kind = 1;
+    }
+    else if (recognition.IsCylinder(tolerance, cylinder))
+    {
+        kind = 2;
+    }
+    else if (recognition.IsCone(tolerance, cone))
+    {
+        kind = 3;
+    }
+    else if (recognition.IsSphere(tolerance, sphere))
+    {
+        kind = 4;
+    }
+    else
+    {
+        return {};
+    }
+    gap = recognition.GetGap();
+    if (!(gap <= tolerance))
+    {
+        // The recognition may accept a surface whose measured deviation exceeds the requested
+        // tolerance (0.18 mm at 0.05 mm on the engine assembly); never replace beyond it.
+        return {};
+    }
+
+    auto make = [&]() -> Handle(Geom_Surface) {
+        switch (kind)
+        {
+        case 1:
+            return new Geom_Plane(plane);
+        case 2:
+            return new Geom_CylindricalSurface(cylinder);
+        case 3:
+            return new Geom_ConicalSurface(cone);
+        default:
+            return new Geom_SphericalSurface(sphere);
+        }
+    };
+    Handle(Geom_Surface) surface = make();
+
+    // Compare normals at the middle of the face's parameter range.
+    double u1 = 0, u2 = 0, v1 = 0, v2 = 0;
+    BRepTools::UVBounds(face, u1, u2, v1, v2);
+    GeomLProp_SLProps original(BRep_Tool::Surface(face), (u1 + u2) / 2, (v1 + v2) / 2, 1, 1e-9);
+    if (!original.IsNormalDefined())
+    {
+        return surface;
+    }
+    GeomAPI_ProjectPointOnSurf projection(original.Value(), surface);
+    if (projection.NbPoints() == 0)
+    {
+        return {};
+    }
+    double u = 0, v = 0;
+    projection.LowerDistanceParameters(u, v);
+    GeomLProp_SLProps candidate(surface, u, v, 1, 1e-9);
+    if (!candidate.IsNormalDefined() || original.Normal().Dot(candidate.Normal()) >= 0)
+    {
+        return surface;
+    }
+
+    // Opposite normal: a plane flips its normal, the others switch to a left-handed frame.
+    auto flip = [](auto& primitive, bool reverseNormal) {
+        gp_Ax3 position = primitive.Position();
+        if (reverseNormal)
+        {
+            position.ZReverse();
+        }
+        else
+        {
+            position.YReverse();
+        }
+        primitive.SetPosition(position);
+    };
+    switch (kind)
+    {
+    case 1:
+        flip(plane, true);
+        break;
+    case 2:
+        flip(cylinder, false);
+        break;
+    case 3:
+        flip(cone, false);
+        break;
+    default:
+        flip(sphere, false);
+        break;
+    }
+    return make();
+}
+
 // What the never-worse rule compares before and after a step.
 struct Quality
 {
     int32_t invalid = 0;
     int32_t freeEdges = 0;
+    int32_t solids = 0;
+    int32_t insideOutSolids = 0; // negative volume: faces oriented the wrong way
+    double volume = 0.0;
 };
 
 Quality Measure(const TopoDS_Shape& shape)
 {
-    return {ups::detail::CountInvalidShapes(shape), ups::detail::CountFreeEdges(shape)};
+    Quality quality{ups::detail::CountInvalidShapes(shape), ups::detail::CountFreeEdges(shape)};
+    for (TopExp_Explorer solids(shape, TopAbs_SOLID); solids.More(); solids.Next())
+    {
+        GProp_GProps properties;
+        BRepGProp::VolumeProperties(solids.Current(), properties);
+        ++quality.solids;
+        quality.insideOutSolids += properties.Mass() < 0 ? 1 : 0;
+        quality.volume += properties.Mass();
+    }
+    return quality;
+}
+
+// A step is worse if it adds invalid sub-shapes, gaps or inside-out solids, or (with the same
+// solids) changes the volume by more than 1 %: e.g. an exact surface with the material side flipped.
+bool IsWorse(const Quality& after, const Quality& before)
+{
+    if (after.invalid > before.invalid || after.freeEdges > before.freeEdges || after.insideOutSolids > before.insideOutSolids)
+    {
+        return true;
+    }
+    return after.solids == before.solids && std::abs(before.volume) > 0.0
+           && std::abs(after.volume - before.volume) > 0.01 * std::abs(before.volume);
 }
 
 PartResult RepairPart(const Handle(XCAFDoc_ColorTool)& colors, const TDF_Label& label, const ups_repair_params& params)
@@ -221,7 +367,7 @@ PartResult RepairPart(const Handle(XCAFDoc_ColorTool)& colors, const TDF_Label& 
 
     // Runs one step on a copy of the colour tracking. It is kept only if it changed the shape,
     // did not throw and did not make the part worse; otherwise the part stays as before the step
-    // and the other steps still run.
+    // and the other steps still run. Returns whether the step was kept.
     TopoDS_Shape current = original;
     auto attempt = [&](auto&& step) {
         std::vector<Tracked> tracked = result.tracked;
@@ -230,21 +376,23 @@ PartResult RepairPart(const Handle(XCAFDoc_ColorTool)& colors, const TDF_Label& 
             const TopoDS_Shape next = step(current, tracked);
             if (next.IsSame(current))
             {
-                return;
+                return false;
             }
             const Quality after = Measure(next);
-            if (after.invalid > quality.invalid || after.freeEdges > quality.freeEdges)
+            if (IsWorse(after, quality))
             {
                 report.reverted = 1;
-                return;
+                return false;
             }
             current = next;
             quality = after;
             result.tracked = std::move(tracked);
+            return true;
         }
         catch (const std::exception&)
         {
             report.failed = 1;
+            return false;
         }
     };
 
@@ -273,6 +421,60 @@ PartResult RepairPart(const Handle(XCAFDoc_ColorTool)& colors, const TDF_Label& 
             FollowSewing(tracked, sewing);
             return SolidsFromClosedShells(sewing.SewedShape());
         });
+    }
+
+    // Tier 2 before merging, so faces that become the same cylinder can then be merged.
+    if ((params.steps & UPS_REPAIR_CANONICAL) != 0)
+    {
+        int32_t converted = 0;
+        double deviation = 0.0;
+        const bool kept = attempt([&](const TopoDS_Shape& shape, std::vector<Tracked>& tracked) {
+            converted = 0;
+            deviation = 0.0;
+            const Handle(ShapeBuild_ReShape) reshape = new ShapeBuild_ReShape();
+            ShapeIndexedMap faces;
+            TopExp::MapShapes(shape, TopAbs_FACE, faces);
+            for (int index = 1; index <= faces.Extent(); ++index)
+            {
+                const TopoDS_Face& face = TopoDS::Face(faces(index));
+                double gap = 0.0;
+                const Handle(Geom_Surface) surface = CanonicalSurface(face, params.tolerance, gap);
+                if (surface.IsNull())
+                {
+                    continue;
+                }
+
+                // Same wires (shared edges stay shared) on the exact surface; ShapeFix below adds
+                // the edges' parameter curves on it.
+                TopoDS_Face exact;
+                BRep_Builder builder;
+                builder.MakeFace(exact, surface, std::max(BRep_Tool::Tolerance(face), gap));
+                for (TopoDS_Iterator wires(face, /*cumOri*/ false); wires.More(); wires.Next())
+                {
+                    builder.Add(exact, wires.Value());
+                }
+                exact.Orientation(face.Orientation());
+                reshape->Replace(face, exact);
+                ++converted;
+                deviation = std::max(deviation, gap);
+            }
+            if (converted == 0)
+            {
+                return shape;
+            }
+
+            const TopoDS_Shape replaced = reshape->Apply(shape);
+            Follow(tracked, reshape->History());
+            ShapeFix_Shape fix(replaced);
+            fix.Perform();
+            Follow(tracked, fix.Context()->History());
+            return fix.Shape();
+        });
+        if (kept)
+        {
+            report.canonical_faces = converted;
+            report.max_deviation = deviation;
+        }
     }
 
     if ((params.steps & UPS_REPAIR_MERGE_FACES) != 0 && Count(current, TopAbs_FACE) > 1)
@@ -394,7 +596,7 @@ extern "C" UPS_API ups_status ups_document_repair(
         {
             return Fail(UPS_ERROR_INVALID_ARGUMENT, "Tolerance must be positive.");
         }
-        if ((params->steps & ~(UPS_REPAIR_FIX | UPS_REPAIR_SEW | UPS_REPAIR_MERGE_FACES)) != 0)
+        if ((params->steps & ~(UPS_REPAIR_FIX | UPS_REPAIR_SEW | UPS_REPAIR_MERGE_FACES | UPS_REPAIR_CANONICAL)) != 0)
         {
             return Fail(UPS_ERROR_INVALID_ARGUMENT, "Unknown repair step.");
         }

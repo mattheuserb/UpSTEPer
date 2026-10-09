@@ -119,7 +119,9 @@ internal sealed class OcctStepDocument : IStepDocument
                 p.InvalidBefore,
                 p.InvalidAfter,
                 p.ColourConflicts,
-                p.Reverted != 0))];
+                p.Reverted != 0,
+                p.CanonicalFaces,
+                p.MaxDeviation))];
         }
     }
 

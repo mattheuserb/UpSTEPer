@@ -86,6 +86,11 @@ Linux and macOS from CI-built binaries.
 - [x] Healing (tier 1, ADR 0011): ShapeFix, sewing (closed shells become solids), merging faces on
   the same surface; per part definition, all-or-nothing, cancellable, colours through the histories
   (largest area wins on conflicts); CLI `repair <in> <out> [--steps] [--tolerance] [--schema]`
+- [x] Canonical recognition (tier 2): spline faces that are planes, cylinders, cones or spheres
+  get the exact surface (orientation kept, deviation reported); `--steps canonical`
+- [ ] Canonical recognition of edge curves (lines, circles, ellipses), so DXF views of converted
+  parts become analytic too
+- [ ] App: repair dialog with check report, options and result report
 - Healing pipeline with a change report; canonical recognition of spline geometry
 - Colour preservation through `BRepTools_History`
 - CLI: `upsteper repair <in> <out> --report`

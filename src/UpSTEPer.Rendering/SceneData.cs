@@ -8,8 +8,12 @@ public sealed class SceneData
     private readonly ColorRgb?[] _faceColors;
     private readonly ReadOnlyMemory<float> _vertexColors;
 
-    private SceneData(MeshData mesh, ColorRgb?[] faceColors, BoundingBox bounds, EdgeData edges)
+    // Identifies the model across re-meshing and colour edits (see IsSameModel).
+    private readonly object _model;
+
+    private SceneData(MeshData mesh, ColorRgb?[] faceColors, BoundingBox bounds, EdgeData edges, object model)
     {
+        _model = model;
         Mesh = mesh;
         _faceColors = faceColors;
         _vertexColors = VertexColors.Build(mesh, GetFaceColor);
@@ -38,7 +42,7 @@ public sealed class SceneData
     {
         ArgumentNullException.ThrowIfNull(mesh);
         ArgumentNullException.ThrowIfNull(faceColor);
-        return new SceneData(mesh, ReadFaceColors(mesh, faceColor), BoundingBox.FromPositions(mesh.Positions.Span), edges ?? EdgeData.Empty);
+        return new SceneData(mesh, ReadFaceColors(mesh, faceColor), BoundingBox.FromPositions(mesh.Positions.Span), edges ?? EdgeData.Empty, new object());
     }
 
     /// <summary>
@@ -50,8 +54,30 @@ public sealed class SceneData
     public SceneData WithFaceColors(Func<FaceId, ColorRgb?> faceColor)
     {
         ArgumentNullException.ThrowIfNull(faceColor);
-        return new SceneData(Mesh, ReadFaceColors(Mesh, faceColor), Bounds, Edges);
+        return new SceneData(Mesh, ReadFaceColors(Mesh, faceColor), Bounds, Edges, _model);
     }
+
+    /// <summary>
+    /// Creates scene data for the same model with a new mesh and edges (e.g. another display
+    /// quality). Face ids must be unchanged; the face colours are kept.
+    /// </summary>
+    /// <param name="mesh">The new display mesh.</param>
+    /// <param name="edges">The new edge lines.</param>
+    /// <returns>The new scene data; <see cref="IsSameModel"/> is <see langword="true"/> for this instance.</returns>
+    public SceneData WithGeometry(MeshData mesh, EdgeData edges)
+    {
+        ArgumentNullException.ThrowIfNull(mesh);
+        ArgumentNullException.ThrowIfNull(edges);
+        return new SceneData(mesh, ReadFaceColors(mesh, GetFaceColor), BoundingBox.FromPositions(mesh.Positions.Span), edges, _model);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether <paramref name="other"/> shows the same model, derived by
+    /// <see cref="WithFaceColors"/> or <see cref="WithGeometry"/>; views keep their camera then.
+    /// </summary>
+    /// <param name="other">The other scene.</param>
+    /// <returns><see langword="true"/> for the same model.</returns>
+    public bool IsSameModel(SceneData? other) => other is not null && ReferenceEquals(_model, other._model);
 
     /// <summary>Gets the colour assigned to a face in the model.</summary>
     /// <param name="face">The face.</param>

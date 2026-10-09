@@ -40,13 +40,59 @@ public class TessellationTests
     {
         TestFiles.RequireNativeLibrary();
 
-        // Separate documents: OCCT keeps an existing finer triangulation.
-        using var coarseDocument = _reader.Load(TestFiles.CableGland);
-        using var fineDocument = _reader.Load(TestFiles.CableGland);
+        using var document = _reader.Load(TestFiles.CableGland);
 
-        var coarse = coarseDocument.Tessellate(TessellationOptions.Coarse);
-        var fine = fineDocument.Tessellate(TessellationOptions.Fine);
+        var coarse = document.Tessellate(TessellationOptions.Coarse);
+        var fine = document.Tessellate(TessellationOptions.Fine);
 
         Assert.True(fine.TriangleCount > coarse.TriangleCount, $"fine={fine.TriangleCount}, coarse={coarse.TriangleCount}");
+    }
+
+    [Fact]
+    public void Tessellate_CoarserAfterFiner_ReplacesTriangulation()
+    {
+        TestFiles.RequireNativeLibrary();
+        using var document = _reader.Load(TestFiles.CableGland);
+        var coarse = document.Tessellate(TessellationOptions.Coarse);
+        var fine = document.Tessellate(TessellationOptions.Fine);
+
+        var coarseAgain = document.Tessellate(TessellationOptions.Coarse);
+
+        Assert.True(coarseAgain.TriangleCount < fine.TriangleCount, $"fine={fine.TriangleCount}, coarse again={coarseAgain.TriangleCount}");
+        Assert.Equal(coarse.TriangleCount, coarseAgain.TriangleCount);
+    }
+
+    [Fact]
+    public void Bounds_ContainTheMesh()
+    {
+        TestFiles.RequireNativeLibrary();
+        using var document = _reader.Load(TestFiles.CableGland);
+
+        var bounds = document.Bounds;
+        var positions = document.Tessellate(TessellationOptions.Default).Positions.ToArray();
+
+        Assert.NotNull(bounds);
+        Assert.InRange(bounds.Diagonal, 10, 1000);
+        const double tolerance = 1e-3;
+        for (var i = 0; i < positions.Length; i += 3)
+        {
+            Assert.InRange(positions[i], bounds.MinX - tolerance, bounds.MaxX + tolerance);
+            Assert.InRange(positions[i + 1], bounds.MinY - tolerance, bounds.MaxY + tolerance);
+            Assert.InRange(positions[i + 2], bounds.MinZ - tolerance, bounds.MaxZ + tolerance);
+        }
+    }
+
+    [Theory]
+    [InlineData(DisplayQuality.Coarse)]
+    [InlineData(DisplayQuality.Normal)]
+    [InlineData(DisplayQuality.Fine)]
+    public void Tessellate_ForModel_StaysWithinReasonableTriangleCount(DisplayQuality quality)
+    {
+        TestFiles.RequireNativeLibrary();
+        using var document = _reader.Load(TestFiles.CableGland);
+
+        var mesh = document.Tessellate(TessellationOptions.ForModel(quality, document.Bounds));
+
+        Assert.InRange(mesh.TriangleCount, 1_000, 500_000);
     }
 }

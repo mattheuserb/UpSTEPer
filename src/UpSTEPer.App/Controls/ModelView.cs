@@ -143,7 +143,8 @@ internal sealed class ModelView : OpenGlControlBase
             }
             else
             {
-                if (Scene is { } loaded)
+                // A new model gets the default view; the same model re-meshed keeps the camera.
+                if (Scene is { } loaded && !loaded.IsSameModel(previous))
                 {
                     _camera.ResetOrientation();
                     _camera.FitTo(loaded.Bounds);

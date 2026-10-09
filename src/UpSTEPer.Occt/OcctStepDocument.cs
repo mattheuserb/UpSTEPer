@@ -9,12 +9,14 @@ internal sealed class OcctStepDocument : IStepDocument
 {
     private readonly DocumentSafeHandle _handle;
     private readonly Lazy<ModelStatistics> _statistics;
+    private readonly Lazy<ModelBounds?> _bounds;
 
     public OcctStepDocument(DocumentSafeHandle handle, string sourcePath)
     {
         _handle = handle;
         SourcePath = sourcePath;
         _statistics = new Lazy<ModelStatistics>(ReadStatistics);
+        _bounds = new Lazy<ModelBounds?>(ReadBounds);
     }
 
     public string SourcePath { get; }
@@ -25,6 +27,15 @@ internal sealed class OcctStepDocument : IStepDocument
         {
             ThrowIfDisposed();
             return _statistics.Value;
+        }
+    }
+
+    public ModelBounds? Bounds
+    {
+        get
+        {
+            ThrowIfDisposed();
+            return _bounds.Value;
         }
     }
 
@@ -280,6 +291,12 @@ internal sealed class OcctStepDocument : IStepDocument
     {
         NativeError.ThrowIfFailed(NativeMethods.DocumentGetStats(_handle, out var stats), "Reading statistics");
         return new ModelStatistics(stats.SolidCount, stats.ShellCount, stats.FaceCount, stats.EdgeCount, stats.VertexCount);
+    }
+
+    private ModelBounds? ReadBounds()
+    {
+        NativeError.ThrowIfFailed(NativeMethods.DocumentGetBounds(_handle, out var bounds), "Reading bounds");
+        return bounds.IsVoid != 0 ? null : new ModelBounds(bounds.MinX, bounds.MinY, bounds.MinZ, bounds.MaxX, bounds.MaxY, bounds.MaxZ);
     }
 
     private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_handle.IsClosed, this);

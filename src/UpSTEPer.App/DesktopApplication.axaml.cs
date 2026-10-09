@@ -39,7 +39,7 @@ internal sealed partial class DesktopApplication : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var viewModel = new MainViewModel(new OcctStepReader());
+            var viewModel = new MainViewModel(new OcctStepReader()) { DisplayQuality = _options.Quality };
             var window = new MainWindow { DataContext = viewModel };
             desktop.MainWindow = window;
             desktop.Exit += (_, _) => viewModel.Dispose();

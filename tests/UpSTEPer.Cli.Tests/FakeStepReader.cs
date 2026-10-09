@@ -29,6 +29,8 @@ internal sealed class FakeStepDocument : IStepDocument
 
     public ModelStatistics Statistics { get; } = new(SolidCount: 1, ShellCount: 1, FaceCount: 3, EdgeCount: 9, VertexCount: 6);
 
+    public ModelBounds? Bounds { get; } = new(0, 0, 0, 1, 1, 1);
+
     public TessellationOptions? LastOptions { get; private set; }
 
     public bool IsDisposed { get; private set; }

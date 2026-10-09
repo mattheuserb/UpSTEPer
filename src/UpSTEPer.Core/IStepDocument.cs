@@ -15,6 +15,9 @@ public interface IStepDocument : IDisposable
     /// <summary>Gets topology counts of the model.</summary>
     ModelStatistics Statistics { get; }
 
+    /// <summary>Gets the bounding box of the model, or <see langword="null"/> when it has no geometry.</summary>
+    ModelBounds? Bounds { get; }
+
     /// <summary>Gets the colour assigned to a face in the file, falling back to its solid's colour.</summary>
     /// <param name="faceId">The face.</param>
     /// <returns>The colour, or <see langword="null"/> when the file assigns none.</returns>
@@ -68,7 +71,7 @@ public interface IStepDocument : IDisposable
     /// <exception cref="GeometryOperationException">Discretisation failed.</exception>
     EdgeData TessellateEdges(TessellationOptions options);
 
-    /// <summary>Triangulates the model for display.</summary>
+    /// <summary>Triangulates the model for display, replacing any previous triangulation.</summary>
     /// <param name="options">Tessellation quality.</param>
     /// <returns>The mesh.</returns>
     /// <exception cref="GeometryOperationException">Tessellation failed.</exception>

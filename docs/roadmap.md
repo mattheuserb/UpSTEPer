@@ -35,7 +35,9 @@ Linux and macOS from CI-built binaries.
 - [ ] Optional: view cube in the 3D view
 - [x] Model tree (assemblies, parts, bodies) from XDE labels; selecting a node highlights its faces;
   "Colour body" acts on the tree selection (one undo step for several bodies)
-- [ ] Display quality presets (re-mesh with `BRepTools::Clean`)
+- [x] Display quality (coarse / normal / fine) in the toolbar: re-meshes in the background and keeps
+  colours, selection and camera; chord tolerance scales with the model size (bounding box
+  diagonal), the previous triangulation is discarded (`BRepTools::Clean`)
 - [ ] Progress and cancellation for long loads; DI/logging (Microsoft.Extensions)
 - [ ] Hover highlight (needs a BVH for picking performance)
 

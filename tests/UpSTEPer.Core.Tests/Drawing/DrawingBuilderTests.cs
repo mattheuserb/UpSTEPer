@@ -44,6 +44,8 @@ public class DrawingBuilderTests
 
         public ModelStatistics Statistics { get; } = new(1, 1, 1, 4, 4);
 
+        public ModelBounds? Bounds { get; } = new(0, 0, 0, 1, 1, 1);
+
         public ProjectedView Project(ViewDirection direction, ProjectionOptions options)
         {
             Projected.Add(direction);

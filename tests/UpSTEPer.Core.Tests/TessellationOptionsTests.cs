@@ -19,4 +19,48 @@ public class TessellationOptionsTests
         Assert.True(TessellationOptions.Coarse.AngularDeflectionRadians > TessellationOptions.Default.AngularDeflectionRadians);
         Assert.True(TessellationOptions.Default.AngularDeflectionRadians > TessellationOptions.Fine.AngularDeflectionRadians);
     }
+
+    [Theory]
+    [InlineData(DisplayQuality.Coarse, 0.2, 0.5)]
+    [InlineData(DisplayQuality.Normal, 0.05, 0.2)]
+    [InlineData(DisplayQuality.Fine, 0.01, 0.05)]
+    public void ForModel_ScalesChordToleranceWithModelSize(DisplayQuality quality, double linearAt100, double angular)
+    {
+        // Diagonal of a 60 x 80 x 0 box: 100 mm.
+        var options = TessellationOptions.ForModel(quality, new ModelBounds(0, 0, 0, 60, 80, 0));
+        var large = TessellationOptions.ForModel(quality, new ModelBounds(0, 0, 0, 6000, 8000, 0));
+
+        Assert.Equal(linearAt100, options.LinearDeflection, 9);
+        Assert.Equal(linearAt100 * 100, large.LinearDeflection, 6);
+        Assert.Equal(angular, options.AngularDeflectionRadians);
+        Assert.False(options.IsRelative);
+    }
+
+    [Fact]
+    public void ForModel_TinyModel_KeepsMinimumChordTolerance()
+    {
+        var options = TessellationOptions.ForModel(DisplayQuality.Fine, new ModelBounds(0, 0, 0, 0, 0, 0));
+
+        Assert.Equal(1e-3, options.LinearDeflection);
+    }
+
+    [Fact]
+    public void ForModel_UnknownBounds_UsesFixedPresets()
+    {
+        Assert.Same(TessellationOptions.Coarse, TessellationOptions.ForModel(DisplayQuality.Coarse, null));
+        Assert.Same(TessellationOptions.Default, TessellationOptions.ForModel(DisplayQuality.Normal, null));
+        Assert.Same(TessellationOptions.Fine, TessellationOptions.ForModel(DisplayQuality.Fine, null));
+    }
+
+    [Fact]
+    public void ForModel_UndefinedQuality_Throws()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => TessellationOptions.ForModel((DisplayQuality)7, null));
+    }
+
+    [Fact]
+    public void ModelBounds_Diagonal_IsLengthOfBoxDiagonal()
+    {
+        Assert.Equal(13.0, new ModelBounds(-1, -2, -3, 2, 2, 9).Diagonal, 12);
+    }
 }

@@ -124,7 +124,7 @@ Colours survive repair by mapping through `BRepTools_History` (ADR 0005).
 
 ```
 IStepDocument.Project(view)          native: HLRBRep_Algo + HLRBRep_HLRToShape, edge classification
-  -> HiddenLineCleanup               Core: drop hidden curves lying on visible ones (ISO 128)
+  -> HiddenLineCleanup               Core: cut hidden stretches lying on visible curves (ISO 128)
   -> DrawingLayout.Arrange           Core: first-angle placement, iso top right
   -> DxfExporter.Write               Export.Dxf: ACadSharp, ASCII DXF, millimetres
 ```

@@ -25,7 +25,7 @@ public static class DrawingBuilder
         }
 
         var views = directions
-            .Select(d => HiddenLineCleanup.RemoveCoveredHidden(document.Project(d, options)))
+            .Select(d => HiddenLineCleanup.RemoveCoveredHidden(document.Project(d, options), polylineDeflection: options.Deflection))
             .ToList();
         var size = views.Select(v => v.GetBounds()).Select(b => Math.Max(b.Width, b.Height)).Max();
         return DrawingLayout.Arrange(views, gap ?? Math.Max(10, 0.2 * size));

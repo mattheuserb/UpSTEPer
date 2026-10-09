@@ -79,7 +79,8 @@ OCCT objects are not safe for concurrent access. Rules:
 ## Colours (M2)
 
 - Import uses OCCT XDE (`STEPCAFControl_Reader`) with colour, name and layer modes enabled.
-- Resolution order for display: face colour → solid colour → single root colour.
+- Resolution order for display, per part occurrence: face colour → solid colour → instance →
+  definition → parent assembly (`ResolveFaceColors` in `instances.cpp`).
 - Edits go straight into the XDE document via `XCAFDoc_ColorTool` (surface colour on the face or
   solid label; sub-shape labels are created on demand) and are written by
   `STEPCAFControl_Writer`. Clearing removes the label's colour, so the face falls back to its body.
@@ -87,7 +88,9 @@ OCCT objects are not safe for concurrent access. Rules:
   (`GetAssignedColor`), not the displayed one, so undo restores inheritance exactly.
 - After an edit the app builds `SceneData.WithFaceColors` on the same mesh: no re-tessellation,
   the view keeps its camera and only re-uploads the colour buffer.
-- Known gap: faces/bodies inside assembly instances are rejected (`UPS_ERROR_OPERATION`).
+- Assemblies: colouring a face or body changes only the clicked occurrence. Shared definitions on
+  its path are copied first (`MakeOccurrenceUnique`), keeping all face and body ids; saved files
+  then contain one extra product per individually coloured part (ADR 0009).
 
 ## Repair (M4–M5 design)
 

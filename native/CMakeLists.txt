@@ -1,4 +1,4 @@
-# UpSTEPer native facade: a narrow, C-ABI shared library over Open CASCADE (OCCT).
+﻿# UpSTEPer native facade: a narrow, C-ABI shared library over Open CASCADE (OCCT).
 # See docs/adr/0002-native-interop-c-abi.md for the rationale.
 cmake_minimum_required(VERSION 3.24)
 
@@ -22,6 +22,7 @@ add_library(upsteper_native SHARED
     src/drawing.cpp
     src/edges.cpp
     src/tree.cpp
+    src/instances.cpp
     src/version.cpp
 )
 

@@ -87,46 +87,12 @@ private:
         TopExp::MapShapes(shape, TopAbs_SOLID, solids);
         for (int i = 1; i <= solids.Extent(); ++i)
         {
-            const int32_t bodyId = FindBody(solids(i));
+            const int32_t bodyId = ups::detail::FindIndexTolerant(m_document.solids, solids(i)) - 1;
             const std::string bodyName = solids.Extent() == 1 ? name : name + " #" + std::to_string(i);
             Add(self, UPS_NODE_BODY, bodyId, bodyName);
         }
     }
 
-    // The solid as it occurs in the document's compound. Locations may be composed differently
-    // along the two paths, so fall back to comparing the underlying shape and the transformation.
-    int32_t FindBody(const TopoDS_Shape& solid) const
-    {
-        const int index = m_document.solids.FindIndex(solid);
-        if (index > 0)
-        {
-            return index - 1;
-        }
-
-        const gp_Trsf trsf = solid.Location().Transformation();
-        for (int i = 1; i <= m_document.solids.Extent(); ++i)
-        {
-            const TopoDS_Shape& candidate = m_document.solids(i);
-            if (candidate.TShape() != solid.TShape())
-            {
-                continue;
-            }
-            const gp_Trsf other = candidate.Location().Transformation();
-            bool same = true;
-            for (int row = 1; row <= 3 && same; ++row)
-            {
-                for (int col = 1; col <= 4 && same; ++col)
-                {
-                    same = std::abs(trsf.Value(row, col) - other.Value(row, col)) < 1e-9;
-                }
-            }
-            if (same)
-            {
-                return i - 1;
-            }
-        }
-        return -1;
-    }
 
     int32_t Add(int32_t parent, ups_node_kind kind, int32_t bodyId, const std::string& name)
     {

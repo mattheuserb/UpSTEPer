@@ -90,7 +90,8 @@ Linux and macOS from CI-built binaries.
   get the exact surface (orientation kept, deviation reported); `--steps canonical`
 - [ ] Canonical recognition of edge curves (lines, circles, ellipses), so DXF views of converted
   parts become analytic too
-- [ ] App: repair dialog with check report, options and result report
+- [x] App: repair dialog ("Repair..."): check report, options (steps, tolerance), result report, undo of the
+  last repair via a temporary STEP snapshot
 - Healing pipeline with a change report; canonical recognition of spline geometry
 - Colour preservation through `BRepTools_History`
 - CLI: `upsteper repair <in> <out> --report`

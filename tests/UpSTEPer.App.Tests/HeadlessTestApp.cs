@@ -26,5 +26,9 @@ internal sealed class HeadlessTestApp : Application
         {
             Source = new Uri("avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml"),
         });
+        Styles.Add(new StyleInclude(new Uri("avares://UpSTEPer.App.Tests/"))
+        {
+            Source = new Uri("avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"),
+        });
     }
 }

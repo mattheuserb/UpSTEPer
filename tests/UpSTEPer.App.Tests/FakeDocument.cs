@@ -47,10 +47,33 @@ internal sealed class FakeDocument(bool twoBodies = false) : IStepDocument
         ]
         : [new ModelNode("Fake part", ModelNodeKind.Part, null, [new ModelNode("Fake part", ModelNodeKind.Body, new BodyId(0), [])])];
 
-    public IReadOnlyList<PartRepair> Repair(RepairOptions options, IProgress<OperationProgress>? progress = null, CancellationToken cancellationToken = default) =>
-        [];
+    public IReadOnlyList<PartCheck> CheckResult { get; set; } = [new PartCheck("Fake part", 1, 2, 0, 0, 0, 0, 1, 0)];
 
-    public IReadOnlyList<PartCheck> Check(double tolerance = 0.01) => [];
+    public IReadOnlyList<PartRepair> RepairResult { get; set; } = [new PartRepair("Fake part", true, false, 2, 1, 1, 1, 0, 0, 0, 0, 0)];
+
+    public RepairOptions? RepairedWith { get; private set; }
+
+    /// <summary>Gets or sets a value indicating whether Repair behaves as if cancelled.</summary>
+    public bool CancelRepair { get; set; }
+
+    public IReadOnlyList<PartRepair> Repair(RepairOptions options, IProgress<OperationProgress>? progress = null, CancellationToken cancellationToken = default)
+    {
+        if (CancelRepair)
+        {
+            throw new OperationCanceledException();
+        }
+
+        RepairedWith = options;
+        return RepairResult;
+    }
+
+    public double? CheckedWith { get; private set; }
+
+    public IReadOnlyList<PartCheck> Check(double tolerance = 0.01)
+    {
+        CheckedWith = tolerance;
+        return CheckResult;
+    }
 
     public BodyId? GetBodyOfFace(FaceId faceId) => new BodyId(twoBodies ? faceId.Value : 0);
 

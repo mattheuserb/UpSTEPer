@@ -42,7 +42,9 @@ Linux and macOS from CI-built binaries.
   and Cancel (Esc) in the app, progress line and Ctrl+C in the CLI
 - [x] DI/logging (Microsoft.Extensions): containers in app and CLI, daily log file in the app,
   `--verbose` in the CLI, OCCT messages routed into the log
-- [ ] Hover highlight (needs a BVH for picking performance)
+- [x] Hover highlight: the face under the pointer is tinted blue and named in the status bar;
+  picking through a per-mesh BVH (`TriangleBvh`, µs instead of ms per pick at 10⁵ triangles),
+  only the two affected faces are re-uploaded (`FaceVertexRanges`, `glBufferSubData`)
 
 ## M2 — Colouring
 

@@ -22,7 +22,7 @@ dotnet run --project src/UpSTEPer.Cli -- info <file.stp> [--verbose] # load + st
 dotnet run --project src/UpSTEPer.Cli -- paint <in.stp> <out.stp> --face 80=#FF0000 --body 0=#3366CC   # colour + save
 dotnet run --project src/UpSTEPer.Cli -- export-dxf <in.stp> <out.dxf> [--views front,top,left,iso]  # 2D views
 dotnet run --project src/UpSTEPer.App -- <file.stp>       # desktop viewer
-dotnet run --project src/UpSTEPer.App -- <file.stp> --screenshot out.png [--select-face N] [--view front|top|iso|...] [--ortho] [--quality coarse|normal|fine]   # render 1 frame to PNG and exit
+dotnet run --project src/UpSTEPer.App -- <file.stp> --screenshot out.png [--select-face N] [--view front|top|iso|...] [--ortho] [--quality coarse|normal|fine] [--hover-face N]   # render 1 frame to PNG and exit
 
 # Native bridge (needs C++ toolchain, CMake >= 3.24, Ninja, VCPKG_ROOT) — see docs/development.md
 powershell -File scripts/build-native.ps1 -VcpkgRoot C:\vcpkg   # Windows: sets up MSVC env itself

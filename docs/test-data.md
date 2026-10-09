@@ -49,6 +49,19 @@ $env:PATH = "$PWD\..\artifacts\native\win-x64;$env:PATH"
 .\build\win-x64\upsteper_make_test_assembly.exe ..\examples\generated\test-assembly.stp
 ```
 
+## Large local files (not in the repository)
+
+Too big for Git (and not ours to redistribute); download them into `examples/local/`, which is
+ignored. Nothing in the test suite requires them; they are for performance measurements.
+
+### `examples/local/Scania-Engine-V8-XT-Turbo.step`
+
+- Source: STEP Tools large-assembly samples,
+  <https://www.steptools.com/docs/stpfiles/bigassy/Scania-Engine-V8-XT-Turbo.step> (374 MB,
+  AP203). Originally "Scania V8 XT Turbo Engine" by Ivo Jardim on GrabCAD, Autodesk Inventor.
+- Licence: none stated; GrabCAD library terms apply. Use locally only, never commit.
+- Download: `curl -L -o examples/local/Scania-Engine-V8-XT-Turbo.step <url above>`
+
 ## Wanted
 
 | Need | Why | Ideas |

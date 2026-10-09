@@ -12,7 +12,8 @@ public sealed record PickResult(FaceId Face, float Distance, Vector3 Point);
 /// <summary>Finds the face under the mouse by intersecting a ray with the display mesh.</summary>
 /// <remarks>
 /// Brute force over all triangles (Möller–Trumbore, two-sided): a few milliseconds for 10⁵
-/// triangles, which is enough for click selection. Add a BVH if hover picking is needed.
+/// triangles. The viewer picks through <see cref="TriangleBvh"/> (same results, built once per
+/// mesh); this is the simple reference implementation.
 /// </remarks>
 public static class MeshPicker
 {
@@ -56,7 +57,7 @@ public static class MeshPicker
     }
 
     // Möller–Trumbore ray/triangle intersection, accepting both windings.
-    private static bool Intersect(Ray ray, Vector3 a, Vector3 b, Vector3 c, out float distance)
+    internal static bool Intersect(Ray ray, Vector3 a, Vector3 b, Vector3 c, out float distance)
     {
         distance = 0;
         var edge1 = b - a;

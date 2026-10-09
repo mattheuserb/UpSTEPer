@@ -161,6 +161,21 @@ public sealed class MeshRenderer : IDisposable
         _gl.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
     }
 
+    /// <summary>Replaces the colours of a range of vertices (e.g. the face under the pointer).</summary>
+    /// <param name="firstVertex">The first vertex to update.</param>
+    /// <param name="vertexColors">RGB per vertex, starting at <paramref name="firstVertex"/>.</param>
+    public unsafe void UpdateColors(int firstVertex, ReadOnlySpan<float> vertexColors)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(firstVertex);
+        _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _colorBuffer);
+        fixed (float* data = vertexColors)
+        {
+            _gl.BufferSubData(BufferTargetARB.ArrayBuffer, firstVertex * 3 * sizeof(float), (nuint)(vertexColors.Length * sizeof(float)), data);
+        }
+
+        _gl.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
+    }
+
     /// <summary>Clears the viewport and draws the uploaded mesh.</summary>
     /// <param name="camera">The camera.</param>
     /// <param name="width">Viewport width in pixels.</param>

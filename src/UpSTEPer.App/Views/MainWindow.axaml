@@ -85,6 +85,7 @@
     <Border DockPanel.Dock="Bottom" Padding="8,4" BorderThickness="0,1,0,0" BorderBrush="#D0D4D9">
       <DockPanel>
         <TextBlock DockPanel.Dock="Right" FontSize="12" Text="{Binding SelectionInfo}" />
+        <TextBlock DockPanel.Dock="Right" FontSize="12" Foreground="#5F6368" Margin="0,0,16,0" Text="{Binding HoverInfo}" />
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6" Margin="0,0,12,0" IsVisible="{Binding IsCancellable}">
           <ProgressBar Width="160" Minimum="0" Maximum="1" Value="{Binding ProgressFraction}" VerticalAlignment="Center" />
           <Button Content="Cancel" Command="{Binding CancelCommand}" Padding="8,0" FontSize="12" ToolTip.Tip="Esc" />
@@ -114,7 +115,7 @@
       <GridSplitter Grid.Column="1" Background="#D0D4D9" ResizeDirection="Columns" />
       <controls:ModelView Grid.Column="2" x:Name="ModelViewControl"
                           Scene="{Binding Scene}" SelectedFace="{Binding SelectedFace}"
-                          HighlightedFaces="{Binding HighlightedFaces}" ShowEdges="{Binding ShowEdges}"
+                          HighlightedFaces="{Binding HighlightedFaces}" HoveredFace="{Binding HoveredFace}" ShowEdges="{Binding ShowEdges}"
                           IsOrthographic="{Binding IsOrthographic}" />
     </Grid>
   </DockPanel>

@@ -87,6 +87,11 @@ internal sealed partial class DesktopApplication : Application
                         viewModel.SelectedFace = new FaceId(face);
                     }
 
+                    if (loaded && _options.HoverFace is { } hovered)
+                    {
+                        viewModel.HoveredFace = new FaceId(hovered);
+                    }
+
                     viewModel.IsOrthographic |= _options.Orthographic;
                     if (loaded && _options.View is { } view)
                     {

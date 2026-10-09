@@ -60,6 +60,9 @@ public class DrawingBuilderTests
 
         public IReadOnlyList<ModelNode> GetModelTree() => [];
 
+        public IReadOnlyList<PartRepair> Repair(RepairOptions options, IProgress<OperationProgress>? progress = null, CancellationToken cancellationToken = default) =>
+            [];
+
         public IReadOnlyList<PartCheck> Check(double tolerance = 0.01) => [];
 
         public BodyId? GetBodyOfFace(FaceId faceId) => null;

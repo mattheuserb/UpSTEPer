@@ -106,6 +106,21 @@ void MakeOccurrenceUnique(ups_document& document, const PartInstance& instance);
 // UTF-8 name of a label (TDataStd_Name), empty when unnamed (tree.cpp).
 std::string NameOf(const TDF_Label& label);
 
+// ---- Part definitions, check and topology (check.cpp, document.cpp) ----------------------------
+
+// Labels of all part definitions (simple shapes, not assemblies), each once, in document order.
+LabelSequence PartDefinitions(const ups_document& document);
+
+// Edges bounding exactly one face (seams and degenerated edges excluded): gaps, open shells.
+int32_t CountFreeEdges(const TopoDS_Shape& shape);
+
+// Faces, edges and vertices BRepCheck reports invalid; at least 1 if the shape is invalid at all.
+int32_t CountInvalidShapes(const TopoDS_Shape& shape);
+
+// Rebuilds roots, document shape, face/solid maps and display colours from the XDE document after
+// its geometry changed. Face and body ids are renumbered.
+void RebuildTopology(ups_document& document);
+
 // Recomputes ups_document::faceColors from the XDE colour attributes (instances.cpp).
 void ResolveFaceColors(ups_document& document);
 

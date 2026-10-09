@@ -43,9 +43,11 @@ int32_t Count(const TopoDS_Shape& shape, TopAbs_ShapeEnum type)
     return static_cast<int32_t>(map.Extent());
 }
 
+} // namespace
+
 // Edges that bound exactly one face: gaps between faces or an open shell. Seams (an edge used
 // twice by the same face) and degenerated edges (cone apex, sphere pole) are no defect.
-int32_t FreeEdges(const TopoDS_Shape& shape)
+int32_t ups::detail::CountFreeEdges(const TopoDS_Shape& shape)
 {
     ShapeAncestorMap edgeFaces;
     TopExp::MapShapesAndAncestors(shape, TopAbs_EDGE, TopAbs_FACE, edgeFaces);
@@ -71,7 +73,7 @@ int32_t FreeEdges(const TopoDS_Shape& shape)
 }
 
 // Sub-shapes (faces, edges, vertices) that BRepCheck reports as invalid.
-int32_t InvalidShapes(const TopoDS_Shape& shape)
+int32_t ups::detail::CountInvalidShapes(const TopoDS_Shape& shape)
 {
     const BRepCheck_Analyzer analyzer(shape);
     if (analyzer.IsValid())
@@ -94,6 +96,28 @@ int32_t InvalidShapes(const TopoDS_Shape& shape)
     // Invalid at a higher level only (e.g. a shell that is not closed): count the whole shape.
     return std::max(count, 1);
 }
+
+ups::detail::LabelSequence ups::detail::PartDefinitions(const ups_document& document)
+{
+    const Handle(XCAFDoc_ShapeTool) shapeTool = XCAFDoc_DocumentTool::ShapeTool(document.xdeDocument->Main());
+    LabelSequence labels;
+    shapeTool->GetShapes(labels);
+    LabelSequence parts;
+    for (const TDF_Label& label : labels)
+    {
+        // Assemblies consist of parts, which are handled once each, however often they are placed.
+        if (!XCAFDoc_ShapeTool::IsAssembly(label) && XCAFDoc_ShapeTool::IsSimpleShape(label))
+        {
+            parts.Append(label);
+        }
+    }
+    return parts;
+}
+
+namespace
+{
+using ups::detail::CountFreeEdges;
+using ups::detail::CountInvalidShapes;
 
 void CheckFaces(const TopoDS_Shape& shape, double tolerance, ups_part_check& result)
 {
@@ -168,8 +192,8 @@ ups_part_check CheckPart(const TopoDS_Shape& shape, double tolerance)
     ups_part_check result{};
     result.solid_count = Count(shape, TopAbs_SOLID);
     result.face_count = Count(shape, TopAbs_FACE);
-    Try(result, [&] { result.free_edges = FreeEdges(shape); });
-    Try(result, [&] { result.invalid_shapes = InvalidShapes(shape); });
+    Try(result, [&] { result.free_edges = CountFreeEdges(shape); });
+    Try(result, [&] { result.invalid_shapes = CountInvalidShapes(shape); });
     Try(result, [&] { CheckFaces(shape, tolerance, result); });
     Try(result, [&] { result.mergeable_faces = result.face_count > 1 ? MergeableFaces(shape, result.face_count) : 0; });
     Try(result, [&] { result.small_edges = SmallEdges(shape, tolerance); });
@@ -191,18 +215,8 @@ extern "C" UPS_API ups_status ups_document_check(const ups_document* document, d
         *out_check = nullptr;
 
         auto check = std::make_unique<ups_check>();
-        const Handle(XCAFDoc_ShapeTool) shapeTool = XCAFDoc_DocumentTool::ShapeTool(document->xdeDocument->Main());
-        ups::detail::LabelSequence labels;
-        shapeTool->GetShapes(labels);
-        for (const TDF_Label& label : labels)
+        for (const TDF_Label& label : ups::detail::PartDefinitions(*document))
         {
-            // Part definitions only: assemblies consist of parts, which are checked once each,
-            // however often they are placed.
-            if (XCAFDoc_ShapeTool::IsAssembly(label) || !XCAFDoc_ShapeTool::IsSimpleShape(label))
-            {
-                continue;
-            }
-
             ups_part_check part = CheckPart(XCAFDoc_ShapeTool::GetShape(label), tolerance);
             const std::string name = ups::detail::NameOf(label);
             part.name_offset = static_cast<int32_t>(check->names.size());

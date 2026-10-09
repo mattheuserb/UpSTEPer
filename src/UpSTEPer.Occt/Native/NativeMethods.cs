@@ -88,6 +88,24 @@ internal static partial class NativeMethods
     [LibraryImport(LibraryName, EntryPoint = "ups_document_check")]
     internal static partial NativeStatus DocumentCheck(DocumentSafeHandle document, double tolerance, out CheckSafeHandle check);
 
+    [LibraryImport(LibraryName, EntryPoint = "ups_document_repair")]
+    internal static unsafe partial NativeStatus DocumentRepair(
+        DocumentSafeHandle document,
+        in NativeRepairParams parameters,
+        delegate* unmanaged[Cdecl]<nint, double, byte*, int> callback,
+        nint userData,
+        out RepairSafeHandle repair);
+
+    [LibraryImport(LibraryName, EntryPoint = "ups_repair_free")]
+    internal static partial void RepairFree(nint repair);
+
+    [LibraryImport(LibraryName, EntryPoint = "ups_repair_get_info")]
+    internal static partial NativeStatus RepairGetInfo(RepairSafeHandle repair, out int partCount, out int namesLength);
+
+    [LibraryImport(LibraryName, EntryPoint = "ups_repair_copy")]
+    internal static unsafe partial NativeStatus RepairCopy(
+        RepairSafeHandle repair, NativePartRepair* parts, long partsCapacity, byte* names, long namesCapacity);
+
     [LibraryImport(LibraryName, EntryPoint = "ups_check_free")]
     internal static partial void CheckFree(nint check);
 
@@ -193,6 +211,34 @@ internal enum NativeTargetKind
 }
 
 /// <summary>Mirrors <c>ups_tree_node</c>.</summary>
+[StructLayout(LayoutKind.Sequential)]
+internal struct NativeRepairParams
+{
+    public int Steps;
+    public double Tolerance;
+}
+
+/// <summary>Mirrors <c>ups_part_repair</c>.</summary>
+[StructLayout(LayoutKind.Sequential)]
+internal struct NativePartRepair
+{
+    public int Changed;
+    public int Failed;
+    public int Reverted;
+    public int FacesBefore;
+    public int FacesAfter;
+    public int SolidsBefore;
+    public int SolidsAfter;
+    public int FreeEdgesBefore;
+    public int FreeEdgesAfter;
+    public int InvalidBefore;
+    public int InvalidAfter;
+    public int ColourConflicts;
+    public int NameOffset;
+    public int NameLength;
+}
+
+/// <summary>Mirrors <c>ups_part_check</c>.</summary>
 [StructLayout(LayoutKind.Sequential)]
 internal struct NativePartCheck
 {

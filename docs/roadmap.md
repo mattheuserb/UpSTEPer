@@ -83,6 +83,9 @@ Linux and macOS from CI-built binaries.
 - [x] Generated test file with one defect per part (`examples/generated/damaged-parts.stp`)
 - [x] Check per part definition (free edges, invalid shapes, canonical splines, mergeable faces,
   small edges; failures isolated per sub-check): native `ups_document_check`, CLI `check`
+- [x] Healing (tier 1, ADR 0011): ShapeFix, sewing (closed shells become solids), merging faces on
+  the same surface; per part definition, all-or-nothing, cancellable, colours through the histories
+  (largest area wins on conflicts); CLI `repair <in> <out> [--steps] [--tolerance] [--schema]`
 - Healing pipeline with a change report; canonical recognition of spline geometry
 - Colour preservation through `BRepTools_History`
 - CLI: `upsteper repair <in> <out> --report`

@@ -83,27 +83,36 @@ extern "C" UPS_API ups_status ups_document_load_step_with_progress(
             return Fail(UPS_ERROR_TRANSFER, "STEP file was read but contains no transferable geometry.");
         }
 
-        const Handle(XCAFDoc_ShapeTool) shapeTool = XCAFDoc_DocumentTool::ShapeTool(document->xdeDocument->Main());
-        shapeTool->GetFreeShapes(document->roots);
-
-        TopoDS_Compound compound;
-        BRep_Builder builder;
-        builder.MakeCompound(compound);
-        for (const TDF_Label& root : document->roots)
-        {
-            builder.Add(compound, XCAFDoc_ShapeTool::GetShape(root));
-        }
-        document->shape = compound;
-
-        TopExp::MapShapes(document->shape, TopAbs_FACE, document->faces);
-        TopExp::MapShapes(document->shape, TopAbs_SOLID, document->solids);
-        TopExp::MapShapesAndAncestors(document->shape, TopAbs_FACE, TopAbs_SOLID, document->faceToSolids);
-        ups::detail::ResolveFaceColors(*document);
+        ups::detail::RebuildTopology(*document);
 
         progress->ReportDone();
         *out_document = document.release();
         return UPS_OK;
     });
+}
+
+void ups::detail::RebuildTopology(ups_document& document)
+{
+    const Handle(XCAFDoc_ShapeTool) shapeTool = XCAFDoc_DocumentTool::ShapeTool(document.xdeDocument->Main());
+    document.roots.Clear();
+    shapeTool->GetFreeShapes(document.roots);
+
+    TopoDS_Compound compound;
+    BRep_Builder builder;
+    builder.MakeCompound(compound);
+    for (const TDF_Label& root : document.roots)
+    {
+        builder.Add(compound, XCAFDoc_ShapeTool::GetShape(root));
+    }
+    document.shape = compound;
+
+    document.faces.Clear();
+    document.solids.Clear();
+    document.faceToSolids.Clear();
+    TopExp::MapShapes(document.shape, TopAbs_FACE, document.faces);
+    TopExp::MapShapes(document.shape, TopAbs_SOLID, document.solids);
+    TopExp::MapShapesAndAncestors(document.shape, TopAbs_FACE, TopAbs_SOLID, document.faceToSolids);
+    ups::detail::ResolveFaceColors(document);
 }
 
 extern "C" UPS_API void ups_document_free(ups_document* document)

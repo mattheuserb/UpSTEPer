@@ -120,6 +120,11 @@ Tiered, each tier a separate, testable pipeline step with a report of what chang
 
 Colours survive repair by mapping through `BRepTools_History` (ADR 0005).
 
+Implemented so far (M4): `check` (per part definition, read-only, failures isolated per sub-check)
+and tier 1 healing (`native/src/repair.cpp`, ADR 0011): per part definition, all parts computed
+first and applied together (cancellable, all-or-nothing), then `RebuildTopology` renumbers face and
+body ids and re-resolves colours.
+
 ## DXF export (M3)
 
 ```

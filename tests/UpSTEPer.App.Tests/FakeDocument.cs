@@ -47,6 +47,9 @@ internal sealed class FakeDocument(bool twoBodies = false) : IStepDocument
         ]
         : [new ModelNode("Fake part", ModelNodeKind.Part, null, [new ModelNode("Fake part", ModelNodeKind.Body, new BodyId(0), [])])];
 
+    public IReadOnlyList<PartRepair> Repair(RepairOptions options, IProgress<OperationProgress>? progress = null, CancellationToken cancellationToken = default) =>
+        [];
+
     public IReadOnlyList<PartCheck> Check(double tolerance = 0.01) => [];
 
     public BodyId? GetBodyOfFace(FaceId faceId) => new BodyId(twoBodies ? faceId.Value : 0);

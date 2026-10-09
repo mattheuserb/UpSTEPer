@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using UpSTEPer.App.ViewModels;
 using UpSTEPer.Core;
 
@@ -359,6 +360,32 @@ public class MainViewModelTests
         Assert.Equal(0.9, reports[0].Fraction, 12);
         Assert.Equal("Meshing", reports[0].Phase);
         Assert.Equal(1.0, reports[1].Fraction, 12);
+    }
+
+    [Fact]
+    public async Task LoadAsync_LogsSuccessAndFailure()
+    {
+        var logger = new RecordingLogger<MainViewModel>();
+        var calls = 0;
+        var reader = new FakeReader(_ => ++calls == 1 ? new FakeDocument() : throw new StepImportException("not STEP"));
+        using var viewModel = new MainViewModel(reader, logger);
+
+        await viewModel.LoadAsync("good.stp");
+        await viewModel.LoadAsync("bad.stp");
+
+        Assert.Collection(
+            logger.Entries,
+            opened =>
+            {
+                Assert.Equal(LogLevel.Information, opened.Level);
+                Assert.Contains("good.stp at Normal display quality: 2 triangles", opened.Message, StringComparison.Ordinal);
+            },
+            failed =>
+            {
+                Assert.Equal(LogLevel.Warning, failed.Level);
+                Assert.Contains("bad.stp failed", failed.Message, StringComparison.Ordinal);
+                Assert.IsType<StepImportException>(failed.Exception);
+            });
     }
 
     private static async Task<MainViewModel> LoadedAsync(FakeReader reader)

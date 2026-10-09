@@ -1,6 +1,9 @@
+using System.Diagnostics;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using UpSTEPer.Core;
 using UpSTEPer.Core.Drawing;
 using UpSTEPer.Export.Dxf;
@@ -14,6 +17,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     private static readonly IReadOnlySet<FaceId> _noFaces = new HashSet<FaceId>();
 
     private readonly IStepReader _reader;
+    private readonly ILogger _logger;
     private readonly EditHistory _history = new();
     private DocumentSession? _session;
     private string? _fileName;
@@ -30,9 +34,11 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     /// <summary>Initializes a new instance of the <see cref="MainViewModel"/> class.</summary>
     /// <param name="reader">Reader used to load STEP files.</param>
-    public MainViewModel(IStepReader reader)
+    /// <param name="logger">Logs loads, saves and failures; <see langword="null"/> for none.</param>
+    public MainViewModel(IStepReader reader, ILogger<MainViewModel>? logger = null)
     {
         _reader = reader ?? throw new ArgumentNullException(nameof(reader));
+        _logger = logger ?? NullLogger<MainViewModel>.Instance;
         SelectedPaletteEntry = Palette[0];
     }
 
@@ -121,6 +127,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         IsBusy = true;
         Status = $"Loading {fileName} ...";
         var quality = DisplayQuality;
+        var watch = Stopwatch.StartNew();
         var (progress, cancellationToken) = BeginOperation($"Loading {fileName}");
         try
         {
@@ -141,6 +148,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             Status = string.Create(
                 CultureInfo.CurrentCulture,
                 $"{fileName}: {statistics.SolidCount} solid(s), {statistics.FaceCount} faces, {loaded.Scene.Mesh.TriangleCount:N0} triangles");
+            LogOpened(_logger, path, quality, loaded.Scene.Mesh.TriangleCount, watch.ElapsedMilliseconds);
             NotifyHistoryChanged();
             OnPropertyChanged(nameof(HasDocument));
             return true;
@@ -148,11 +156,13 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         catch (OperationCanceledException)
         {
             Status = HasDocument ? $"Loading {fileName} cancelled; the previous model stays open." : $"Loading {fileName} cancelled.";
+            LogOpenCancelled(_logger, path);
             return false;
         }
         catch (Exception exception) when (exception is FileNotFoundException or StepImportException or GeometryOperationException)
         {
             Status = $"Error: {exception.Message}";
+            LogOpenFailed(_logger, path, exception);
             return false;
         }
         finally
@@ -184,11 +194,13 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             _fileName = Path.GetFileName(path);
             IsDirty = false;
             Status = $"Saved {path}";
+            LogSaved(_logger, path);
             return true;
         }
         catch (Exception exception) when (exception is IOException or GeometryOperationException)
         {
             Status = $"Error: {exception.Message}";
+            LogSaveFailed(_logger, path, exception);
             return false;
         }
         finally
@@ -221,11 +233,13 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             }).ConfigureAwait(true);
 
             Status = string.Create(CultureInfo.CurrentCulture, $"Exported {curveCount:N0} curves to {path}");
+            LogExported(_logger, path, curveCount);
             return true;
         }
         catch (Exception exception) when (exception is IOException or GeometryOperationException)
         {
             Status = $"Error: {exception.Message}";
+            LogExportFailed(_logger, path, exception);
             return false;
         }
         finally
@@ -262,6 +276,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         }
 
         var quality = DisplayQuality;
+        var watch = Stopwatch.StartNew();
         IsBusy = true;
         Status = $"Meshing with {quality} display quality ...";
         var (progress, cancellationToken) = BeginOperation($"Meshing ({quality})");
@@ -276,6 +291,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             Scene = Scene?.WithGeometry(mesh, edges);
             _meshedQuality = quality;
             Status = string.Create(CultureInfo.CurrentCulture, $"{quality} display quality: {mesh.TriangleCount:N0} triangles");
+            LogRemeshed(_logger, quality, mesh.TriangleCount, watch.ElapsedMilliseconds);
         }
         catch (OperationCanceledException)
         {
@@ -286,6 +302,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         {
             RestoreDisplayQuality();
             Status = $"Error: {exception.Message}";
+            LogRemeshFailed(_logger, quality, exception);
         }
         finally
         {
@@ -451,6 +468,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         catch (Exception exception) when (exception is GeometryOperationException or ArgumentException)
         {
             Status = $"Error: {exception.Message}";
+            LogColourFailed(_logger, exception);
         }
         finally
         {
@@ -544,6 +562,36 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             throw;
         }
     }
+
+    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Opened {Path} at {Quality} display quality: {TriangleCount} triangles in {ElapsedMs} ms")]
+    private static partial void LogOpened(ILogger logger, string path, DisplayQuality quality, int triangleCount, long elapsedMs);
+
+    [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Opening {Path} cancelled")]
+    private static partial void LogOpenCancelled(ILogger logger, string path);
+
+    [LoggerMessage(EventId = 3, Level = LogLevel.Warning, Message = "Opening {Path} failed")]
+    private static partial void LogOpenFailed(ILogger logger, string path, Exception exception);
+
+    [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "Re-meshed at {Quality} display quality: {TriangleCount} triangles in {ElapsedMs} ms")]
+    private static partial void LogRemeshed(ILogger logger, DisplayQuality quality, int triangleCount, long elapsedMs);
+
+    [LoggerMessage(EventId = 5, Level = LogLevel.Warning, Message = "Re-meshing at {Quality} display quality failed")]
+    private static partial void LogRemeshFailed(ILogger logger, DisplayQuality quality, Exception exception);
+
+    [LoggerMessage(EventId = 6, Level = LogLevel.Information, Message = "Saved {Path}")]
+    private static partial void LogSaved(ILogger logger, string path);
+
+    [LoggerMessage(EventId = 7, Level = LogLevel.Error, Message = "Saving {Path} failed")]
+    private static partial void LogSaveFailed(ILogger logger, string path, Exception exception);
+
+    [LoggerMessage(EventId = 8, Level = LogLevel.Information, Message = "Exported {CurveCount} curves to {Path}")]
+    private static partial void LogExported(ILogger logger, string path, int curveCount);
+
+    [LoggerMessage(EventId = 9, Level = LogLevel.Error, Message = "DXF export to {Path} failed")]
+    private static partial void LogExportFailed(ILogger logger, string path, Exception exception);
+
+    [LoggerMessage(EventId = 10, Level = LogLevel.Warning, Message = "Colour change failed")]
+    private static partial void LogColourFailed(ILogger logger, Exception exception);
 
     private sealed record LoadedModel(IStepDocument Document, SceneData Scene, IReadOnlyList<ModelNode> Tree, int[] FaceBodies);
 }

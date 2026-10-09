@@ -1,9 +1,12 @@
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using UpSTEPer.App.Controls;
+using UpSTEPer.App.Logging;
 using UpSTEPer.App.ViewModels;
 using UpSTEPer.App.Views;
 using UpSTEPer.Core;
@@ -39,16 +42,28 @@ internal sealed partial class DesktopApplication : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var viewModel = new MainViewModel(new OcctStepReader()) { DisplayQuality = _options.Quality };
+            // Automation mode (screenshot) also logs to stderr, so CI shows GL and OCCT diagnostics.
+            var services = AppServices.Build(FileLoggerProvider.DefaultDirectory, logToConsole: _options.ScreenshotPath is not null);
+            var loggerFactory = services.GetRequiredService<ILoggerFactory>();
+            var occtMessages = OcctMessageRouter.TryStart(loggerFactory.CreateLogger("OCCT"));
+            LogUnhandledExceptions(loggerFactory.CreateLogger<DesktopApplication>());
+
+            var viewModel = services.GetRequiredService<MainViewModel>();
+            viewModel.DisplayQuality = _options.Quality;
             var window = new MainWindow { DataContext = viewModel };
+            window.ModelView.Logger = loggerFactory.CreateLogger<ModelView>();
             desktop.MainWindow = window;
-            desktop.Exit += (_, _) => viewModel.Dispose();
+            desktop.Exit += (_, _) =>
+            {
+                viewModel.Dispose();
+                occtMessages?.Dispose();
+                services.Dispose();
+            };
 
             if (_options.ScreenshotPath is not null)
             {
-                // Automation mode: make GL diagnostics visible on stderr. The screenshot itself is
-                // requested after loading and selection (below), so the frame reflects both.
-                Trace.Listeners.Add(new ConsoleTraceListener(useErrorStream: true));
+                // The screenshot itself is requested after loading and selection (below), so the
+                // frame reflects both.
                 window.ModelView.ScreenshotSaved += (_, _) => desktop.Shutdown(0);
                 window.ModelView.RenderingFailed += (_, _) => desktop.Shutdown(RenderingFailedExitCode);
 
@@ -85,4 +100,19 @@ internal sealed partial class DesktopApplication : Application
 
         base.OnFrameworkInitializationCompleted();
     }
+
+    // Exceptions that escape event handlers or tasks would otherwise vanish or end the process
+    // without a trace in the log.
+    private static void LogUnhandledExceptions(ILogger logger)
+    {
+        AppDomain.CurrentDomain.UnhandledException += (_, e) => LogUnhandled(logger, e.ExceptionObject as Exception);
+        TaskScheduler.UnobservedTaskException += (_, e) => LogUnobservedTask(logger, e.Exception);
+        Dispatcher.UIThread.UnhandledException += (_, e) => LogUnhandled(logger, e.Exception);
+    }
+
+    [LoggerMessage(EventId = 1, Level = LogLevel.Critical, Message = "Unhandled exception")]
+    private static partial void LogUnhandled(ILogger logger, Exception? exception);
+
+    [LoggerMessage(EventId = 2, Level = LogLevel.Error, Message = "Unobserved task exception")]
+    private static partial void LogUnobservedTask(ILogger logger, Exception exception);
 }

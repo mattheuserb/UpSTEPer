@@ -13,7 +13,7 @@ Goal: prove that the native bridge builds and runs on all three platforms.
 - [x] Unit and integration tests; CI matrix (Windows, Linux, macOS)
 - [x] Native build and all tests green locally on Windows (OCCT 8.0.1, MSVC 14.51)
 - [x] CI green on all three platforms (native build, tests, CLI smoke test)
-- [ ] Redirect OCCT console diagnostics (`Message::DefaultMessenger`) into our error reporting
+- [x] Redirect OCCT console diagnostics (`Message::DefaultMessenger`) into our logging (M1)
 - [x] Spike: Avalonia window with OpenGL control rendering `MeshData` (verified locally on Windows/ANGLE)
 - [x] Viewer screenshot smoke test green in CI on Windows (ANGLE) and Linux (Mesa llvmpipe, Xvfb)
 - [ ] macOS 3D view — **deferred to the end of the roadmap** (decision 2026-10-08), see
@@ -40,7 +40,8 @@ Linux and macOS from CI-built binaries.
   diagonal), the previous triangulation is discarded (`BRepTools::Clean`)
 - [x] Progress and cancellation for loading and meshing: native callback (ADR 0010), progress bar
   and Cancel (Esc) in the app, progress line and Ctrl+C in the CLI
-- [ ] DI/logging (Microsoft.Extensions)
+- [x] DI/logging (Microsoft.Extensions): containers in app and CLI, daily log file in the app,
+  `--verbose` in the CLI, OCCT messages routed into the log
 - [ ] Hover highlight (needs a BVH for picking performance)
 
 ## M2 — Colouring

@@ -70,6 +70,28 @@ UPS_API const char* ups_occt_version(void);
  */
 typedef int32_t (*ups_progress_callback)(void* user_data, double fraction, const char* phase);
 
+/* -------------------------------------------------------------- messages -- */
+
+typedef enum ups_message_level
+{
+    UPS_MESSAGE_TRACE = 0,   /* OCCT internals, very verbose */
+    UPS_MESSAGE_INFO = 1,    /* statistics and progress notes of translators */
+    UPS_MESSAGE_WARNING = 2, /* recoverable problems, e.g. a STEP entity that was skipped */
+    UPS_MESSAGE_ALARM = 3,   /* serious problems; the result may be incomplete */
+    UPS_MESSAGE_FAIL = 4     /* an operation failed */
+} ups_message_level;
+
+/** Receives one OCCT diagnostic message; text is UTF-8 and valid during the call. */
+typedef void (*ups_message_callback)(void* user_data, ups_message_level level, const char* text);
+
+/**
+ * Routes OCCT's diagnostic messages (process-wide) to callback, dropping those below min_level.
+ * Pass NULL to discard them again (the default; OCCT never prints to the console). Calls are
+ * serialised and may come from any thread; once this function returns, the previous callback is
+ * never called again. The callback must not call into this library and must not throw or longjmp.
+ */
+UPS_API ups_status ups_set_message_handler(ups_message_callback callback, void* user_data, ups_message_level min_level);
+
 /* -------------------------------------------------------------- document -- */
 
 typedef struct ups_document ups_document;

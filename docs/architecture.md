@@ -62,6 +62,21 @@ marshalling trivial, keeps OCCT types out of .NET, and is easy to test. See ADR 
 - .NET: `NativeError.ThrowIfFailed` maps statuses to `ArgumentException`, `StepImportException`
   or `GeometryOperationException`, including the native message.
 
+## Logging and composition
+
+- Both composition roots (`src/UpSTEPer.Cli/Program.cs` with `CliServices`, and
+  `DesktopApplication` with `AppServices`) build a `Microsoft.Extensions.DependencyInjection`
+  container with `IStepReader` and `Microsoft.Extensions.Logging`. Core stays free of both.
+- CLI: logs to stderr (stdout is command output); Warning and above, Debug with `--verbose`.
+- App: a daily file `upsteper-yyyyMMdd.log` in the user's local application data
+  (`FileLoggerProvider`, Debug and above, 14 days retention); in screenshot mode also stderr.
+  Unhandled exceptions are logged as Critical.
+- OCCT's process-wide message channel is routed into the category `OCCT` by `OcctMessageRouter`
+  through the native callback `ups_set_message_handler` (same pattern as progress, ADR 0010).
+  The STEP translators report real file problems at OCCT's Trace level, so OCCT Trace and Info
+  both map to Debug; Warning → Warning; Alarm and Fail → Error.
+- Log calls use `[LoggerMessage]` source-generated methods (analyzer rules CA1848/CA1873).
+
 ## Threading
 
 OCCT objects are not safe for concurrent access. Rules:

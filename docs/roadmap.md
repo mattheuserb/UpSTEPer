@@ -29,7 +29,10 @@ Linux and macOS from CI-built binaries.
 - [x] Face selection by click: CPU ray casting (`MeshPicker`, Möller–Trumbore) instead of a GPU
   ID buffer — testable and independent of GPU quirks; highlight + face/colour in the status bar
 - [x] Edges overlay: B-Rep edges as lines (seams skipped), polygon offset against z-fighting, toggle in the toolbar
-- [ ] Standard views (front, top, right, iso) and view cube / toolbar
+- [x] Fix: the 3D view received no mouse input (Avalonia hit-tests only what a control draws itself)
+- [x] Standard views (front, back, left, right, top, bottom, iso) in toolbar and on the numeric
+  keypad, oriented like the DXF views; exact top/bottom views; orthographic projection toggle
+- [ ] Optional: view cube in the 3D view
 - [x] Model tree (assemblies, parts, bodies) from XDE labels; selecting a node highlights its faces;
   "Colour body" acts on the tree selection (one undo step for several bodies)
 - [ ] Display quality presets (re-mesh with `BRepTools::Clean`)

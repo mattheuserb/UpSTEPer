@@ -80,6 +80,10 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial bool ShowEdges { get; set; } = true;
 
+    /// <summary>Gets or sets a value indicating whether the 3D view uses a parallel (orthographic) projection.</summary>
+    [ObservableProperty]
+    public partial bool IsOrthographic { get; set; }
+
     /// <summary>Gets or sets the colour applied by the colour commands.</summary>
     [ObservableProperty]
     public partial PaletteEntry SelectedPaletteEntry { get; set; }
@@ -202,6 +206,10 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     /// <inheritdoc />
     public void Dispose() => _session?.Dispose();
+
+    /// <summary>Switches between perspective and orthographic projection.</summary>
+    [RelayCommand]
+    private void ToggleProjection() => IsOrthographic = !IsOrthographic;
 
     /// <summary>Gives the selected face the selected palette colour.</summary>
     [RelayCommand(CanExecute = nameof(CanEditFace))]

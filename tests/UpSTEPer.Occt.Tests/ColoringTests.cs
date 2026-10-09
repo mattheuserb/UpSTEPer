@@ -69,8 +69,10 @@ public sealed class ColoringTests : IDisposable
         Assert.Equal(1, CountFaces(document, _red));
     }
 
-    [Fact]
-    public void SaveStep_ThenReload_KeepsFaceAndBodyColours()
+    [Theory]
+    [InlineData(StepSchema.Ap214, "AUTOMOTIVE_DESIGN")]
+    [InlineData(StepSchema.Ap242, "AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF")]
+    public void SaveStep_ThenReload_KeepsFaceAndBodyColours(StepSchema schema, string fileSchema)
     {
         TestFiles.RequireNativeLibrary();
         var path = TempPath();
@@ -80,8 +82,13 @@ public sealed class ColoringTests : IDisposable
             faceCount = document.Statistics.FaceCount;
             document.SetColor(ColorTarget.Of(_face), _red);
             document.SetColor(ColorTarget.Of(_body), _blue);
-            document.SaveStep(path);
+            document.SaveStep(path, schema);
         }
+
+        // The entry may span several lines (OCCT wraps the AP242 schema name).
+        var header = string.Concat(File.ReadLines(path).TakeWhile(line => !line.StartsWith("DATA;", StringComparison.Ordinal)))
+            .Replace(" ", string.Empty, StringComparison.Ordinal);
+        Assert.Contains($"FILE_SCHEMA(('{fileSchema}", header, StringComparison.Ordinal);
 
         using var reloaded = _reader.Load(path, cancellationToken: TestContext.Current.CancellationToken);
 
@@ -99,6 +106,15 @@ public sealed class ColoringTests : IDisposable
         var path = Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}", "out.stp");
 
         Assert.Throws<IOException>(() => document.SaveStep(path));
+    }
+
+    [Fact]
+    public void SaveStep_UndefinedSchema_Throws()
+    {
+        TestFiles.RequireNativeLibrary();
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => document.SaveStep(TempPath(), (StepSchema)7));
     }
 
     [Theory]

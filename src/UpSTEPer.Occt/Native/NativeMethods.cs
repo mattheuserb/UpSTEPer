@@ -65,6 +65,9 @@ internal static partial class NativeMethods
     [LibraryImport(LibraryName, EntryPoint = "ups_document_save_step", StringMarshalling = StringMarshalling.Utf8)]
     internal static partial NativeStatus DocumentSaveStep(DocumentSafeHandle document, string utf8Path);
 
+    [LibraryImport(LibraryName, EntryPoint = "ups_document_save_step_as", StringMarshalling = StringMarshalling.Utf8)]
+    internal static partial NativeStatus DocumentSaveStepAs(DocumentSafeHandle document, string utf8Path, NativeStepSchema schema);
+
     [LibraryImport(LibraryName, EntryPoint = "ups_document_project")]
     internal static partial NativeStatus DocumentProject(
         DocumentSafeHandle document, in NativeProjectionParams parameters, out DrawingSafeHandle drawing);
@@ -150,6 +153,13 @@ internal enum NativeStatus
     FileWrite = 6,
     Cancelled = 7,
     Internal = 99,
+}
+
+/// <summary>Mirrors <c>ups_step_schema</c>; values equal <see cref="UpSTEPer.Core.StepSchema"/>.</summary>
+internal enum NativeStepSchema
+{
+    Ap214 = 0,
+    Ap242 = 1,
 }
 
 /// <summary>Mirrors <c>ups_message_level</c>.</summary>

@@ -22,7 +22,19 @@ public sealed class PaintCommandTests : IDisposable
         Assert.True(_document.IsDisposed);
 
         var lines = _output.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-        Assert.Equal(["Set Body 0 = #3366CC", "Set Face 1 = #FF0000", "Set Face 2 = none", $"Saved {Path.GetFullPath("out.stp")}"], lines);
+        Assert.Equal(["Set Body 0 = #3366CC", "Set Face 1 = #FF0000", "Set Face 2 = none", $"Saved {Path.GetFullPath("out.stp")} (Ap214)"], lines);
+        Assert.Equal(StepSchema.Ap214, _document.SavedSchema);
+    }
+
+    [Theory]
+    [InlineData("ap242", StepSchema.Ap242)]
+    [InlineData("Ap214", StepSchema.Ap214)]
+    public void Paint_SchemaOption_SelectsProtocol(string value, StepSchema expected)
+    {
+        var exitCode = Invoke("paint", "in.stp", "out.stp", "--face", "1=#FF0000", "--schema", value);
+
+        Assert.Equal(0, exitCode);
+        Assert.Equal(expected, _document!.SavedSchema);
     }
 
     [Fact]

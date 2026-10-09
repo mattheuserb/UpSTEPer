@@ -52,10 +52,11 @@ public interface IStepDocument : IDisposable
     /// <exception cref="GeometryOperationException">The target cannot be coloured (e.g. inside an assembly instance).</exception>
     void SetColor(ColorTarget target, ColorRgb? color);
 
-    /// <summary>Writes the model as STEP (AP214) including colours.</summary>
+    /// <summary>Writes the model as STEP including colours, names and layers.</summary>
     /// <param name="path">The output path; an existing file is overwritten.</param>
+    /// <param name="schema">The application protocol; AP214 by default.</param>
     /// <exception cref="IOException">The file cannot be written.</exception>
-    void SaveStep(string path);
+    void SaveStep(string path, StepSchema schema = StepSchema.Ap214);
 
     /// <summary>Projects the model into a 2D view with exact hidden-line removal.</summary>
     /// <remarks>Lines, circles, arcs and ellipses stay analytic; other curves become polylines.</remarks>

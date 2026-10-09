@@ -54,10 +54,13 @@ Linux and macOS from CI-built binaries.
 - [x] Save STEP (AP214) with colours via `STEPCAFControl_Writer`; save → reload round-trip test
 - [x] CLI `paint` command; app toolbar with RAL palette, Ctrl+Z/Y, Save as
 - [x] Fix: concurrent STEP loads crashed (OCCT translators use global state) — now serialised
-- [ ] Manual interoperability check of saved files in FreeCAD and one commercial CAD
+- [ ] Manual interoperability check of saved files in FreeCAD and one commercial CAD: files and
+  checklist in `docs/interop-check.md`
 - [x] Colours in assemblies: only the clicked instance changes; shared definitions are copied
   for it ("make independent", ADR 0009), ids stay stable, save → reload tested
-- [ ] AP242 output option; custom colour picker (any RGB) in the app
+- [x] AP242 output option: "Save as" file type in the app, `paint --schema ap242` in the CLI;
+  `info --tree` prints the body ids `paint --body` expects
+- [ ] Custom colour picker (any RGB) in the app
 
 ## M3 — DXF export (2D views)
 

@@ -22,12 +22,19 @@ internal static class PaintCommand
             Description = "Body colour, <bodyId>=<#RRGGBB|none>. Applies to faces without their own colour. Repeatable.",
         };
 
+        var schemaOption = new Option<StepSchema>("--schema")
+        {
+            Description = "STEP application protocol of the output: Ap214 (default, widest support) or Ap242.",
+            DefaultValueFactory = _ => StepSchema.Ap214,
+        };
+
         var command = new Command("paint", "Assign face and body colours and save as STEP.")
         {
             inputArgument,
             outputArgument,
             faceOption,
             bodyOption,
+            schemaOption,
         };
 
         command.SetAction((parseResult, cancellationToken) => Task.FromResult(CommandRunner.Run(error, () =>
@@ -45,13 +52,13 @@ internal static class PaintCommand
 
             var input = parseResult.GetValue(inputArgument)!.FullName;
             using var document = reader.Load(input, progress, cancellationToken);
-            return Run(document, output, parseResult.GetValue(outputArgument)!.FullName, assignments);
+            return Run(document, output, parseResult.GetValue(outputArgument)!.FullName, assignments, parseResult.GetValue(schemaOption));
         })));
 
         return command;
     }
 
-    private static int Run(IStepDocument document, TextWriter output, string outputPath, IReadOnlyList<ColorAssignment> assignments)
+    private static int Run(IStepDocument document, TextWriter output, string outputPath, IReadOnlyList<ColorAssignment> assignments, StepSchema schema)
     {
         foreach (var assignment in assignments)
         {
@@ -59,8 +66,8 @@ internal static class PaintCommand
             output.WriteLine($"Set {assignment}");
         }
 
-        document.SaveStep(outputPath);
-        output.WriteLine($"Saved {outputPath}");
+        document.SaveStep(outputPath, schema);
+        output.WriteLine($"Saved {outputPath} ({schema})");
         return 0;
     }
 }

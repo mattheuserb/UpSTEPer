@@ -190,8 +190,9 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     /// <summary>Saves the model with its colours as STEP.</summary>
     /// <param name="path">The output path.</param>
+    /// <param name="schema">The application protocol.</param>
     /// <returns><see langword="true"/> when the file was written.</returns>
-    public async Task<bool> SaveAsync(string path)
+    public async Task<bool> SaveAsync(string path, StepSchema schema = StepSchema.Ap214)
     {
         if (_session is null)
         {
@@ -203,14 +204,14 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         {
             await _session.RunAsync(document =>
             {
-                document.SaveStep(path);
+                document.SaveStep(path, schema);
                 return true;
             }).ConfigureAwait(true);
 
             _fileName = Path.GetFileName(path);
             IsDirty = false;
-            Status = $"Saved {path}";
-            LogSaved(_logger, path);
+            Status = $"Saved {path} ({schema})";
+            LogSaved(_logger, path, schema);
             return true;
         }
         catch (Exception exception) when (exception is IOException or GeometryOperationException)
@@ -604,8 +605,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     [LoggerMessage(EventId = 5, Level = LogLevel.Warning, Message = "Re-meshing at {Quality} display quality failed")]
     private static partial void LogRemeshFailed(ILogger logger, DisplayQuality quality, Exception exception);
 
-    [LoggerMessage(EventId = 6, Level = LogLevel.Information, Message = "Saved {Path}")]
-    private static partial void LogSaved(ILogger logger, string path);
+    [LoggerMessage(EventId = 6, Level = LogLevel.Information, Message = "Saved {Path} as {Schema}")]
+    private static partial void LogSaved(ILogger logger, string path, StepSchema schema);
 
     [LoggerMessage(EventId = 7, Level = LogLevel.Error, Message = "Saving {Path} failed")]
     private static partial void LogSaveFailed(ILogger logger, string path, Exception exception);

@@ -87,6 +87,7 @@
         <TextBlock DockPanel.Dock="Right" FontSize="12" Text="{Binding SelectionInfo}" />
         <TextBlock DockPanel.Dock="Right" FontSize="12" Foreground="#5F6368" Margin="0,0,16,0" Text="{Binding HoverInfo}" />
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6" Margin="0,0,12,0" IsVisible="{Binding IsCancellable}">
+          <TextBlock FontSize="12" Text="{Binding ProgressText}" VerticalAlignment="Center" />
           <ProgressBar Width="160" Minimum="0" Maximum="1" Value="{Binding ProgressFraction}" VerticalAlignment="Center" />
           <Button Content="Cancel" Command="{Binding CancelCommand}" Padding="8,0" FontSize="12" ToolTip.Tip="Esc" />
         </StackPanel>

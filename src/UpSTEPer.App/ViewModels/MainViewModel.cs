@@ -120,6 +120,14 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial double ProgressFraction { get; set; }
 
+    /// <summary>Gets or sets the phase and percentage of the running operation, shown next to the progress bar.</summary>
+    /// <remarks>
+    /// Kept apart from <see cref="Status"/>: <see cref="Progress{T}"/> delivers reports
+    /// asynchronously, and a late one must not overwrite the final status of the operation.
+    /// </remarks>
+    [ObservableProperty]
+    public partial string ProgressText { get; set; } = string.Empty;
+
     /// <summary>Gets a value indicating whether a cancellable operation (loading, meshing) is running.</summary>
     public bool IsCancellable => _operation is not null;
 
@@ -136,7 +144,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         Status = $"Loading {fileName} ...";
         var quality = DisplayQuality;
         var watch = Stopwatch.StartNew();
-        var (progress, cancellationToken) = BeginOperation($"Loading {fileName}");
+        var (progress, cancellationToken) = BeginOperation();
         try
         {
             var loaded = await Task.Run(() => LoadDocument(path, quality, progress, cancellationToken)).ConfigureAwait(true);
@@ -287,7 +295,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         var watch = Stopwatch.StartNew();
         IsBusy = true;
         Status = $"Meshing with {quality} display quality ...";
-        var (progress, cancellationToken) = BeginOperation($"Meshing ({quality})");
+        var (progress, cancellationToken) = BeginOperation();
         try
         {
             // Colour edits are disabled while busy, so the scene cannot change in the meantime.
@@ -346,13 +354,14 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         }
     }
 
-    // Starts a cancellable operation. Reports are marshalled to the UI thread by Progress<T>
-    // and dropped once the operation has ended, so a late report cannot overwrite the final status.
-    private (IProgress<OperationProgress> Progress, CancellationToken Token) BeginOperation(string label)
+    // Starts a cancellable operation. Reports are marshalled to the UI thread by Progress<T> and
+    // only touch the progress display, never Status; reports of an ended operation are dropped.
+    private (IProgress<OperationProgress> Progress, CancellationToken Token) BeginOperation()
     {
         var operation = new CancellationTokenSource();
         _operation = operation;
         ProgressFraction = 0;
+        ProgressText = string.Empty;
         OnPropertyChanged(nameof(IsCancellable));
         CancelCommand.NotifyCanExecuteChanged();
 
@@ -361,7 +370,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             if (ReferenceEquals(_operation, operation) && !operation.IsCancellationRequested)
             {
                 ProgressFraction = report.Fraction;
-                Status = string.Create(CultureInfo.CurrentCulture, $"{label}: {report.Phase} {report.Fraction:P0}");
+                ProgressText = string.Create(CultureInfo.CurrentCulture, $"{report.Phase} {report.Fraction:P0}");
             }
         });
         return (progress, operation.Token);
@@ -372,6 +381,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         _operation?.Dispose();
         _operation = null;
         ProgressFraction = 0;
+        ProgressText = string.Empty;
         OnPropertyChanged(nameof(IsCancellable));
         CancelCommand.NotifyCanExecuteChanged();
     }

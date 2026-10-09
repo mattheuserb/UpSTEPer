@@ -403,6 +403,19 @@ public class MainViewModelTests
         Assert.Empty(viewModel.HoverInfo);
     }
 
+    [Fact]
+    public async Task LoadAsync_LateProgressReports_DoNotOverwriteFinalStatus()
+    {
+        // Without a UI thread Progress<T> delivers on the thread pool, possibly after LoadAsync
+        // returned; reports may only update the progress display, never the status line.
+        using var viewModel = new MainViewModel(new FakeReader());
+
+        await viewModel.LoadAsync("bracket.stp");
+        await Task.Delay(200, TestContext.Current.CancellationToken);
+
+        Assert.Contains("2 faces", viewModel.Status, StringComparison.Ordinal);
+    }
+
     private static async Task<MainViewModel> LoadedAsync(FakeReader reader)
     {
         var viewModel = new MainViewModel(reader);

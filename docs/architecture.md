@@ -113,8 +113,8 @@ OCCT objects are not safe for concurrent access. Rules:
 Tiered, each tier a separate, testable pipeline step with a report of what changed:
 
 1. **Heal**: `ShapeFix_Shape`, sewing, `ShapeUpgrade_UnifySameDomain`.
-2. **Canonical recognition**: B-spline curves/surfaces that are really lines, circles, planes,
-   cylinders, cones, spheres (OCCT `ShapeAnalysis_CanonicalRecognition`).
+2. **Canonical recognition**: B-spline curves/surfaces that are really lines, circles, ellipses,
+   planes, cylinders, cones, spheres (OCCT `ShapeAnalysis_CanonicalRecognition`; ADR 0011).
 3. **Faceted → analytic**: groups of planar facets that approximate a cylinder are fitted
    (least squares) and replaced. Semi-automatic first (user picks facets), automatic later.
 

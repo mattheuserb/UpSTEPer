@@ -14,7 +14,10 @@
 #include <XCAFDoc_DocumentTool.hxx>
 #include <XCAFDoc_ShapeTool.hxx>
 #include <gp_Cone.hxx>
+#include <gp_Circ.hxx>
 #include <gp_Cylinder.hxx>
+#include <gp_Elips.hxx>
+#include <gp_Lin.hxx>
 #include <gp_Pln.hxx>
 #include <gp_Sphere.hxx>
 
@@ -146,6 +149,38 @@ void CheckFaces(const TopoDS_Shape& shape, double tolerance, ups_part_check& res
     }
 }
 
+void CheckEdges(const TopoDS_Shape& shape, double tolerance, ups_part_check& result)
+{
+    ShapeIndexedMap edges;
+    TopExp::MapShapes(shape, TopAbs_EDGE, edges);
+    for (int index = 1; index <= edges.Extent(); ++index)
+    {
+        const TopoDS_Edge& edge = TopoDS::Edge(edges(index));
+        if (BRep_Tool::Degenerated(edge) || !BRep_Tool::IsGeometric(edge))
+        {
+            continue;
+        }
+        const GeomAbs_CurveType type = BRepAdaptor_Curve(edge).GetType();
+        if (type != GeomAbs_BSplineCurve && type != GeomAbs_BezierCurve)
+        {
+            continue;
+        }
+        ++result.spline_edges;
+
+        ShapeAnalysis_CanonicalRecognition recognition(edge);
+        gp_Lin line;
+        gp_Circ circle;
+        gp_Elips ellipse;
+        // Same rule as the repair: the exact curve must also lie within the edge's own tolerance.
+        if ((recognition.IsLine(tolerance, line) || recognition.IsCircle(tolerance, circle)
+             || recognition.IsEllipse(tolerance, ellipse))
+            && recognition.GetGap() <= BRep_Tool::Tolerance(edge))
+        {
+            ++result.canonical_edges;
+        }
+    }
+}
+
 int32_t SmallEdges(const TopoDS_Shape& shape, double tolerance)
 {
     ShapeIndexedMap edges;
@@ -195,6 +230,7 @@ ups_part_check CheckPart(const TopoDS_Shape& shape, double tolerance)
     Try(result, [&] { result.free_edges = CountFreeEdges(shape); });
     Try(result, [&] { result.invalid_shapes = CountInvalidShapes(shape); });
     Try(result, [&] { CheckFaces(shape, tolerance, result); });
+    Try(result, [&] { CheckEdges(shape, tolerance, result); });
     Try(result, [&] { result.mergeable_faces = result.face_count > 1 ? MergeableFaces(shape, result.face_count) : 0; });
     Try(result, [&] { result.small_edges = SmallEdges(shape, tolerance); });
     return result;

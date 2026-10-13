@@ -121,7 +121,8 @@ internal sealed class OcctStepDocument : IStepDocument
                 p.ColourConflicts,
                 p.Reverted != 0,
                 p.CanonicalFaces,
-                p.MaxDeviation))];
+                p.MaxDeviation,
+                p.CanonicalEdges))];
         }
     }
 
@@ -158,7 +159,9 @@ internal sealed class OcctStepDocument : IStepDocument
                 p.CanonicalFaces,
                 p.MergeableFaces,
                 p.SmallEdges,
-                p.FailedChecks))];
+                p.FailedChecks,
+                p.SplineEdges,
+                p.CanonicalEdges))];
         }
     }
 

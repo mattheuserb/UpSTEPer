@@ -50,8 +50,10 @@
           <DataGridTextColumn x:DataType="core:PartCheck" Header="Faces" Binding="{Binding FaceCount}" />
           <DataGridTextColumn x:DataType="core:PartCheck" Header="Free edges" Binding="{Binding FreeEdges}" />
           <DataGridTextColumn x:DataType="core:PartCheck" Header="Invalid" Binding="{Binding InvalidShapes}" />
-          <DataGridTextColumn x:DataType="core:PartCheck" Header="Splines" Binding="{Binding SplineFaces}" />
-          <DataGridTextColumn x:DataType="core:PartCheck" Header="Exact possible" Binding="{Binding CanonicalFaces}" />
+          <DataGridTextColumn x:DataType="core:PartCheck" Header="Spline faces" Binding="{Binding SplineFaces}" />
+          <DataGridTextColumn x:DataType="core:PartCheck" Header="exact possible" Binding="{Binding CanonicalFaces}" />
+          <DataGridTextColumn x:DataType="core:PartCheck" Header="Spline edges" Binding="{Binding SplineEdges}" />
+          <DataGridTextColumn x:DataType="core:PartCheck" Header="exact possible" Binding="{Binding CanonicalEdges}" />
           <DataGridTextColumn x:DataType="core:PartCheck" Header="Mergeable" Binding="{Binding MergeableFaces}" />
           <DataGridTextColumn x:DataType="core:PartCheck" Header="Small edges" Binding="{Binding SmallEdges}" />
           <DataGridTextColumn x:DataType="core:PartCheck" Header="Errors" Binding="{Binding FailedChecks}" />
@@ -71,6 +73,7 @@
           <DataGridTextColumn x:DataType="core:PartRepair" Header="Invalid before" Binding="{Binding InvalidBefore}" />
           <DataGridTextColumn x:DataType="core:PartRepair" Header="after" Binding="{Binding InvalidAfter}" />
           <DataGridTextColumn x:DataType="core:PartRepair" Header="Exact surfaces" Binding="{Binding CanonicalFaces}" />
+          <DataGridTextColumn x:DataType="core:PartRepair" Header="Exact edges" Binding="{Binding CanonicalEdges}" />
           <DataGridTextColumn x:DataType="core:PartRepair" Header="Max deviation (mm)" Binding="{Binding MaxDeviation, StringFormat={}{0:0.####}}" />
           <DataGridTextColumn x:DataType="core:PartRepair" Header="Colour conflicts" Binding="{Binding ColourConflicts}" />
           <DataGridCheckBoxColumn x:DataType="core:PartRepair" Header="Step skipped (worse)" Binding="{Binding Reverted}" />

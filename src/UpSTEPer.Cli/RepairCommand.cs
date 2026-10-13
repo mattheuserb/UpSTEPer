@@ -81,7 +81,7 @@ internal static class RepairCommand
     private static void WriteReport(TextWriter output, IReadOnlyList<PartRepair> parts)
     {
         var nameWidth = Math.Max(4, parts.Count == 0 ? 0 : parts.Max(p => p.DisplayName.Length));
-        output.WriteLine($"{"Part".PadRight(nameWidth)}  Result     Faces      Solids   Free edges  Invalid   Exact surfaces (max dev.)  Colour conflicts  Notes");
+        output.WriteLine($"{"Part".PadRight(nameWidth)}  Result     Faces      Solids   Free edges  Invalid   Exact faces/edges (max dev.)  Colour conflicts  Notes");
         foreach (var part in parts)
         {
             var result = part.Changed ? "repaired" : "unchanged";
@@ -98,7 +98,7 @@ internal static class RepairCommand
 
             output.WriteLine(string.Create(
                 CultureInfo.InvariantCulture,
-                $"{part.DisplayName.PadRight(nameWidth)}  {result,-9}  {Change(part.FacesBefore, part.FacesAfter),-9}  {Change(part.SolidsBefore, part.SolidsAfter),-7}  {Change(part.FreeEdgesBefore, part.FreeEdgesAfter),-10}  {Change(part.InvalidBefore, part.InvalidAfter),-8}  {Exact(part),-25}  {part.ColourConflicts,16}  {string.Join(", ", notes)}").TrimEnd());
+                $"{part.DisplayName.PadRight(nameWidth)}  {result,-9}  {Change(part.FacesBefore, part.FacesAfter),-9}  {Change(part.SolidsBefore, part.SolidsAfter),-7}  {Change(part.FreeEdgesBefore, part.FreeEdgesAfter),-10}  {Change(part.InvalidBefore, part.InvalidAfter),-8}  {Exact(part),-28}  {part.ColourConflicts,16}  {string.Join(", ", notes)}").TrimEnd());
         }
 
         output.WriteLine(string.Create(
@@ -107,7 +107,9 @@ internal static class RepairCommand
     }
 
     private static string Exact(PartRepair part) =>
-        part.CanonicalFaces == 0 ? "0" : string.Create(CultureInfo.InvariantCulture, $"{part.CanonicalFaces} ({part.MaxDeviation:0.####} mm)");
+        part.CanonicalFaces == 0 && part.CanonicalEdges == 0
+            ? "0/0"
+            : string.Create(CultureInfo.InvariantCulture, $"{part.CanonicalFaces}/{part.CanonicalEdges} ({part.MaxDeviation:0.####} mm)");
 
     private static string Change(int before, int after) =>
         before == after ? before.ToString(CultureInfo.InvariantCulture) : string.Create(CultureInfo.InvariantCulture, $"{before}->{after}");

@@ -17,23 +17,36 @@ public class CheckTests
         Assert.Equal(["Healthy box", "Unsewn box", "Split cylinder", "Spline cylinder"], parts.Keys);
         Assert.False(parts["Healthy box"].HasProblems);
         Assert.Equal(new PartCheck("Unsewn box", 0, 6, 24, 0, 0, 0, 0, 0), parts["Unsewn box"]);
-        Assert.Equal(new PartCheck("Split cylinder", 1, 6, 0, 0, 0, 0, 3, 0), parts["Split cylinder"]);
-        Assert.Equal(new PartCheck("Spline cylinder", 1, 3, 0, 0, 3, 3, 0, 0), parts["Spline cylinder"]);
+        // Splitting left B-spline curves where the cutting planes meet the cylinder: circles really.
+        Assert.Equal(new PartCheck("Split cylinder", 1, 6, 0, 0, 0, 0, 3, 0, SplineEdges: 3, CanonicalEdges: 3), parts["Split cylinder"]);
+        Assert.Equal(new PartCheck("Spline cylinder", 1, 3, 0, 0, 3, 3, 0, 0, SplineEdges: 3, CanonicalEdges: 3), parts["Spline cylinder"]);
     }
 
     [Fact]
-    public void Check_HealthyFiles_ReportNoProblems()
+    public void Check_HealthyFile_ReportsNoProblems()
     {
         TestFiles.RequireNativeLibrary();
-        foreach (var file in new[] { TestFiles.CableGland, TestFiles.TestAssembly })
-        {
-            using var document = _reader.Load(file, cancellationToken: TestContext.Current.CancellationToken);
+        using var document = _reader.Load(TestFiles.TestAssembly, cancellationToken: TestContext.Current.CancellationToken);
 
-            var parts = document.Check();
+        var parts = document.Check();
 
-            Assert.NotEmpty(parts);
-            Assert.All(parts, part => Assert.False(part.HasProblems, $"{Path.GetFileName(file)}: {part}"));
-        }
+        Assert.NotEmpty(parts);
+        Assert.All(parts, part => Assert.False(part.HasProblems, part.ToString()));
+    }
+
+    [Fact]
+    public void Check_CableGland_FindsCirclesAndLinesStoredAsSplines()
+    {
+        // 38 spline edges; 26 are exact circles and lines, 12 only resemble circles (0.04 mm off,
+        // beyond their edge tolerance) and stay splines.
+        TestFiles.RequireNativeLibrary();
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
+
+        var part = document.Check().Single();
+
+        Assert.Equal(38, part.SplineEdges);
+        Assert.Equal(26, part.CanonicalEdges);
+        Assert.Equal(0, part.FreeEdges + part.InvalidShapes + part.SplineFaces + part.MergeableFaces + part.SmallEdges + part.FailedChecks);
     }
 
     [Fact]
@@ -57,6 +70,8 @@ public class CheckTests
 
         Assert.Equal(3, spline.SplineFaces);
         Assert.InRange(spline.CanonicalFaces, 0, 3);
+        Assert.Equal(3, spline.SplineEdges);
+        Assert.InRange(spline.CanonicalEdges, 0, 3);
     }
 
     [Theory]

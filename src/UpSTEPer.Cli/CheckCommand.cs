@@ -43,12 +43,12 @@ internal static class CheckCommand
         var parts = document.Check(tolerance);
         var nameWidth = Math.Max(4, parts.Count == 0 ? 0 : parts.Max(p => p.DisplayName.Length));
 
-        output.WriteLine($"{"Part".PadRight(nameWidth)}  Solids  Faces  Free edges  Invalid  Splines (canonical)  Mergeable  Small edges  Errors");
+        output.WriteLine($"{"Part".PadRight(nameWidth)}  Solids  Faces  Free edges  Invalid  Spline faces (canonical)  Spline edges (canonical)  Mergeable  Small edges  Errors");
         foreach (var part in parts)
         {
             output.WriteLine(string.Create(
                 CultureInfo.InvariantCulture,
-                $"{part.DisplayName.PadRight(nameWidth)}  {part.SolidCount,6}  {part.FaceCount,5}  {part.FreeEdges,10}  {part.InvalidShapes,7}  {$"{part.SplineFaces} ({part.CanonicalFaces})",19}  {part.MergeableFaces,9}  {part.SmallEdges,11}  {part.FailedChecks,6}"));
+                $"{part.DisplayName.PadRight(nameWidth)}  {part.SolidCount,6}  {part.FaceCount,5}  {part.FreeEdges,10}  {part.InvalidShapes,7}  {$"{part.SplineFaces} ({part.CanonicalFaces})",24}  {$"{part.SplineEdges} ({part.CanonicalEdges})",24}  {part.MergeableFaces,9}  {part.SmallEdges,11}  {part.FailedChecks,6}"));
         }
 
         var withProblems = parts.Count(p => p.HasProblems);

@@ -89,7 +89,7 @@ internal sealed partial class MainViewModel
             var changed = report.Count(p => p.Changed);
             Status = string.Create(
                 CultureInfo.CurrentCulture,
-                $"Repair: {changed} of {report.Count} part(s) changed, {report.Sum(p => p.CanonicalFaces)} exact surface(s); Undo repair restores the previous model.");
+                $"Repair: {changed} of {report.Count} part(s) changed, {report.Sum(p => p.CanonicalFaces)} exact surface(s), {report.Sum(p => p.CanonicalEdges)} exact edge(s); Undo repair restores the previous model.");
             LogRepaired(_logger, changed, report.Count);
             return report;
         }

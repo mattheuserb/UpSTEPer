@@ -242,6 +242,8 @@ typedef struct ups_part_check
     int32_t invalid_shapes;  /* faces, edges, vertices BRepCheck reports invalid (>= 1 if invalid) */
     int32_t spline_faces;    /* faces on B-spline or Bezier surfaces */
     int32_t canonical_faces; /* of those: planes, cylinders, cones, spheres within tolerance */
+    int32_t spline_edges;    /* edges with B-spline or Bezier curves */
+    int32_t canonical_edges; /* of those: lines, circles, ellipses within tolerance */
     int32_t mergeable_faces; /* faces that disappear when same-surface neighbours are merged */
     int32_t small_edges;     /* edges shorter than the tolerance */
     int32_t failed_checks;   /* sub-checks that threw (broken geometry); the others still ran */
@@ -272,8 +274,9 @@ typedef enum ups_repair_step
     UPS_REPAIR_FIX = 1,         /* ShapeFix_Shape: tolerances, orientation, wires, small defects */
     UPS_REPAIR_SEW = 2,         /* sew faces along free edges; closed shells become solids */
     UPS_REPAIR_MERGE_FACES = 4, /* merge neighbouring faces on the same surface (UnifySameDomain) */
-    UPS_REPAIR_CANONICAL = 8    /* replace spline faces that are planes, cylinders, cones or spheres
-                                   within the tolerance by the exact surface (tier 2) */
+    UPS_REPAIR_CANONICAL = 8    /* replace spline faces that are planes, cylinders, cones or spheres,
+                                   and spline edges that are lines, circles or ellipses, within the
+                                   tolerance by the exact geometry (tier 2) */
 } ups_repair_step;
 
 typedef struct ups_repair_params
@@ -300,9 +303,10 @@ typedef struct ups_part_repair
     int32_t invalid_after;
     int32_t colour_conflicts;   /* merged faces whose sources had different colours (largest area won) */
     int32_t canonical_faces;    /* spline faces replaced by planes, cylinders, cones or spheres */
+    int32_t canonical_edges;    /* spline edges replaced by lines, circles or ellipses */
     int32_t name_offset;        /* UTF-8 part name in the names buffer (not zero-terminated) */
     int32_t name_length;
-    double max_deviation;       /* mm; largest distance between a replaced spline and its exact surface */
+    double max_deviation;       /* mm; largest distance between a replaced spline and its exact geometry */
 } ups_part_repair;
 
 /**

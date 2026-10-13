@@ -235,6 +235,7 @@ internal struct NativePartRepair
     public int InvalidAfter;
     public int ColourConflicts;
     public int CanonicalFaces;
+    public int CanonicalEdges;
     public int NameOffset;
     public int NameLength;
     public double MaxDeviation;
@@ -250,6 +251,8 @@ internal struct NativePartCheck
     public int InvalidShapes;
     public int SplineFaces;
     public int CanonicalFaces;
+    public int SplineEdges;
+    public int CanonicalEdges;
     public int MergeableFaces;
     public int SmallEdges;
     public int FailedChecks;

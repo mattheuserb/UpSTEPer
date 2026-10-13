@@ -37,7 +37,7 @@ For each system, open all four files (AP214 and AP242) and record the result her
 | FreeCAD 1.1.1 | gland-face-body-ap242 | yes | 2026-10-13 |
 | FreeCAD 1.1.1 | assembly-instance-ap214 | yes | 2026-10-13 |
 | FreeCAD 1.1.1 | assembly-instance-ap242 | yes | 2026-10-13 |
-| Commercial CAD (e.g. SolidWorks, Inventor, NX, eDrawings) | all four | | |
+| Commercial CAD (e.g. SolidWorks, Inventor, NX, eDrawings) | all four | not needed | Decision 2026-10-13: the FreeCAD check suffices |
 
 Things to look for:
 

@@ -54,8 +54,9 @@ Linux and macOS from CI-built binaries.
 - [x] Save STEP (AP214) with colours via `STEPCAFControl_Writer`; save → reload round-trip test
 - [x] CLI `paint` command; app toolbar with RAL palette, Ctrl+Z/Y, Save as
 - [x] Fix: concurrent STEP loads crashed (OCCT translators use global state) — now serialised
-- [ ] Manual interoperability check of saved files in FreeCAD and one commercial CAD: files and
-  checklist in `docs/interop-check.md`
+- [x] Manual interoperability check of saved files in FreeCAD (2026-10-13): colours as expected,
+  results in `docs/interop-check.md`
+- [ ] Same check in one commercial CAD
 - [x] Colours in assemblies: only the clicked instance changes; shared definitions are copied
   for it ("make independent", ADR 0009), ids stay stable, save → reload tested
 - [x] AP242 output option: "Save as" file type in the app, `paint --schema ap242` in the CLI;
@@ -91,7 +92,7 @@ Linux and macOS from CI-built binaries.
 - [ ] Canonical recognition of edge curves (lines, circles, ellipses), so DXF views of converted
   parts become analytic too
 - [x] App: repair dialog ("Repair..."): check report, options (steps, tolerance), result report, undo of the
-  last repair via a temporary STEP snapshot
+  last repair via a temporary STEP snapshot; manually tested (2026-10-13)
 - Healing pipeline with a change report; canonical recognition of spline geometry
 - Colour preservation through `BRepTools_History`
 - CLI: `upsteper repair <in> <out> --report`
@@ -100,7 +101,8 @@ Linux and macOS from CI-built binaries.
 
 - Interactive: select facets → fit cylinder/cone → preview deviation → apply
 - Automatic detection of cylindrical facet strips (holes, shafts)
-- **Needs real problem files** (see `docs/test-data.md`)
+- **Needs real problem files** (see `docs/test-data.md`); none available yet (2026-10-13), so M5
+  waits until one turns up
 
 ## macOS support (last)
 

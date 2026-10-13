@@ -1,9 +1,11 @@
 // Repair (ADR 0007, ADR 0011): tier 1 healing (ShapeFix, sewing, merging faces on the same surface)
-// and tier 2 canonical recognition (spline faces -> planes, cylinders, cones, spheres), per part definition, with colours carried over through the algorithms' histories
+// and tier 2 canonical recognition (spline faces -> planes, cylinders, cones, spheres; spline edges
+// -> lines, circles, ellipses), per part definition, with colours carried over through the algorithms' histories
 // (ADR 0005). All parts are computed first (cancellable) and applied to the document only at the
 // end, so a cancelled or failed repair never leaves a half-repaired model behind.
 #include "internal.hpp"
 
+#include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBuilderAPI_MakeSolid.hxx>
 #include <BRepBuilderAPI_Sewing.hxx>
@@ -14,10 +16,14 @@
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
 #include <GProp_GProps.hxx>
+#include <GeomAPI_ProjectPointOnCurve.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
 #include <GeomLProp_SLProps.hxx>
+#include <Geom_Circle.hxx>
 #include <Geom_ConicalSurface.hxx>
 #include <Geom_CylindricalSurface.hxx>
+#include <Geom_Ellipse.hxx>
+#include <Geom_Line.hxx>
 #include <Geom_Plane.hxx>
 #include <Geom_SphericalSurface.hxx>
 #include <Message_ProgressScope.hxx>
@@ -302,6 +308,118 @@ Handle(Geom_Surface) CanonicalSurface(const TopoDS_Face& face, double tolerance,
     return make();
 }
 
+// The exact curve a spline edge approximates within the tolerance, as a new edge between the same
+// vertices that runs the same way (parameter curves are added later by ShapeFix), or a null edge.
+TopoDS_Edge CanonicalEdge(const TopoDS_Edge& edge, double tolerance, double& gap)
+{
+    if (BRep_Tool::Degenerated(edge) || !BRep_Tool::IsGeometric(edge))
+    {
+        return {};
+    }
+    const GeomAbs_CurveType type = BRepAdaptor_Curve(edge).GetType();
+    if (type != GeomAbs_BSplineCurve && type != GeomAbs_BezierCurve)
+    {
+        return {};
+    }
+
+    ShapeAnalysis_CanonicalRecognition recognition(edge);
+    gp_Lin line;
+    gp_Circ circle;
+    gp_Elips ellipse;
+    Handle(Geom_Curve) exact;
+    if (recognition.IsLine(tolerance, line))
+    {
+        exact = new Geom_Line(line);
+    }
+    else if (recognition.IsCircle(tolerance, circle))
+    {
+        exact = new Geom_Circle(circle);
+    }
+    else if (recognition.IsEllipse(tolerance, ellipse))
+    {
+        exact = new Geom_Ellipse(ellipse);
+    }
+    else
+    {
+        return {};
+    }
+    // Only the same curve stored as a spline: within the requested tolerance and the edge's own
+    // tolerance. A circle that merely approximates the curve would pull the edge off its faces
+    // (on the cable gland: 0.04 mm at an edge tolerance of 0.002 mm made the part invalid).
+    gap = recognition.GetGap();
+    if (!(gap <= tolerance) || gap > BRep_Tool::Tolerance(edge))
+    {
+        return {};
+    }
+
+    // Run the same way as the spline: compare tangents in the middle of the edge.
+    const TopoDS_Edge forward = TopoDS::Edge(edge.Oriented(TopAbs_FORWARD));
+    double first = 0.0, last = 0.0;
+    const Handle(Geom_Curve) original = BRep_Tool::Curve(forward, first, last);
+    gp_Pnt middle;
+    gp_Vec tangent;
+    original->D1((first + last) / 2, middle, tangent);
+    GeomAPI_ProjectPointOnCurve onExact(middle, exact);
+    if (onExact.NbPoints() == 0)
+    {
+        return {};
+    }
+    gp_Pnt point;
+    gp_Vec exactTangent;
+    exact->D1(onExact.LowerDistanceParameter(), point, exactTangent);
+    if (tangent.Dot(exactTangent) < 0)
+    {
+        exact->Reverse();
+    }
+
+    // Parameters of the vertices on the exact curve; a closed edge goes once around.
+    TopoDS_Vertex start, end;
+    TopExp::Vertices(forward, start, end);
+    if (start.IsNull() || end.IsNull())
+    {
+        return {};
+    }
+    auto parameter = [&](const TopoDS_Vertex& vertex, double& result) {
+        GeomAPI_ProjectPointOnCurve projection(BRep_Tool::Pnt(vertex), exact);
+        if (projection.NbPoints() == 0)
+        {
+            return false;
+        }
+        result = projection.LowerDistanceParameter();
+        return true;
+    };
+    double p1 = 0.0, p2 = 0.0;
+    if (!parameter(start, p1) || !parameter(end, p2))
+    {
+        return {};
+    }
+    if (exact->IsPeriodic())
+    {
+        const double period = exact->Period();
+        if (start.IsSame(end))
+        {
+            p2 = p1 + period;
+        }
+        while (p2 <= p1)
+        {
+            p2 += period;
+        }
+    }
+    else if (p2 <= p1)
+    {
+        return {};
+    }
+
+    TopoDS_Edge result;
+    BRep_Builder builder;
+    builder.MakeEdge(result, exact, BRep_Tool::Tolerance(edge));
+    builder.Add(result, start.Oriented(TopAbs_FORWARD));
+    builder.Add(result, end.Oriented(TopAbs_REVERSED));
+    builder.Range(result, p1, p2);
+    result.Orientation(edge.Orientation());
+    return result;
+}
+
 // What the never-worse rule compares before and after a step.
 struct Quality
 {
@@ -427,9 +545,11 @@ PartResult RepairPart(const Handle(XCAFDoc_ColorTool)& colors, const TDF_Label& 
     if ((params.steps & UPS_REPAIR_CANONICAL) != 0)
     {
         int32_t converted = 0;
+        int32_t convertedEdges = 0;
         double deviation = 0.0;
         const bool kept = attempt([&](const TopoDS_Shape& shape, std::vector<Tracked>& tracked) {
             converted = 0;
+            convertedEdges = 0;
             deviation = 0.0;
             const Handle(ShapeBuild_ReShape) reshape = new ShapeBuild_ReShape();
             ShapeIndexedMap faces;
@@ -458,13 +578,39 @@ PartResult RepairPart(const Handle(XCAFDoc_ColorTool)& colors, const TDF_Label& 
                 ++converted;
                 deviation = std::max(deviation, gap);
             }
-            if (converted == 0)
+            TopoDS_Shape replaced = shape;
+            if (converted > 0)
+            {
+                replaced = reshape->Apply(shape);
+                Follow(tracked, reshape->History());
+            }
+
+            // Then the edges (a second pass, so faces and their edges are not replaced in one go).
+            const Handle(ShapeBuild_ReShape) edgeReshape = new ShapeBuild_ReShape();
+            ShapeIndexedMap edges;
+            TopExp::MapShapes(replaced, TopAbs_EDGE, edges);
+            for (int index = 1; index <= edges.Extent(); ++index)
+            {
+                double gap = 0.0;
+                const TopoDS_Edge exact = CanonicalEdge(TopoDS::Edge(edges(index)), params.tolerance, gap);
+                if (exact.IsNull())
+                {
+                    continue;
+                }
+                edgeReshape->Replace(edges(index), exact);
+                ++convertedEdges;
+                deviation = std::max(deviation, gap);
+            }
+            if (convertedEdges > 0)
+            {
+                replaced = edgeReshape->Apply(replaced);
+                Follow(tracked, edgeReshape->History());
+            }
+            if (converted == 0 && convertedEdges == 0)
             {
                 return shape;
             }
 
-            const TopoDS_Shape replaced = reshape->Apply(shape);
-            Follow(tracked, reshape->History());
             ShapeFix_Shape fix(replaced);
             fix.Perform();
             Follow(tracked, fix.Context()->History());
@@ -474,6 +620,7 @@ PartResult RepairPart(const Handle(XCAFDoc_ColorTool)& colors, const TDF_Label& 
         {
             report.canonical_faces = converted;
             report.max_deviation = deviation;
+            report.canonical_edges = convertedEdges;
         }
     }
 

@@ -29,13 +29,23 @@ ADR 0007 sets the repair tiers, ADR 0005 how colours survive topology changes. I
   identifies as plane, cylinder, cone or sphere within the tolerance get the exact surface. The new
   face keeps the old wires (shared edges stay shared); `ShapeFix_Shape` then adds the edges'
   parameter curves on the new surface. The exact surface is oriented like the spline (plane: normal
-  reversed, others: left-handed frame) so the material side does not flip. Edges keep their curves
-  (B-splines stay B-splines) for now. It runs before merging, so pieces of one cylinder can merge.
-  The report gives the number of converted faces and the largest deviation. Faces whose measured
+  reversed, others: left-handed frame) so the material side does not flip. It runs before merging,
+  so pieces of one cylinder can merge. The report gives the number of converted faces and edges and
+  the largest deviation. Faces whose measured
   deviation (`GetGap`) exceeds the tolerance are skipped although the recognition accepted them
   (seen on the engine assembly: 0.18 mm at 0.05 mm). If converting a part's faces fails the
   never-worse rule, the conversion of the whole part is discarded; retrying face by face is future
   work.
+- **Canonical edges (tier 2, same step)**: afterwards, B-spline/Bezier edges that the recognition
+  identifies as line, circle or ellipse get the exact curve, so DXF views show lines, arcs and
+  ellipses instead of polylines. The new edge keeps the vertices and runs the same way (tangents
+  compared in the middle); `ShapeFix_Shape` adds its parameter curves. An edge is replaced only if
+  the deviation is within the tolerance **and within the edge's own tolerance**: then it is the same
+  curve, only stored as a spline. A curve that merely resembles a circle would be pulled off its
+  faces: on the cable gland 12 edges are circles within 0.05 mm (0.04 mm off at an edge tolerance
+  of about 0.002 mm), and converting them made the part invalid, so the never-worse rule discarded
+  the whole step; its 26 real circles and lines stayed splines. With the edge tolerance rule the 26
+  are converted and the 12 stay. `check` counts spline edges and convertible ones by the same rule.
 - **All or nothing**: every part is computed first; only if the whole run completes are the
   results written to the document. Cancellation (between parts) or an unexpected failure leaves the
   model unchanged.
@@ -61,6 +71,8 @@ ADR 0007 sets the repair tiers, ADR 0005 how colours survive topology changes. I
 
 - Names on sub-shapes (rare) are not carried over; part names and part colours are.
 - Parts placed several times are repaired once, which is both faster and keeps instances identical.
-- Canonical recognition (tier 2) is a separate step and not part of this decision's steps yet.
+- Canonical recognition (tier 2) is the `canonical` step above, for faces and edges.
+- Edges of a spline face that is converted but whose edges deviate beyond their own tolerance
+  keep spline curves; the part is still valid, only its DXF views keep polylines there.
 - Covered by `RepairTests` on `examples/generated/damaged-parts.stp` (sewing, merging with colour
   conflict, cancellation, healthy files unchanged, save -> reload, instance colours of ADR 0009).

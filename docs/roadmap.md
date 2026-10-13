@@ -78,6 +78,9 @@ Linux and macOS from CI-built binaries.
 - [x] Scale 1:1 in mm, no frame/title block by default (decision 2026-10-08, ADR 0006)
 - [ ] Optional (opt-in only): other scales, frame/title block; section views, dimensions
 - [ ] Manual check of exported DXF in a commercial CAD (AutoCAD / DraftSight / LibreCAD)
+- [ ] Fewer polylines from HLR: also exact models give some (cable gland: about 200 of 400 curves),
+  e.g. edge-on circles as straight 15-point polylines; classify straight ones as lines, find out
+  where HLR returns approximations
 
 ## M4 — Repair, tiers 1–2
 
@@ -89,8 +92,8 @@ Linux and macOS from CI-built binaries.
   (largest area wins on conflicts); CLI `repair <in> <out> [--steps] [--tolerance] [--schema]`
 - [x] Canonical recognition (tier 2): spline faces that are planes, cylinders, cones or spheres
   get the exact surface (orientation kept, deviation reported); `--steps canonical`
-- [ ] Canonical recognition of edge curves (lines, circles, ellipses), so DXF views of converted
-  parts become analytic too
+- [x] Canonical recognition of edge curves (lines, circles, ellipses), so DXF views of converted
+  parts become analytic too; only exact ones (within the edge's own tolerance, ADR 0011)
 - [x] App: repair dialog ("Repair..."): check report, options (steps, tolerance), result report, undo of the
   last repair via a temporary STEP snapshot; manually tested (2026-10-13)
 - Healing pipeline with a change report; canonical recognition of spline geometry

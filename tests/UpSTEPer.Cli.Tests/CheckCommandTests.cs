@@ -15,15 +15,15 @@ public sealed class CheckCommandTests : IDisposable
             [
                 new PartCheck("Healthy box", 1, 6, 0, 0, 0, 0, 0, 0),
                 new PartCheck("Unsewn box", 0, 6, 24, 0, 0, 0, 0, 0),
-                new PartCheck(string.Empty, 1, 3, 0, 0, 3, 3, 0, 0),
+                new PartCheck(string.Empty, 1, 3, 0, 0, 3, 3, 0, 0, SplineEdges: 3, CanonicalEdges: 2),
             ],
             "check", "model.stp");
 
         Assert.Equal(CheckCommand.ProblemsFound, exitCode);
         var lines = _output.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
         Assert.StartsWith("Part ", lines[0], StringComparison.Ordinal);
-        Assert.Matches(@"^Unsewn box\s+0\s+6\s+24\s+0\s+0 \(0\)\s+0\s+0\s+0$", lines[2]);
-        Assert.Matches(@"^\(unnamed part\)\s+1\s+3\s+0\s+0\s+3 \(3\)\s+0\s+0\s+0$", lines[3]);
+        Assert.Matches(@"^Unsewn box\s+0\s+6\s+24\s+0\s+0 \(0\)\s+0 \(0\)\s+0\s+0\s+0$", lines[2]);
+        Assert.Matches(@"^\(unnamed part\)\s+1\s+3\s+0\s+0\s+3 \(3\)\s+3 \(2\)\s+0\s+0\s+0$", lines[3]);
         Assert.Equal("2 of 3 part(s) have problems.", lines[^1]);
         Assert.Empty(_error.ToString());
     }
@@ -48,12 +48,20 @@ public sealed class CheckCommandTests : IDisposable
     }
 
     [Fact]
+    public void Check_CanonicalEdgesOnly_CountAsProblems()
+    {
+        var exitCode = Invoke([new PartCheck("Spline rims", 1, 3, 0, 0, 0, 0, 0, 0, SplineEdges: 2, CanonicalEdges: 2)], "check", "model.stp");
+
+        Assert.Equal(CheckCommand.ProblemsFound, exitCode);
+    }
+
+    [Fact]
     public void Check_FailedChecks_CountAsProblems()
     {
         var exitCode = Invoke([new PartCheck("Broken", 1, 9, 0, 0, 0, 0, 0, 0, FailedChecks: 2)], "check", "model.stp");
 
         Assert.Equal(CheckCommand.ProblemsFound, exitCode);
-        Assert.Matches(@"^Broken\s+1\s+9\s+0\s+0\s+0 \(0\)\s+0\s+0\s+2$", _output.ToString().Split(Environment.NewLine)[1]);
+        Assert.Matches(@"^Broken\s+1\s+9\s+0\s+0\s+0 \(0\)\s+0 \(0\)\s+0\s+0\s+2$", _output.ToString().Split(Environment.NewLine)[1]);
     }
 
     public void Dispose()

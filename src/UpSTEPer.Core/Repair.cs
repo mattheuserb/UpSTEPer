@@ -17,8 +17,9 @@ public enum RepairSteps
     MergeFaces = 4,
 
     /// <summary>
-    /// Replace spline faces that are planes, cylinders, cones or spheres within the tolerance by the
-    /// exact surface (tier 2); runs before merging, so split pieces of one cylinder can merge.
+    /// Replace spline faces that are planes, cylinders, cones or spheres, and spline edges that are
+    /// lines, circles or ellipses, within the tolerance by the exact geometry (tier 2); runs before
+    /// merging, so split pieces of one cylinder can merge.
     /// </summary>
     Canonical = 8,
 
@@ -30,7 +31,7 @@ public enum RepairSteps
 /// <param name="Steps">The healing steps to run.</param>
 /// <param name="Tolerance">
 /// Tolerance in mm: gaps up to this size are sewn, faces within it merged, splines within it
-/// replaced by exact surfaces.
+/// replaced by exact geometry.
 /// </param>
 public sealed record RepairOptions(RepairSteps Steps = RepairSteps.All, double Tolerance = 0.05)
 {
@@ -56,7 +57,8 @@ public sealed record RepairOptions(RepairSteps Steps = RepairSteps.All, double T
 /// volume change above 1 %) and was discarded; the other steps still ran.
 /// </param>
 /// <param name="CanonicalFaces">Spline faces replaced by planes, cylinders, cones or spheres.</param>
-/// <param name="MaxDeviation">Largest distance (mm) between a replaced spline and its exact surface.</param>
+/// <param name="MaxDeviation">Largest distance (mm) between a replaced spline and its exact surface or curve.</param>
+/// <param name="CanonicalEdges">Spline edges replaced by lines, circles or ellipses.</param>
 public sealed record PartRepair(
     string Name,
     bool Changed,
@@ -72,7 +74,8 @@ public sealed record PartRepair(
     int ColourConflicts,
     bool Reverted = false,
     int CanonicalFaces = 0,
-    double MaxDeviation = 0)
+    double MaxDeviation = 0,
+    int CanonicalEdges = 0)
 {
     /// <summary>Gets the name, or a placeholder for unnamed parts.</summary>
     public string DisplayName => string.IsNullOrWhiteSpace(Name) ? "(unnamed part)" : Name;

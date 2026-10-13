@@ -30,5 +30,15 @@ internal sealed class HeadlessTestApp : Application
         {
             Source = new Uri("avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"),
         });
+
+        // The app's own resources and styles, as DesktopApplication.axaml includes them.
+        Resources.MergedDictionaries.Add(new ResourceInclude(new Uri("avares://UpSTEPer.App.Tests/"))
+        {
+            Source = new Uri("avares://UpSTEPer/Themes/AppResources.axaml"),
+        });
+        Styles.Add(new StyleInclude(new Uri("avares://UpSTEPer.App.Tests/"))
+        {
+            Source = new Uri("avares://UpSTEPer/Themes/Styles.axaml"),
+        });
     }
 }

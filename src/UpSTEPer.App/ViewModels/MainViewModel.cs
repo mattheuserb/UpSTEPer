@@ -226,7 +226,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// Exports the standard 2D views (front, top, left, iso; first-angle) with hidden lines as DXF.
+    /// Exports the standard 2D views (front, top, left; first-angle) with hidden lines as DXF.
     /// </summary>
     /// <param name="path">The output path.</param>
     /// <returns><see langword="true"/> when the file was written.</returns>

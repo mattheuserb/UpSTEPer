@@ -11,7 +11,8 @@ DXF with 2D views is sufficient.
 
 ## Decision
 
-- Output **DXF only**, as **2D drawing views** (front, top, side, isometric; sections later).
+- Output **DXF only**, as **2D drawing views** (front, top, side by default; isometric on request
+  only, decision 2026-10-13; sections later).
 - Projection and hidden-line removal with OCCT `HLRBRep_Algo` in the native layer; edges are
   returned classified (line, circle, arc, ellipse, B-spline) with visibility.
 - Writing with **ACadSharp** (MIT, pure C#). Circles and arcs are written as `CIRCLE`/`ARC`,

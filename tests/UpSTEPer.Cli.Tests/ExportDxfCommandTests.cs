@@ -28,6 +28,16 @@ public sealed class ExportDxfCommandTests : IDisposable
     }
 
     [Fact]
+    public void ExportDxf_WithoutViews_ExportsFrontTopLeftButNoIso()
+    {
+        var exitCode = Invoke("export-dxf", "in.stp", _path);
+
+        Assert.Equal(0, exitCode);
+        var views = _output.ToString().Split(Environment.NewLine).Where(l => l.EndsWith(" curves", StringComparison.Ordinal)).Select(l => l.Split(' ')[0]);
+        Assert.Equal(["Front", "Top", "Left"], views);
+    }
+
+    [Fact]
     public void ExportDxf_WritesFileAndReportsViews()
     {
         var exitCode = Invoke("export-dxf", "in.stp", _path, "--views", "front,iso", "--gap", "12.5");

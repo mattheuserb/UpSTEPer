@@ -4,16 +4,24 @@
         xmlns:core="using:UpSTEPer.Core"
         xmlns:drawing="using:UpSTEPer.Core.Drawing"
         xmlns:controls="using:UpSTEPer.App.Controls"
+        xmlns:conv="using:UpSTEPer.App.Converters"
         x:Class="UpSTEPer.App.Views.MainWindow"
         x:ClassModifier="internal"
         x:DataType="vm:MainViewModel"
+        x:Name="Root"
         Title="{Binding Title}"
         Width="1280" Height="800"
-        MinWidth="640" MinHeight="400">
+        MinWidth="640" MinHeight="400"
+        Background="{StaticResource WindowBrush}">
+  <!-- Every shortcut is bound here once; menu entries only display their gestures (InputGesture),
+       toolbar buttons and menu entries share the same commands. -->
   <Window.KeyBindings>
+    <KeyBinding Gesture="Ctrl+O" Command="{Binding #Root.OpenCommand}" />
+    <KeyBinding Gesture="Ctrl+S" Command="{Binding #Root.SaveAsCommand}" />
     <KeyBinding Gesture="Ctrl+Z" Command="{Binding UndoCommand}" />
     <KeyBinding Gesture="Ctrl+Y" Command="{Binding RedoCommand}" />
     <KeyBinding Gesture="Ctrl+Shift+Z" Command="{Binding RedoCommand}" />
+    <KeyBinding Gesture="F1" Command="{Binding #Root.ShowShortcutsCommand}" />
     <KeyBinding Gesture="NumPad1" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Front}" />
     <KeyBinding Gesture="Ctrl+NumPad1" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Back}" />
     <KeyBinding Gesture="NumPad3" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Right}" />
@@ -32,107 +40,379 @@
   </Window.Styles>
 
   <DockPanel>
-    <Border DockPanel.Dock="Top" Padding="8" BorderThickness="0,0,0,1" BorderBrush="#D0D4D9">
-      <WrapPanel Orientation="Horizontal">
-        <Button Content="Open STEP..." Click="OnOpenClick" IsEnabled="{Binding !IsBusy}" Margin="0,0,6,0" />
-        <Button Content="Save as..." Click="OnSaveAsClick" HotKey="Ctrl+S" IsEnabled="{Binding HasDocument}" Margin="0,0,6,0" />
-        <Button Content="Repair..." Click="OnRepairClick" IsEnabled="{Binding HasDocument}" Margin="0,0,6,0"
-                ToolTip.Tip="Check the model for defects and repair it (sew gaps, exact surfaces, merge split faces)" />
-        <Button Content="Export DXF..." Click="OnExportDxfClick" IsEnabled="{Binding HasDocument}" Margin="0,0,16,0"
-                ToolTip.Tip="Front, top and left view with hidden lines (first-angle projection)" />
+    <!-- 1 Menu -->
+    <Menu DockPanel.Dock="Top" Background="{StaticResource PanelBrush}">
+      <MenuItem Header="_File">
+        <MenuItem Header="_Open STEP..." Command="{Binding #Root.OpenCommand}" InputGesture="Ctrl+O" IsEnabled="{Binding !IsBusy}">
+          <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.FolderOpen}" /></MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="_Save as..." Command="{Binding #Root.SaveAsCommand}" InputGesture="Ctrl+S" IsEnabled="{Binding HasDocument}">
+          <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.Save}" /></MenuItem.Icon>
+        </MenuItem>
+        <Separator />
+        <MenuItem Header="_Repair..." Command="{Binding #Root.RepairCommand}" IsEnabled="{Binding HasDocument}">
+          <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.Wrench}" /></MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="_Export DXF..." Command="{Binding #Root.ExportDxfCommand}" IsEnabled="{Binding HasDocument}">
+          <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.FileOutput}" /></MenuItem.Icon>
+        </MenuItem>
+        <Separator />
+        <MenuItem Header="E_xit" Command="{Binding #Root.ExitCommand}" />
+      </MenuItem>
+      <MenuItem Header="_Edit">
+        <MenuItem Header="_Undo" Command="{Binding UndoCommand}" InputGesture="Ctrl+Z">
+          <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.Undo2}" /></MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="_Redo" Command="{Binding RedoCommand}" InputGesture="Ctrl+Y">
+          <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.Redo2}" /></MenuItem.Icon>
+        </MenuItem>
+        <Separator />
+        <MenuItem Header="Remove face colour" Command="{Binding ClearFaceColorCommand}">
+          <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.Eraser}" /></MenuItem.Icon>
+        </MenuItem>
+      </MenuItem>
+      <MenuItem Header="_View">
+        <MenuItem Header="_Fit model" Command="{Binding #ModelViewControl.FitCommand}" InputGesture="">
+          <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.Scan}" /></MenuItem.Icon>
+        </MenuItem>
+        <Separator />
+        <MenuItem Header="Front" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Front}" InputGesture="NumPad1" />
+        <MenuItem Header="Back" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Back}" InputGesture="Ctrl+NumPad1" />
+        <MenuItem Header="Left" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Left}" InputGesture="Ctrl+NumPad3" />
+        <MenuItem Header="Right" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Right}" InputGesture="NumPad3" />
+        <MenuItem Header="Top" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Top}" InputGesture="NumPad7" />
+        <MenuItem Header="Bottom" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Bottom}" InputGesture="Ctrl+NumPad7" />
+        <MenuItem Header="Isometric" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Iso}" InputGesture="NumPad0" />
+        <Separator />
+        <MenuItem Header="_Edges" ToggleType="CheckBox" IsChecked="{Binding ShowEdges}" />
+        <MenuItem Header="_Orthographic" ToggleType="CheckBox" IsChecked="{Binding IsOrthographic}" InputGesture="NumPad5" />
+        <MenuItem Header="Display _quality">
+          <MenuItem Header="Coarse" ToggleType="Radio" Command="{Binding SetDisplayQualityCommand}" CommandParameter="{x:Static core:DisplayQuality.Coarse}"
+                    IsChecked="{Binding DisplayQuality, Mode=OneWay, Converter={x:Static conv:EqualsConverter.Instance}, ConverterParameter={x:Static core:DisplayQuality.Coarse}}" />
+          <MenuItem Header="Normal" ToggleType="Radio" Command="{Binding SetDisplayQualityCommand}" CommandParameter="{x:Static core:DisplayQuality.Normal}"
+                    IsChecked="{Binding DisplayQuality, Mode=OneWay, Converter={x:Static conv:EqualsConverter.Instance}, ConverterParameter={x:Static core:DisplayQuality.Normal}}" />
+          <MenuItem Header="Fine" ToggleType="Radio" Command="{Binding SetDisplayQualityCommand}" CommandParameter="{x:Static core:DisplayQuality.Fine}"
+                    IsChecked="{Binding DisplayQuality, Mode=OneWay, Converter={x:Static conv:EqualsConverter.Instance}, ConverterParameter={x:Static core:DisplayQuality.Fine}}" />
+        </MenuItem>
+        <Separator />
+        <MenuItem Header="_Model panel" ToggleType="CheckBox" IsChecked="{Binding IsModelPanelVisible}" />
+        <MenuItem Header="_Shortcut hints" ToggleType="CheckBox" IsChecked="{Binding ShowShortcutHints}" />
+      </MenuItem>
+      <MenuItem Header="_Tools">
+        <MenuItem Header="Colour _face" Command="{Binding ColorFaceCommand}">
+          <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.Paintbrush}" /></MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="Colour _body" Command="{Binding ColorBodyCommand}">
+          <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.PaintBucket}" /></MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="_Remove face colour" Command="{Binding ClearFaceColorCommand}">
+          <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.Eraser}" /></MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="_Custom colour..." Command="{Binding #Root.OpenColourPanelCommand}">
+          <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.Pipette}" /></MenuItem.Icon>
+        </MenuItem>
+        <Separator />
+        <MenuItem Header="Check and _repair..." Command="{Binding #Root.RepairCommand}" IsEnabled="{Binding HasDocument}">
+          <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.Wrench}" /></MenuItem.Icon>
+        </MenuItem>
+      </MenuItem>
+      <MenuItem Header="_Help">
+        <MenuItem Header="_Keyboard shortcuts" Command="{Binding #Root.ShowShortcutsCommand}" InputGesture="F1">
+          <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.Keyboard}" /></MenuItem.Icon>
+        </MenuItem>
+      </MenuItem>
+    </Menu>
 
-        <ListBox ItemsSource="{Binding Palette}" SelectedItem="{Binding SelectedPaletteEntry}"
-                 Background="Transparent" Padding="0" Margin="0,0,8,0" VerticalAlignment="Center">
-          <ListBox.ItemsPanel>
-            <ItemsPanelTemplate>
-              <StackPanel Orientation="Horizontal" />
-            </ItemsPanelTemplate>
-          </ListBox.ItemsPanel>
-          <ListBox.ItemTemplate>
-            <DataTemplate x:DataType="vm:PaletteEntry">
-              <Border Width="22" Height="22" CornerRadius="3" Background="{Binding Hex}"
-                      BorderBrush="#80000000" BorderThickness="1" ToolTip.Tip="{Binding Name}" />
-            </DataTemplate>
-          </ListBox.ItemTemplate>
-        </ListBox>
-
-        <Button x:Name="CustomColorButton" Content="Custom..." Margin="0,0,12,0" VerticalAlignment="Center"
-                ToolTip.Tip="Pick any colour; it is added to the palette and becomes the active colour">
-          <Button.Flyout>
-            <Flyout Placement="BottomEdgeAlignedLeft">
-              <StackPanel Spacing="8">
-                <ColorView x:Name="CustomColorView" Color="#3366CC"
-                           IsAlphaEnabled="False" IsAlphaVisible="False" IsAccentColorsVisible="False" />
-                <Button Content="Use colour" HorizontalAlignment="Right" Click="OnUseCustomColorClick" />
-              </StackPanel>
-            </Flyout>
-          </Button.Flyout>
-        </Button>
-
-        <Button Content="Colour face" Command="{Binding ColorFaceCommand}" Margin="0,0,6,0" />
-        <Button Content="Colour body" Command="{Binding ColorBodyCommand}" Margin="0,0,6,0"
-                ToolTip.Tip="Colours the bodies selected in the model tree, or the body of the selected face" />
-        <Button Content="Remove face colour" Command="{Binding ClearFaceColorCommand}" Margin="0,0,16,0" />
-        <Button Content="Undo" Command="{Binding UndoCommand}" ToolTip.Tip="Ctrl+Z" Margin="0,0,6,0" />
-        <Button Content="Redo" Command="{Binding RedoCommand}" ToolTip.Tip="Ctrl+Y" Margin="0,0,16,0" />
-        <CheckBox Content="Edges" IsChecked="{Binding ShowEdges}" VerticalAlignment="Center" Margin="0,0,16,0" />
-        <Button Content="Front" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Front}"
-                ToolTip.Tip="Num 1" Margin="0,0,4,0" />
-        <Button Content="Back" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Back}"
-                ToolTip.Tip="Ctrl+Num 1" Margin="0,0,4,0" />
-        <Button Content="Left" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Left}"
-                ToolTip.Tip="Ctrl+Num 3" Margin="0,0,4,0" />
-        <Button Content="Right" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Right}"
-                ToolTip.Tip="Num 3" Margin="0,0,4,0" />
-        <Button Content="Top" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Top}"
-                ToolTip.Tip="Num 7" Margin="0,0,4,0" />
-        <Button Content="Bottom" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Bottom}"
-                ToolTip.Tip="Ctrl+Num 7" Margin="0,0,4,0" />
-        <Button Content="Iso" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Iso}"
-                ToolTip.Tip="Num 0" Margin="0,0,4,0" />
-        <CheckBox Content="Orthographic" IsChecked="{Binding IsOrthographic}" VerticalAlignment="Center" Margin="12,0,0,0"
-                  ToolTip.Tip="Parallel projection without perspective (Num 5)" />
-        <ComboBox ItemsSource="{Binding DisplayQualities}" SelectedItem="{Binding DisplayQuality}" IsEnabled="{Binding !IsBusy}"
-                  VerticalAlignment="Center" Margin="16,0,0,0" MinWidth="100"
-                  ToolTip.Tip="Display quality: how finely curved faces are triangulated (the model itself is not changed)" />
-      </WrapPanel>
-    </Border>
-    <Border DockPanel.Dock="Bottom" Padding="8,4" BorderThickness="0,1,0,0" BorderBrush="#D0D4D9">
-      <DockPanel>
-        <TextBlock DockPanel.Dock="Right" FontSize="12" Text="{Binding SelectionInfo}" />
-        <TextBlock DockPanel.Dock="Right" FontSize="12" Foreground="#5F6368" Margin="0,0,16,0" Text="{Binding HoverInfo}" />
-        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6" Margin="0,0,12,0" IsVisible="{Binding IsCancellable}">
-          <TextBlock FontSize="12" Text="{Binding ProgressText}" VerticalAlignment="Center" />
-          <ProgressBar Width="160" Minimum="0" Maximum="1" Value="{Binding ProgressFraction}" VerticalAlignment="Center" />
-          <Button Content="Cancel" Command="{Binding CancelCommand}" Padding="8,0" FontSize="12" ToolTip.Tip="Esc" />
+    <!-- 2 + 3 Toolbars. They never wrap: in narrow windows the inline palette and then the button
+         texts disappear (icons and tooltips stay); every command is also in the menu. -->
+    <Border DockPanel.Dock="Top" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,1"
+            Container.Name="bars" Container.Sizing="Width" ClipToBounds="True">
+      <Border.Styles>
+        <ContainerQuery Name="bars" Query="max-width:1180">
+          <Style Selector="ListBox.inlinePalette">
+            <Setter Property="IsVisible" Value="False" />
+          </Style>
+        </ContainerQuery>
+        <ContainerQuery Name="bars" Query="max-width:900">
+          <Style Selector="TextBlock.label">
+            <Setter Property="IsVisible" Value="False" />
+          </Style>
+        </ContainerQuery>
+      </Border.Styles>
+      <StackPanel>
+        <!-- 2 File and edit -->
+        <StackPanel Orientation="Horizontal" Margin="6,4">
+          <Button Classes="tool" Command="{Binding #Root.OpenCommand}" IsEnabled="{Binding !IsBusy}" ToolTip.Tip="Open a STEP file (Ctrl+O)">
+            <StackPanel><controls:Icon Data="{StaticResource Icon.FolderOpen}" /><TextBlock Classes="label" Text="Open STEP..." /></StackPanel>
+          </Button>
+          <Button Classes="tool" Command="{Binding #Root.SaveAsCommand}" IsEnabled="{Binding HasDocument}" ToolTip.Tip="Save the model with its colours as STEP AP214 or AP242 (Ctrl+S)">
+            <StackPanel><controls:Icon Data="{StaticResource Icon.Save}" /><TextBlock Classes="label" Text="Save as..." /></StackPanel>
+          </Button>
+          <Button Classes="tool" Command="{Binding #Root.RepairCommand}" IsEnabled="{Binding HasDocument}"
+                  ToolTip.Tip="Check the model for defects and repair it (sew gaps, exact surfaces, merge split faces)">
+            <StackPanel><controls:Icon Data="{StaticResource Icon.Wrench}" /><TextBlock Classes="label" Text="Repair..." /></StackPanel>
+          </Button>
+          <Button Classes="tool" Command="{Binding #Root.ExportDxfCommand}" IsEnabled="{Binding HasDocument}"
+                  ToolTip.Tip="Front, top and left view with hidden lines (first-angle projection)">
+            <StackPanel><controls:Icon Data="{StaticResource Icon.FileOutput}" /><TextBlock Classes="label" Text="Export DXF..." /></StackPanel>
+          </Button>
+          <Border Classes="toolSeparator" />
+          <Button Classes="tool" Command="{Binding UndoCommand}" ToolTip.Tip="Undo the last colour change (Ctrl+Z)">
+            <StackPanel><controls:Icon Data="{StaticResource Icon.Undo2}" /><TextBlock Classes="label" Text="Undo" /></StackPanel>
+          </Button>
+          <Button Classes="tool" Command="{Binding RedoCommand}" ToolTip.Tip="Redo (Ctrl+Y)">
+            <StackPanel><controls:Icon Data="{StaticResource Icon.Redo2}" /><TextBlock Classes="label" Text="Redo" /></StackPanel>
+          </Button>
         </StackPanel>
-        <TextBlock FontSize="12" Text="{Binding Status}" TextTrimming="CharacterEllipsis" />
-      </DockPanel>
-    </Border>
-    <Border DockPanel.Dock="Bottom" Padding="8,2">
-      <TextBlock Foreground="#5F6368" FontSize="11"
-                 Text="Click: select face   Left drag: rotate   Right/middle drag: pan   Wheel: zoom   Double-click: fit   Num 1/3/7/0: front/right/top/iso (Ctrl: opposite side)   Num 5: orthographic" />
+
+        <!-- 3 View and colour -->
+        <Grid ColumnDefinitions="Auto,*,Auto" Margin="6,0,6,4">
+          <StackPanel Grid.Column="0" Orientation="Horizontal">
+            <ToggleButton Classes="tool" IsChecked="{Binding IsModelPanelVisible}" ToolTip.Tip="Show or hide the model panel">
+              <controls:Icon Data="{StaticResource Icon.PanelLeft}" />
+            </ToggleButton>
+            <ToggleButton Classes="tool" IsChecked="{Binding ShowEdges}" ToolTip.Tip="Show model edges">
+              <StackPanel><controls:Icon Data="{StaticResource Icon.Frame}" /><TextBlock Classes="label" Text="Edges" /></StackPanel>
+            </ToggleButton>
+            <DropDownButton Classes="tool" ToolTip.Tip="Standard views (Num 1/3/7/0, Ctrl: opposite side) and fit">
+              <StackPanel><controls:Icon Data="{StaticResource Icon.Rotate3d}" /><TextBlock Classes="label" Text="View" /></StackPanel>
+              <DropDownButton.Flyout>
+                <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                  <MenuItem Header="Fit model" Command="{Binding #ModelViewControl.FitCommand}">
+                    <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.Scan}" /></MenuItem.Icon>
+                  </MenuItem>
+                  <Separator />
+                  <MenuItem Header="Front" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Front}" InputGesture="NumPad1" />
+                  <MenuItem Header="Back" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Back}" InputGesture="Ctrl+NumPad1" />
+                  <MenuItem Header="Left" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Left}" InputGesture="Ctrl+NumPad3" />
+                  <MenuItem Header="Right" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Right}" InputGesture="NumPad3" />
+                  <MenuItem Header="Top" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Top}" InputGesture="NumPad7" />
+                  <MenuItem Header="Bottom" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Bottom}" InputGesture="Ctrl+NumPad7" />
+                  <MenuItem Header="Isometric" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Iso}" InputGesture="NumPad0" />
+                </MenuFlyout>
+              </DropDownButton.Flyout>
+            </DropDownButton>
+            <ToggleButton Classes="tool" IsChecked="{Binding IsOrthographic}" ToolTip.Tip="Parallel projection without perspective (Num 5)">
+              <StackPanel><controls:Icon Data="{StaticResource Icon.Axis3d}" /><TextBlock Classes="label" Text="Orthographic" /></StackPanel>
+            </ToggleButton>
+            <TextBlock Classes="label secondary" Text="Quality" VerticalAlignment="Center" Margin="8,0,6,0" />
+            <ComboBox ItemsSource="{Binding DisplayQualities}" SelectedItem="{Binding DisplayQuality}" IsEnabled="{Binding !IsBusy}"
+                      VerticalAlignment="Center" MinWidth="96" Margin="0,0,2,0"
+                      ToolTip.Tip="Display quality: how finely curved faces are triangulated (the model itself is not changed)" />
+            <Border Classes="toolSeparator" />
+          </StackPanel>
+
+          <!-- The palette takes the remaining width; it is hidden in narrow windows (the colour button stays). -->
+          <StackPanel Grid.Column="1" Orientation="Horizontal" ClipToBounds="True">
+            <DropDownButton x:Name="ColourButton" Classes="tool" Padding="6,4" ToolTip.Tip="Active colour, palette and colouring actions">
+              <Border Classes="swatch" Background="{Binding SelectedPaletteEntry.Hex}" />
+              <DropDownButton.Flyout>
+                <Flyout Placement="BottomEdgeAlignedLeft">
+                  <StackPanel Width="300" Spacing="{StaticResource SpaceS}">
+                    <TextBlock Classes="header" Text="Active colour" />
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                      <Border Classes="swatch" Width="32" Height="32" Background="{Binding SelectedPaletteEntry.Hex}" />
+                      <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding SelectedPaletteEntry.Name}" FontWeight="SemiBold" />
+                        <TextBlock Classes="secondary" Text="{Binding SelectedPaletteEntry.Hex}" />
+                      </StackPanel>
+                    </StackPanel>
+                    <TextBlock Classes="header" Text="Palette" Margin="0,4,0,0" />
+                    <ListBox Classes="palette" ItemsSource="{Binding Palette}" SelectedItem="{Binding SelectedPaletteEntry}">
+                      <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                      </ListBox.ItemsPanel>
+                      <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:PaletteEntry">
+                          <Panel ToolTip.Tip="{Binding Description}">
+                            <Border Classes="swatch" Width="26" Height="26" Background="{Binding Hex}" />
+                            <Border Classes="selectedBadge"><controls:Icon Data="{StaticResource Icon.Check}" /></Border>
+                          </Panel>
+                        </DataTemplate>
+                      </ListBox.ItemTemplate>
+                    </ListBox>
+                    <Expander Header="Custom colour..." x:Name="CustomColourExpander" HorizontalAlignment="Stretch">
+                      <StackPanel Spacing="8">
+                        <ColorView x:Name="CustomColorView" Color="#3366CC"
+                                   IsAlphaEnabled="False" IsAlphaVisible="False" IsAccentColorsVisible="False" />
+                        <Button Content="Use colour" HorizontalAlignment="Right" Click="OnUseCustomColorClick"
+                                ToolTip.Tip="Adds the colour to the palette and makes it the active colour" />
+                      </StackPanel>
+                    </Expander>
+                    <TextBlock Classes="header" Text="Apply to" Margin="0,4,0,0" />
+                    <Button Command="{Binding ColorFaceCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                            ToolTip.Tip="Colour the selected face (select it by clicking in the 3D view)">
+                      <StackPanel Orientation="Horizontal" Spacing="8"><controls:Icon Data="{StaticResource Icon.Paintbrush}" /><TextBlock Text="Colour face" /></StackPanel>
+                    </Button>
+                    <Button Command="{Binding ColorBodyCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                            ToolTip.Tip="Colour the bodies selected in the model tree, or the body of the selected face">
+                      <StackPanel Orientation="Horizontal" Spacing="8"><controls:Icon Data="{StaticResource Icon.PaintBucket}" /><TextBlock Text="Colour body" /></StackPanel>
+                    </Button>
+                    <Button Command="{Binding ClearFaceColorCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                            ToolTip.Tip="Remove the selected face's own colour; it shows its body colour again">
+                      <StackPanel Orientation="Horizontal" Spacing="8"><controls:Icon Data="{StaticResource Icon.Eraser}" /><TextBlock Text="Remove face colour" /></StackPanel>
+                    </Button>
+                  </StackPanel>
+                </Flyout>
+              </DropDownButton.Flyout>
+            </DropDownButton>
+            <ListBox Classes="palette inlinePalette" ItemsSource="{Binding Palette}" SelectedItem="{Binding SelectedPaletteEntry}" Margin="4,0,0,0">
+              <ListBox.ItemsPanel>
+                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+              </ListBox.ItemsPanel>
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:PaletteEntry">
+                  <Panel ToolTip.Tip="{Binding Description}">
+                    <Border Classes="swatch" Background="{Binding Hex}" />
+                    <Border Classes="selectedBadge"><controls:Icon Data="{StaticResource Icon.Check}" /></Border>
+                  </Panel>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </StackPanel>
+
+          <StackPanel Grid.Column="2" Orientation="Horizontal">
+            <Border Classes="toolSeparator" />
+            <Button Classes="tool" Command="{Binding ColorFaceCommand}" ToolTip.Tip="Colour the selected face with the active colour">
+              <StackPanel><controls:Icon Data="{StaticResource Icon.Paintbrush}" /><TextBlock Classes="label" Text="Colour face" /></StackPanel>
+            </Button>
+            <Button Classes="tool" Command="{Binding ColorBodyCommand}"
+                    ToolTip.Tip="Colour the bodies selected in the model tree, or the body of the selected face">
+              <StackPanel><controls:Icon Data="{StaticResource Icon.PaintBucket}" /><TextBlock Classes="label" Text="Colour body" /></StackPanel>
+            </Button>
+            <Button Classes="tool" Command="{Binding ClearFaceColorCommand}" ToolTip.Tip="Remove the selected face's own colour">
+              <StackPanel><controls:Icon Data="{StaticResource Icon.Eraser}" /><TextBlock Classes="label" Text="Remove face colour" /></StackPanel>
+            </Button>
+          </StackPanel>
+        </Grid>
+      </StackPanel>
     </Border>
 
-    <Grid ColumnDefinitions="260,4,*">
-      <DockPanel Grid.Column="0">
-        <TextBlock DockPanel.Dock="Top" Text="Model" FontWeight="SemiBold" Margin="10,8,8,4" />
-        <TreeView ItemsSource="{Binding ModelTree}" SelectedItem="{Binding SelectedNode}">
-          <TreeView.ItemTemplate>
-            <TreeDataTemplate x:DataType="core:ModelNode" ItemsSource="{Binding Children}">
-              <StackPanel Orientation="Horizontal" Spacing="6">
-                <TextBlock Text="{Binding Kind}" Foreground="#80868B" FontSize="11" VerticalAlignment="Center" />
-                <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" />
-              </StackPanel>
-            </TreeDataTemplate>
-          </TreeView.ItemTemplate>
-        </TreeView>
+    <!-- 8 Shortcut hints (optional) -->
+    <Border DockPanel.Dock="Bottom" Padding="10,3,4,3" Background="{StaticResource WindowBrush}" IsVisible="{Binding ShowShortcutHints}">
+      <DockPanel>
+        <Button DockPanel.Dock="Right" Classes="tool" Padding="4" Command="{Binding ToggleShortcutHintsCommand}" ToolTip.Tip="Hide hints (View → Shortcut hints)">
+          <controls:Icon Data="{StaticResource Icon.X}" Width="12" Height="12" />
+        </Button>
+        <TextBlock Classes="secondary" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                   Text="LMB: Rotate · RMB/MMB drag: Pan · Right-click: Menu · Wheel: Zoom · Double-click: Fit · Click: Select face · F1: All shortcuts" />
       </DockPanel>
-      <GridSplitter Grid.Column="1" Background="#D0D4D9" ResizeDirection="Columns" />
+    </Border>
+
+    <!-- 7 Status bar -->
+    <Border DockPanel.Dock="Bottom" Padding="10,4" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0"
+            Container.Name="status" Container.Sizing="Width">
+      <Border.Styles>
+        <ContainerQuery Name="status" Query="max-width:900">
+          <Style Selector=":is(Control).wideOnly">
+            <Setter Property="IsVisible" Value="False" />
+          </Style>
+        </ContainerQuery>
+      </Border.Styles>
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6" Margin="12,0,0,0" IsVisible="{Binding IsCancellable}">
+          <TextBlock FontSize="{StaticResource FontSizeStatus}" Text="{Binding ProgressText}" VerticalAlignment="Center" />
+          <ProgressBar Width="140" Minimum="0" Maximum="1" Value="{Binding ProgressFraction}" VerticalAlignment="Center" />
+          <Button Content="Cancel" Command="{Binding CancelCommand}" Padding="8,0" FontSize="{StaticResource FontSizeStatus}" ToolTip.Tip="Esc" />
+        </StackPanel>
+        <!-- Operations without progress reports (saving, export, colouring, repair) -->
+        <ProgressBar DockPanel.Dock="Right" Width="80" IsIndeterminate="True" VerticalAlignment="Center" Margin="12,0,0,0">
+          <ProgressBar.IsVisible>
+            <MultiBinding Converter="{x:Static BoolConverters.And}">
+              <Binding Path="IsBusy" />
+              <Binding Path="!IsCancellable" />
+            </MultiBinding>
+          </ProgressBar.IsVisible>
+        </ProgressBar>
+        <TextBlock DockPanel.Dock="Right" Classes="wideOnly" FontSize="{StaticResource FontSizeStatus}" VerticalAlignment="Center" Margin="12,0,0,0"
+                   Text="{Binding SelectedPaletteEntry.Name, StringFormat='Active colour: {0}'}" />
+        <TextBlock DockPanel.Dock="Right" FontSize="{StaticResource FontSizeStatus}" VerticalAlignment="Center" Margin="12,0,0,0"
+                   Text="{Binding SelectionInfo}" TextTrimming="CharacterEllipsis" MaxWidth="360" />
+        <TextBlock DockPanel.Dock="Right" Classes="secondary wideOnly" FontSize="{StaticResource FontSizeStatus}" VerticalAlignment="Center" Margin="12,0,0,0"
+                   Text="{Binding HoverInfo}" />
+        <!-- Own IsVisible binding inside: a local value would override the narrow-window style. -->
+        <Panel DockPanel.Dock="Right" Classes="wideOnly">
+          <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" IsVisible="{Binding HasDocument}">
+            <StackPanel Orientation="Horizontal" Spacing="4" ToolTip.Tip="Part placements in the model tree">
+              <controls:Icon Data="{StaticResource Icon.Box}" Width="13" Height="13" Foreground="{StaticResource TextSecondaryBrush}" />
+              <TextBlock FontSize="{StaticResource FontSizeStatus}" VerticalAlignment="Center" Text="{Binding PartCount, StringFormat='{}{0:N0} parts'}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="4">
+              <controls:Icon Data="{StaticResource Icon.Square}" Width="13" Height="13" Foreground="{StaticResource TextSecondaryBrush}" />
+              <TextBlock FontSize="{StaticResource FontSizeStatus}" VerticalAlignment="Center" Text="{Binding FaceCount, StringFormat='{}{0:N0} faces'}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="4" ToolTip.Tip="Triangles displayed at the current display quality">
+              <controls:Icon Data="{StaticResource Icon.Triangle}" Width="13" Height="13" Foreground="{StaticResource TextSecondaryBrush}" />
+              <TextBlock FontSize="{StaticResource FontSizeStatus}" VerticalAlignment="Center" Text="{Binding TriangleCount, StringFormat='{}{0:N0} triangles'}" />
+            </StackPanel>
+          </StackPanel>
+        </Panel>
+        <TextBlock FontSize="{StaticResource FontSizeStatus}" VerticalAlignment="Center" Text="{Binding Status}" TextTrimming="CharacterEllipsis" />
+      </DockPanel>
+    </Border>
+
+    <!-- 4 Model panel, 5 viewport -->
+    <Grid x:Name="ContentGrid" ColumnDefinitions="260,4,*">
+      <Border Grid.Column="0" Background="{StaticResource PanelBrush}" IsVisible="{Binding IsModelPanelVisible}" MinWidth="160">
+        <DockPanel>
+          <DockPanel DockPanel.Dock="Top" Margin="10,6,4,4">
+            <Button DockPanel.Dock="Right" Classes="tool" Padding="4" Command="{Binding ToggleModelPanelCommand}" ToolTip.Tip="Hide the model panel">
+              <controls:Icon Data="{StaticResource Icon.PanelLeft}" Width="14" Height="14" />
+            </Button>
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <controls:Icon Data="{StaticResource Icon.ListTree}" />
+              <TextBlock Classes="header" Text="Model" VerticalAlignment="Center" />
+            </StackPanel>
+          </DockPanel>
+          <TextBlock DockPanel.Dock="Top" Classes="secondary" Margin="10,4" TextWrapping="Wrap" FontSize="12"
+                     Text="Open a STEP file to see its assemblies, parts and bodies." IsVisible="{Binding !HasDocument}" />
+          <TreeView ItemsSource="{Binding ModelTree}" SelectedItem="{Binding SelectedNode}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <TreeView.ItemTemplate>
+              <TreeDataTemplate x:DataType="core:ModelNode" ItemsSource="{Binding Children}">
+                <DockPanel ToolTip.Tip="{Binding DisplayName}">
+                  <Panel DockPanel.Dock="Left" Margin="0,0,6,0">
+                    <controls:Icon Data="{StaticResource Icon.Boxes}"
+                                   IsVisible="{Binding Kind, Converter={x:Static conv:EqualsConverter.Instance}, ConverterParameter={x:Static core:ModelNodeKind.Assembly}}" />
+                    <controls:Icon Data="{StaticResource Icon.Box}"
+                                   IsVisible="{Binding Kind, Converter={x:Static conv:EqualsConverter.Instance}, ConverterParameter={x:Static core:ModelNodeKind.Part}}" />
+                    <controls:Icon Data="{StaticResource Icon.Square}" Width="14" Height="14"
+                                   IsVisible="{Binding Kind, Converter={x:Static conv:EqualsConverter.Instance}, ConverterParameter={x:Static core:ModelNodeKind.Body}}" />
+                  </Panel>
+                  <TextBlock DockPanel.Dock="Left" Classes="secondary" Text="{Binding Kind}" FontSize="11" VerticalAlignment="Center" Margin="0,0,6,0" />
+                  <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                </DockPanel>
+              </TreeDataTemplate>
+            </TreeView.ItemTemplate>
+          </TreeView>
+        </DockPanel>
+      </Border>
+      <GridSplitter Grid.Column="1" Background="{StaticResource BorderBrush}" ResizeDirection="Columns" IsVisible="{Binding IsModelPanelVisible}" />
       <controls:ModelView Grid.Column="2" x:Name="ModelViewControl"
                           Scene="{Binding Scene}" SelectedFace="{Binding SelectedFace}"
                           HighlightedFaces="{Binding HighlightedFaces}" HoveredFace="{Binding HoveredFace}" ShowEdges="{Binding ShowEdges}"
-                          IsOrthographic="{Binding IsOrthographic}" />
+                          IsOrthographic="{Binding IsOrthographic}">
+        <controls:ModelView.FaceMenu>
+          <MenuFlyout>
+            <MenuItem Header="Colour face" Command="{Binding ColorFaceCommand}">
+              <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.Paintbrush}" /></MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="Colour body" Command="{Binding ColorBodyCommand}">
+              <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.PaintBucket}" /></MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="Remove face colour" Command="{Binding ClearFaceColorCommand}">
+              <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.Eraser}" /></MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="Fit model" Command="{Binding #ModelViewControl.FitCommand}">
+              <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.Scan}" /></MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="Front" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Front}" InputGesture="NumPad1" />
+            <MenuItem Header="Right" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Right}" InputGesture="NumPad3" />
+            <MenuItem Header="Top" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Top}" InputGesture="NumPad7" />
+            <MenuItem Header="Isometric" Command="{Binding #ModelViewControl.ShowViewCommand}" CommandParameter="{x:Static drawing:ViewDirection.Iso}" InputGesture="NumPad0" />
+          </MenuFlyout>
+        </controls:ModelView.FaceMenu>
+      </controls:ModelView>
     </Grid>
   </DockPanel>
 </Window>

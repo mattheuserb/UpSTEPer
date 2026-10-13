@@ -110,8 +110,8 @@ public sealed class MeshRenderer : IDisposable
         _lineIndexBuffer = _gl.GenBuffer();
     }
 
-    /// <summary>Gets or sets the background colour.</summary>
-    public ColorRgb Background { get; set; } = ColorRgb.FromHex("#E9ECEF");
+    /// <summary>Gets or sets the background colour (token ViewportBackground of the app's design).</summary>
+    public ColorRgb Background { get; set; } = ColorRgb.FromHex("#ECEFF3");
 
     /// <summary>Gets or sets the colour of edge lines.</summary>
     public ColorRgb EdgeColor { get; set; } = ColorRgb.FromHex("#2B2E33");

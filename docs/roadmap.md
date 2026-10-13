@@ -46,6 +46,11 @@ Linux and macOS from CI-built binaries.
 - [x] Hover highlight: the face under the pointer is tinted blue and named in the status bar;
   picking through a per-mesh BVH (`TriangleBvh`, µs instead of ms per pick at 10⁵ triangles),
   only the two affected faces are re-uploaded (`FaceVertexRanges`, `glBufferSubData`)
+- [x] UI redesign, main window (2026-10-14): menu bar, two grouped toolbars that never wrap
+  (narrow windows: icons only, palette in the colour panel), colour panel with active colour,
+  right-click menu in the 3D view, collapsible model panel, status bar with counts, optional hint
+  line, keyboard shortcut list (F1); design tokens and Lucide icons. Selection stays orange (#FF8C1A)
+- [ ] UI redesign, check and repair dialog: summary first, status per part, compact before/after
 
 ## M2 — Colouring
 

@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -25,7 +26,8 @@ namespace UpSTEPer.App.Controls;
 /// <summary>
 /// Interactive 3D view of a <see cref="SceneData"/>: left drag rotates, right or middle drag pans,
 /// the wheel zooms, double-click fits the model; standard views via <see cref="ShowViewCommand"/>.
-/// The face under the pointer is tinted blue (<see cref="HoveredFace"/>).
+/// The face under the pointer is tinted blue (<see cref="HoveredFace"/>). A right click without
+/// dragging selects the face under the pointer and opens <see cref="FaceMenu"/>.
 /// </summary>
 [ExcludeFromCodeCoverage(Justification = "Needs a GPU context; exercised by the viewer screenshot smoke test in CI.")]
 [SuppressMessage(
@@ -54,6 +56,10 @@ internal sealed partial class ModelView : OpenGlControlBase
     public static readonly StyledProperty<bool> ShowEdgesProperty =
         AvaloniaProperty.Register<ModelView, bool>(nameof(ShowEdges), defaultValue: true);
 
+    /// <summary>Defines the <see cref="FaceMenu"/> property.</summary>
+    public static readonly StyledProperty<PopupFlyoutBase?> FaceMenuProperty =
+        AvaloniaProperty.Register<ModelView, PopupFlyoutBase?>(nameof(FaceMenu));
+
     /// <summary>Defines the <see cref="IsOrthographic"/> property.</summary>
     public static readonly StyledProperty<bool> IsOrthographicProperty =
         AvaloniaProperty.Register<ModelView, bool>(nameof(IsOrthographic));
@@ -76,7 +82,11 @@ internal sealed partial class ModelView : OpenGlControlBase
     private bool _isPanning;
 
     /// <summary>Initializes a new instance of the <see cref="ModelView"/> class.</summary>
-    public ModelView() => ShowViewCommand = new RelayCommand<ViewDirection>(ShowView);
+    public ModelView()
+    {
+        ShowViewCommand = new RelayCommand<ViewDirection>(ShowView);
+        FitCommand = new RelayCommand(Fit);
+    }
 
     /// <summary>Raised on the UI thread after <see cref="ScreenshotPath"/> has been written.</summary>
     public event EventHandler? ScreenshotSaved;
@@ -128,6 +138,19 @@ internal sealed partial class ModelView : OpenGlControlBase
 
     /// <summary>Gets the command that shows the model from a standard direction (parameter: <see cref="ViewDirection"/>).</summary>
     public ICommand ShowViewCommand { get; }
+
+    /// <summary>Gets the command that fits the whole model into the view (as a double-click does).</summary>
+    public ICommand FitCommand { get; }
+
+    /// <summary>
+    /// Gets or sets the menu opened by a right click without dragging (dragging with the right
+    /// button pans). Not a <c>ContextFlyout</c>: that would also open after every right-button pan.
+    /// </summary>
+    public PopupFlyoutBase? FaceMenu
+    {
+        get => GetValue(FaceMenuProperty);
+        set => SetValue(FaceMenuProperty, value);
+    }
 
     /// <summary>Gets or sets the logger for OpenGL diagnostics (set by the composition root).</summary>
     public ILogger Logger { get; set; } = NullLogger.Instance;
@@ -347,10 +370,9 @@ internal sealed partial class ModelView : OpenGlControlBase
         base.OnPointerPressed(e);
 
         var properties = e.GetCurrentPoint(this).Properties;
-        if (e.ClickCount == 2 && Scene is { } scene)
+        if (e.ClickCount == 2 && properties.IsLeftButtonPressed)
         {
-            _camera.FitTo(scene.Bounds);
-            RequestNextFrameRendering();
+            Fit();
             return;
         }
 
@@ -399,15 +421,32 @@ internal sealed partial class ModelView : OpenGlControlBase
 
         var position = e.GetPosition(this);
         var moved = position - _pressPosition;
-        var isClick = _isOrbiting && Math.Abs(moved.X) < ClickTolerance && Math.Abs(moved.Y) < ClickTolerance;
+        var isClick = Math.Abs(moved.X) < ClickTolerance && Math.Abs(moved.Y) < ClickTolerance;
+        var wasOrbiting = _isOrbiting;
+        var wasPanning = _isPanning;
 
         _isOrbiting = false;
         _isPanning = false;
         e.Pointer.Capture(null);
 
-        if (isClick)
+        if (isClick && wasOrbiting)
         {
             SelectFaceAt(position);
+        }
+        else if (isClick && wasPanning && e.InitialPressMouseButton == MouseButton.Right)
+        {
+            // Background: the selection is cleared, the menu still offers the view commands.
+            SelectFaceAt(position);
+            FaceMenu?.ShowAt(this, showAtPointer: true);
+        }
+    }
+
+    private void Fit()
+    {
+        if (Scene is { } scene)
+        {
+            _camera.FitTo(scene.Bounds);
+            RequestNextFrameRendering();
         }
     }
 

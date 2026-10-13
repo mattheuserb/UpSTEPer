@@ -68,7 +68,7 @@ public class ModelTreeViewModelTests
 
         Assert.Equal(FakeDocument.FileRed, viewModel.Scene!.GetFaceColor(new FaceId(0))); // own face colour wins
         Assert.Equal(_blue.Color, viewModel.Scene.GetFaceColor(new FaceId(1)));
-        Assert.Equal("2 targets changed", viewModel.Status);
+        Assert.Equal("Body colour applied to 2 bodies: Blue", viewModel.Status);
 
         await viewModel.UndoCommand.ExecuteAsync(null);
 
@@ -86,7 +86,7 @@ public class ModelTreeViewModelTests
         await viewModel.ColorBodyCommand.ExecuteAsync(null);
 
         Assert.Equal(_blue.Color, viewModel.Scene!.GetFaceColor(new FaceId(1)));
-        Assert.Equal("Body 1: #2271B3", viewModel.Status);
+        Assert.Equal("Body colour applied: Blue", viewModel.Status);
     }
 
     private static async Task<MainViewModel> LoadedAsync()

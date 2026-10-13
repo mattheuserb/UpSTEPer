@@ -1,7 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using Avalonia.VisualTree;
 using UpSTEPer.App.ViewModels;
 using UpSTEPer.App.Views;
 using UpSTEPer.Core;
@@ -70,7 +69,7 @@ public class CustomColorTests
     }
 
     [Fact]
-    public async Task UseColourButton_InFlyout_AddsPickedColourAndClosesFlyout()
+    public async Task UseColourButton_InColourPanel_AddsPickedColourAndKeepsPanelOpenForApplying()
     {
         var result = await HeadlessTestApp.Session.Dispatch(
             () =>
@@ -78,21 +77,23 @@ public class CustomColorTests
                 using var viewModel = new MainViewModel(new FakeReader());
                 var window = new MainWindow { DataContext = viewModel };
                 window.Show();
-                var button = window.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "CustomColorButton");
+                var button = window.FindControl<DropDownButton>("ColourButton")!;
                 var flyout = (Flyout)button.Flyout!;
                 flyout.ShowAt(button);
 
-                var content = (Panel)flyout.Content!;
-                content.Children.OfType<ColorView>().Single().Color = Color.FromRgb(0x12, 0xAB, 0x34);
-                content.Children.OfType<Button>().Single().RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                var expander = window.FindControl<Expander>("CustomColourExpander")!;
+                expander.IsExpanded = true;
+                window.FindControl<ColorView>("CustomColorView")!.Color = Color.FromRgb(0x12, 0xAB, 0x34);
+                ((Panel)expander.Content!).Children.OfType<Button>().Single().RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
-                var state = (viewModel.SelectedPaletteEntry.Hex, flyout.IsOpen);
+                var state = (viewModel.SelectedPaletteEntry.Hex, flyout.IsOpen, expander.IsExpanded);
                 window.Close();
                 return state;
             },
             TestContext.Current.CancellationToken);
 
         Assert.Equal("#12AB34", result.Hex);
-        Assert.False(result.IsOpen);
+        Assert.True(result.IsOpen);
+        Assert.False(result.IsExpanded);
     }
 }

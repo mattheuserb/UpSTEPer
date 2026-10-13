@@ -429,6 +429,74 @@ public class MainViewModelTests
         Assert.Contains("2 faces", viewModel.Status, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task LoadAsync_SetsPartFaceAndTriangleCounts()
+    {
+        using var viewModel = new MainViewModel(new FakeReader());
+        Assert.Equal((0, 0, 0), (viewModel.PartCount, viewModel.FaceCount, viewModel.TriangleCount));
+
+        await viewModel.LoadAsync("bracket.stp");
+
+        Assert.Equal(1, viewModel.PartCount);
+        Assert.Equal(2, viewModel.FaceCount);
+        Assert.Equal(viewModel.Scene!.Mesh.TriangleCount, viewModel.TriangleCount);
+        Assert.True(viewModel.TriangleCount > 0);
+    }
+
+    [Fact]
+    public async Task ColourCommands_ReportWhatWasApplied()
+    {
+        using var viewModel = await LoadedAsync(new FakeReader());
+        viewModel.SelectedFace = new FaceId(1);
+        viewModel.SelectedPaletteEntry = _blue;
+
+        await viewModel.ColorFaceCommand.ExecuteAsync(null);
+        Assert.Equal("Face colour applied: Blue", viewModel.Status);
+
+        await viewModel.ClearFaceColorCommand.ExecuteAsync(null);
+        Assert.Equal("Face colour removed; the face shows its body colour.", viewModel.Status);
+
+        // Undo describes the restored state technically, as before.
+        await viewModel.UndoCommand.ExecuteAsync(null);
+        Assert.Equal("Face 1: #2271B3", viewModel.Status);
+    }
+
+    [Fact]
+    public void PanelAndHintToggles_FlipTheirState()
+    {
+        using var viewModel = new MainViewModel(new FakeReader());
+        Assert.True(viewModel.IsModelPanelVisible);
+        Assert.True(viewModel.ShowShortcutHints);
+
+        viewModel.ToggleModelPanelCommand.Execute(null);
+        viewModel.ToggleShortcutHintsCommand.Execute(null);
+        Assert.False(viewModel.IsModelPanelVisible);
+        Assert.False(viewModel.ShowShortcutHints);
+
+        viewModel.ToggleModelPanelCommand.Execute(null);
+        Assert.True(viewModel.IsModelPanelVisible);
+    }
+
+    [Fact]
+    public async Task SetDisplayQualityCommand_RemeshesLikeTheToolbar()
+    {
+        var reader = new FakeReader();
+        using var viewModel = await LoadedAsync(reader);
+
+        viewModel.SetDisplayQualityCommand.Execute(DisplayQuality.Fine);
+
+        Assert.Equal(DisplayQuality.Fine, viewModel.DisplayQuality);
+        await viewModel.RemeshCommand.ExecutionTask!;
+        Assert.Equal(TessellationOptions.ForModel(DisplayQuality.Fine, reader.Documents[0].Bounds), reader.Documents[0].TessellationRequests[^1]);
+    }
+
+    [Fact]
+    public void PaletteEntry_Description_AddsTheValueOnce()
+    {
+        Assert.Equal("Blue (#2271B3)", _blue.Description);
+        Assert.Equal("Custom #ABCDEF", PaletteEntry.Custom(ColorRgb.FromHex("#ABCDEF")).Description);
+    }
+
     private static async Task<MainViewModel> LoadedAsync(FakeReader reader)
     {
         var viewModel = new MainViewModel(reader);

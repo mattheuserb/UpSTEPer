@@ -155,14 +155,9 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
             _session?.Dispose();
             _session = new DocumentSession(loaded.Document);
-            _history.Clear();
+            DeleteRepairSnapshot();
             _fileName = fileName;
-            _faceBodies = loaded.FaceBodies;
-            SelectedFace = null;
-            SelectedNode = null;
-            ModelTree = loaded.Tree;
-            Scene = loaded.Scene;
-            _meshedQuality = quality;
+            ShowModel(loaded, quality);
             IsDirty = false;
             var statistics = loaded.Document.Statistics;
             Status = string.Create(
@@ -272,6 +267,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
+        DeleteRepairSnapshot();
         // Let a running load or meshing stop early instead of blocking the shutdown. The native
         // callback only reads IsCancellationRequested, which stays valid after Dispose.
         _operation?.Cancel();
@@ -604,19 +600,40 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         var document = _reader.Load(path, new ScaledProgress(progress, 0, 0.8), cancellationToken);
         try
         {
-            var options = TessellationOptions.ForModel(quality, document.Bounds);
-            var mesh = document.Tessellate(options, new ScaledProgress(progress, 0.8, 1), cancellationToken);
-            var edges = document.TessellateEdges(options);
-            var faceBodies = Enumerable.Range(0, document.Statistics.FaceCount)
-                .Select(i => document.GetBodyOfFace(new FaceId(i))?.Value ?? -1)
-                .ToArray();
-            return new LoadedModel(document, SceneData.Create(mesh, document.GetFaceColor, edges), document.GetModelTree(), faceBodies);
+            return BuildModel(document, quality, new ScaledProgress(progress, 0.8, 1), cancellationToken);
         }
         catch
         {
             document.Dispose();
             throw;
         }
+    }
+
+    // Mesh, edges, tree and face -> body map of a document (on the document's worker thread).
+    private static LoadedModel BuildModel(IStepDocument document, DisplayQuality quality, IProgress<OperationProgress> progress, CancellationToken cancellationToken)
+    {
+        var options = TessellationOptions.ForModel(quality, document.Bounds);
+        var mesh = document.Tessellate(options, progress, cancellationToken);
+        var edges = document.TessellateEdges(options);
+        var faceBodies = Enumerable.Range(0, document.Statistics.FaceCount)
+            .Select(i => document.GetBodyOfFace(new FaceId(i))?.Value ?? -1)
+            .ToArray();
+        return new LoadedModel(document, SceneData.Create(mesh, document.GetFaceColor, edges), document.GetModelTree(), faceBodies);
+    }
+
+    // Shows a (new or rebuilt) model. Face ids may differ from before, so selection and colour
+    // history are reset.
+    private void ShowModel(LoadedModel model, DisplayQuality quality)
+    {
+        _history.Clear();
+        _faceBodies = model.FaceBodies;
+        SelectedFace = null;
+        SelectedNode = null;
+        HoveredFace = null;
+        ModelTree = model.Tree;
+        Scene = model.Scene;
+        _meshedQuality = quality;
+        NotifyHistoryChanged();
     }
 
     [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Opened {Path} at {Quality} display quality: {TriangleCount} triangles in {ElapsedMs} ms")]

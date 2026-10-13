@@ -64,6 +64,14 @@ internal sealed partial class MainWindow : Window
         CustomColorButton.Flyout?.Hide();
     }
 
+    private async void OnRepairClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel { HasDocument: true } viewModel)
+        {
+            await new RepairWindow { DataContext = new RepairViewModel(viewModel) }.ShowDialog(this).ConfigureAwait(true);
+        }
+    }
+
     private async void OnExportDxfClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not MainViewModel { HasDocument: true } viewModel)

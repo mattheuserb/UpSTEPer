@@ -33,10 +33,10 @@ For each system, open all four files (AP214 and AP242) and record the result her
 
 | System, version | File | Colours as expected? | Notes |
 |---|---|---|---|
-| FreeCAD | gland-face-body-ap214 | | |
-| FreeCAD | gland-face-body-ap242 | | |
-| FreeCAD | assembly-instance-ap214 | | |
-| FreeCAD | assembly-instance-ap242 | | |
+| FreeCAD 1.1.1 | gland-face-body-ap214 | yes | 2026-10-13 |
+| FreeCAD 1.1.1 | gland-face-body-ap242 | yes | 2026-10-13 |
+| FreeCAD 1.1.1 | assembly-instance-ap214 | yes | 2026-10-13 |
+| FreeCAD 1.1.1 | assembly-instance-ap242 | yes | 2026-10-13 |
 | Commercial CAD (e.g. SolidWorks, Inventor, NX, eDrawings) | all four | | |
 
 Things to look for:

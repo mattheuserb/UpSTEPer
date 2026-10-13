@@ -59,6 +59,16 @@ internal sealed class FakeStepDocument : IStepDocument
 
     public IReadOnlyList<PartCheck> CheckResult { get; set; } = [];
 
+    public RepairOptions? RepairedWith { get; private set; }
+
+    public IReadOnlyList<PartRepair> RepairResult { get; set; } = [];
+
+    public IReadOnlyList<PartRepair> Repair(RepairOptions options, IProgress<OperationProgress>? progress = null, CancellationToken cancellationToken = default)
+    {
+        RepairedWith = options;
+        return RepairResult;
+    }
+
     public IReadOnlyList<PartCheck> Check(double tolerance = 0.01) => CheckResult;
 
     public BodyId? GetBodyOfFace(FaceId faceId) => new BodyId(0);

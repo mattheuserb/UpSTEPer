@@ -30,6 +30,22 @@ public interface IStepDocument : IDisposable
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is not positive.</exception>
     IReadOnlyList<PartCheck> Check(double tolerance = 0.01);
 
+    /// <summary>
+    /// Heals every part definition (sewing gaps, merging split faces, general fixes) and keeps
+    /// colours: faces merged from differently coloured ones take the colour covering the largest area.
+    /// </summary>
+    /// <remarks>
+    /// Changes topology: afterwards face and body ids are renumbered, so re-read
+    /// <see cref="Statistics"/>, the model tree, colours and the mesh. Either all parts are repaired
+    /// or (on cancellation) none.
+    /// </remarks>
+    /// <param name="options">Steps and tolerance.</param>
+    /// <param name="progress">Receives progress reports, possibly from another thread; may be <see langword="null"/>.</param>
+    /// <param name="cancellationToken">Cancels the repair; the model is unchanged then.</param>
+    /// <returns>One entry per part definition.</returns>
+    /// <exception cref="OperationCanceledException">The repair was cancelled.</exception>
+    IReadOnlyList<PartRepair> Repair(RepairOptions options, IProgress<OperationProgress>? progress = null, CancellationToken cancellationToken = default);
+
     /// <summary>Gets the product structure: assemblies, parts and their bodies, with names.</summary>
     /// <returns>The top-level nodes.</returns>
     IReadOnlyList<ModelNode> GetModelTree();

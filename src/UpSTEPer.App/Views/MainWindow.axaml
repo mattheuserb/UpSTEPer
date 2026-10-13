@@ -36,6 +36,8 @@
       <WrapPanel Orientation="Horizontal">
         <Button Content="Open STEP..." Click="OnOpenClick" IsEnabled="{Binding !IsBusy}" Margin="0,0,6,0" />
         <Button Content="Save as..." Click="OnSaveAsClick" HotKey="Ctrl+S" IsEnabled="{Binding HasDocument}" Margin="0,0,6,0" />
+        <Button Content="Repair..." Click="OnRepairClick" IsEnabled="{Binding HasDocument}" Margin="0,0,6,0"
+                ToolTip.Tip="Check the model for defects and repair it (sew gaps, exact surfaces, merge split faces)" />
         <Button Content="Export DXF..." Click="OnExportDxfClick" IsEnabled="{Binding HasDocument}" Margin="0,0,16,0"
                 ToolTip.Tip="Front, top, left and isometric view with hidden lines (first-angle projection)" />
 

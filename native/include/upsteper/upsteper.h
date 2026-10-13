@@ -263,6 +263,66 @@ UPS_API ups_status ups_check_get_info(const ups_check* check, int32_t* out_part_
 UPS_API ups_status ups_check_copy(
     const ups_check* check, ups_part_check* parts, int64_t parts_capacity, char* names, int64_t names_capacity);
 
+/* ---------------------------------------------------------------- repair -- */
+
+typedef struct ups_repair ups_repair;
+
+typedef enum ups_repair_step
+{
+    UPS_REPAIR_FIX = 1,         /* ShapeFix_Shape: tolerances, orientation, wires, small defects */
+    UPS_REPAIR_SEW = 2,         /* sew faces along free edges; closed shells become solids */
+    UPS_REPAIR_MERGE_FACES = 4, /* merge neighbouring faces on the same surface (UnifySameDomain) */
+    UPS_REPAIR_CANONICAL = 8    /* replace spline faces that are planes, cylinders, cones or spheres
+                                   within the tolerance by the exact surface (tier 2) */
+} ups_repair_step;
+
+typedef struct ups_repair_params
+{
+    int32_t steps;    /* combination of ups_repair_step flags */
+    double tolerance; /* mm; gaps up to this size are sewn; 0.05 is a sensible default */
+} ups_repair_params;
+
+/** Outcome for one part definition. */
+typedef struct ups_part_repair
+{
+    int32_t changed;            /* 1 if the part's geometry was replaced */
+    int32_t failed;             /* 1 if a step threw; it was skipped, the other steps still ran */
+    int32_t reverted;           /* 1 if a step made the part worse (more invalid sub-shapes, free
+                                   edges or inside-out solids, or a volume change > 1 %) and was
+                                   discarded; the other steps still ran */
+    int32_t faces_before;
+    int32_t faces_after;
+    int32_t solids_before;
+    int32_t solids_after;
+    int32_t free_edges_before;
+    int32_t free_edges_after;
+    int32_t invalid_before;
+    int32_t invalid_after;
+    int32_t colour_conflicts;   /* merged faces whose sources had different colours (largest area won) */
+    int32_t canonical_faces;    /* spline faces replaced by planes, cylinders, cones or spheres */
+    int32_t name_offset;        /* UTF-8 part name in the names buffer (not zero-terminated) */
+    int32_t name_length;
+    double max_deviation;       /* mm; largest distance between a replaced spline and its exact surface */
+} ups_part_repair;
+
+/**
+ * Heals every part definition (repair tier 1, see docs/adr/0011-repair.md). All parts are
+ * computed first and applied together, so UPS_ERROR_CANCELLED or a failure leaves the document
+ * unchanged. Colours follow the faces through the algorithms' histories. On success face and body
+ * ids are renumbered: re-read statistics, tree, colours and mesh. Parts that are placed several
+ * times are repaired once.
+ */
+UPS_API ups_status ups_document_repair(
+    ups_document* document, const ups_repair_params* params,
+    ups_progress_callback callback, void* user_data, ups_repair** out_repair);
+
+UPS_API void ups_repair_free(ups_repair* repair);
+
+UPS_API ups_status ups_repair_get_info(const ups_repair* repair, int32_t* out_part_count, int32_t* out_names_length);
+
+UPS_API ups_status ups_repair_copy(
+    const ups_repair* repair, ups_part_repair* parts, int64_t parts_capacity, char* names, int64_t names_capacity);
+
 /* --------------------------------------------------------------- drawing -- */
 
 typedef struct ups_drawing ups_drawing;

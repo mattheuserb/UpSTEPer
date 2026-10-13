@@ -1,0 +1,82 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:UpSTEPer.App.ViewModels"
+        xmlns:core="using:UpSTEPer.Core"
+        x:Class="UpSTEPer.App.Views.RepairWindow"
+        x:ClassModifier="internal"
+        x:DataType="vm:RepairViewModel"
+        Title="Check and repair"
+        Width="1150" Height="560" MinWidth="700" MinHeight="360"
+        WindowStartupLocation="CenterOwner">
+  <DockPanel Margin="12">
+    <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Margin="0,0,0,8" Foreground="#5F6368"
+               Text="Check lists defects per part. Repair heals parts (fix, sew gaps, exact surfaces for splines, merge split faces) and keeps colours; a step that would make a part worse is skipped. Face ids change, so selection and colour undo are reset; Undo repair restores the previous model." />
+
+    <StackPanel DockPanel.Dock="Bottom" Spacing="8" Margin="0,8,0,0">
+      <WrapPanel Orientation="Horizontal">
+        <CheckBox Content="Fix" IsChecked="{Binding Fix}" Margin="0,0,12,0"
+                  ToolTip.Tip="General fixes: tolerances, orientation, wires, small defects" />
+        <CheckBox Content="Sew gaps" IsChecked="{Binding Sew}" Margin="0,0,12,0"
+                  ToolTip.Tip="Join faces along free edges; closed shells become solids" />
+        <CheckBox Content="Exact surfaces" IsChecked="{Binding Canonical}" Margin="0,0,12,0"
+                  ToolTip.Tip="Replace spline faces that are planes, cylinders, cones or spheres by the exact surface" />
+        <CheckBox Content="Merge faces" IsChecked="{Binding MergeFaces}" Margin="0,0,16,0"
+                  ToolTip.Tip="Merge neighbouring faces that lie on the same surface" />
+        <TextBlock Text="Tolerance (mm)" VerticalAlignment="Center" Margin="0,0,6,0" />
+        <NumericUpDown Value="{Binding Tolerance}" Minimum="0.001" Maximum="1" Increment="0.01" FormatString="0.###"
+                       Width="130" Margin="0,0,16,0" />
+        <Button Content="Check" Command="{Binding CheckCommand}" IsEnabled="{Binding !Main.IsBusy}" Margin="0,0,6,0" />
+        <Button Content="Repair" Command="{Binding RepairCommand}" IsEnabled="{Binding !Main.IsBusy}" Margin="0,0,6,0" />
+        <Button Content="Undo repair" Command="{Binding Main.UndoRepairCommand}" Margin="0,0,6,0" />
+        <Button Content="Close" Click="OnCloseClick" />
+      </WrapPanel>
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6" IsVisible="{Binding Main.IsCancellable}">
+          <TextBlock FontSize="12" Text="{Binding Main.ProgressText}" VerticalAlignment="Center" />
+          <ProgressBar Width="160" Minimum="0" Maximum="1" Value="{Binding Main.ProgressFraction}" VerticalAlignment="Center" />
+          <Button Content="Cancel" Command="{Binding Main.CancelCommand}" Padding="8,0" FontSize="12" />
+        </StackPanel>
+        <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" VerticalAlignment="Center" />
+      </DockPanel>
+    </StackPanel>
+
+    <Panel>
+      <DataGrid x:Name="CheckGrid" ItemsSource="{Binding CheckRows}" IsReadOnly="True" IsVisible="{Binding !ShowsRepairReport}"
+                CanUserReorderColumns="False" GridLinesVisibility="Horizontal">
+        <DataGrid.Columns>
+          <DataGridTextColumn x:DataType="core:PartCheck" Header="Part" Binding="{Binding DisplayName}" Width="*" MinWidth="180" />
+          <DataGridCheckBoxColumn x:DataType="core:PartCheck" Header="Problems" Binding="{Binding HasProblems}" />
+          <DataGridTextColumn x:DataType="core:PartCheck" Header="Solids" Binding="{Binding SolidCount}" />
+          <DataGridTextColumn x:DataType="core:PartCheck" Header="Faces" Binding="{Binding FaceCount}" />
+          <DataGridTextColumn x:DataType="core:PartCheck" Header="Free edges" Binding="{Binding FreeEdges}" />
+          <DataGridTextColumn x:DataType="core:PartCheck" Header="Invalid" Binding="{Binding InvalidShapes}" />
+          <DataGridTextColumn x:DataType="core:PartCheck" Header="Splines" Binding="{Binding SplineFaces}" />
+          <DataGridTextColumn x:DataType="core:PartCheck" Header="Exact possible" Binding="{Binding CanonicalFaces}" />
+          <DataGridTextColumn x:DataType="core:PartCheck" Header="Mergeable" Binding="{Binding MergeableFaces}" />
+          <DataGridTextColumn x:DataType="core:PartCheck" Header="Small edges" Binding="{Binding SmallEdges}" />
+          <DataGridTextColumn x:DataType="core:PartCheck" Header="Errors" Binding="{Binding FailedChecks}" />
+        </DataGrid.Columns>
+      </DataGrid>
+      <DataGrid x:Name="RepairGrid" ItemsSource="{Binding RepairRows}" IsReadOnly="True" IsVisible="{Binding ShowsRepairReport}"
+                CanUserReorderColumns="False" GridLinesVisibility="Horizontal">
+        <DataGrid.Columns>
+          <DataGridTextColumn x:DataType="core:PartRepair" Header="Part" Binding="{Binding DisplayName}" Width="*" MinWidth="180" />
+          <DataGridCheckBoxColumn x:DataType="core:PartRepair" Header="Changed" Binding="{Binding Changed}" />
+          <DataGridTextColumn x:DataType="core:PartRepair" Header="Faces before" Binding="{Binding FacesBefore}" />
+          <DataGridTextColumn x:DataType="core:PartRepair" Header="after" Binding="{Binding FacesAfter}" />
+          <DataGridTextColumn x:DataType="core:PartRepair" Header="Solids before" Binding="{Binding SolidsBefore}" />
+          <DataGridTextColumn x:DataType="core:PartRepair" Header="after" Binding="{Binding SolidsAfter}" />
+          <DataGridTextColumn x:DataType="core:PartRepair" Header="Free edges before" Binding="{Binding FreeEdgesBefore}" />
+          <DataGridTextColumn x:DataType="core:PartRepair" Header="after" Binding="{Binding FreeEdgesAfter}" />
+          <DataGridTextColumn x:DataType="core:PartRepair" Header="Invalid before" Binding="{Binding InvalidBefore}" />
+          <DataGridTextColumn x:DataType="core:PartRepair" Header="after" Binding="{Binding InvalidAfter}" />
+          <DataGridTextColumn x:DataType="core:PartRepair" Header="Exact surfaces" Binding="{Binding CanonicalFaces}" />
+          <DataGridTextColumn x:DataType="core:PartRepair" Header="Max deviation (mm)" Binding="{Binding MaxDeviation, StringFormat={}{0:0.####}}" />
+          <DataGridTextColumn x:DataType="core:PartRepair" Header="Colour conflicts" Binding="{Binding ColourConflicts}" />
+          <DataGridCheckBoxColumn x:DataType="core:PartRepair" Header="Step skipped (worse)" Binding="{Binding Reverted}" />
+          <DataGridCheckBoxColumn x:DataType="core:PartRepair" Header="Step failed" Binding="{Binding Failed}" />
+        </DataGrid.Columns>
+      </DataGrid>
+    </Panel>
+  </DockPanel>
+</Window>

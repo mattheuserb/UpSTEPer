@@ -9,8 +9,9 @@ namespace UpSTEPer.Occt;
 internal sealed class OcctStepDocument : IStepDocument
 {
     private readonly DocumentSafeHandle _handle;
-    private readonly Lazy<ModelStatistics> _statistics;
-    private readonly Lazy<ModelBounds?> _bounds;
+    // Re-created after a repair, which changes the topology.
+    private Lazy<ModelStatistics> _statistics;
+    private Lazy<ModelBounds?> _bounds;
 
     public OcctStepDocument(DocumentSafeHandle handle, string sourcePath)
     {
@@ -49,6 +50,79 @@ internal sealed class OcctStepDocument : IStepDocument
         NativeError.ThrowIfFailed(status, "Reading face colour");
 
         return hasColor != 0 ? ToColor(color) : null;
+    }
+
+    public IReadOnlyList<PartRepair> Repair(RepairOptions options, IProgress<OperationProgress>? progress = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        ThrowIfDisposed();
+        if (!double.IsFinite(options.Tolerance) || options.Tolerance <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(options), options.Tolerance, "Tolerance must be a positive, finite number.");
+        }
+
+        if ((options.Steps & ~RepairSteps.All) != 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(options), options.Steps, "Unknown repair step.");
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        var parameters = new NativeRepairParams { Steps = (int)options.Steps, Tolerance = options.Tolerance };
+        RepairSafeHandle repair;
+        using (var nativeProgress = new NativeProgress(progress, cancellationToken))
+        {
+            NativeStatus status;
+            unsafe
+            {
+                status = NativeMethods.DocumentRepair(_handle, parameters, NativeProgress.Callback, nativeProgress.UserData, out repair);
+            }
+
+            try
+            {
+                nativeProgress.ThrowIfFailed(status, "Repair");
+            }
+            catch
+            {
+                repair.Dispose();
+                throw;
+            }
+        }
+
+        // Topology changed: statistics and bounds are read again on demand.
+        _statistics = new Lazy<ModelStatistics>(ReadStatistics);
+        _bounds = new Lazy<ModelBounds?>(ReadBounds);
+
+        using (repair)
+        {
+            NativeError.ThrowIfFailed(NativeMethods.RepairGetInfo(repair, out var partCount, out var namesLength), "Reading repair info");
+            var parts = new NativePartRepair[partCount];
+            var names = new byte[namesLength];
+            unsafe
+            {
+                fixed (NativePartRepair* partsPtr = parts)
+                fixed (byte* namesPtr = names)
+                {
+                    NativeError.ThrowIfFailed(NativeMethods.RepairCopy(repair, partsPtr, parts.Length, namesPtr, names.Length), "Copying repair results");
+                }
+            }
+
+            return [.. parts.Select(p => new PartRepair(
+                Encoding.UTF8.GetString(names, p.NameOffset, p.NameLength),
+                p.Changed != 0,
+                p.Failed != 0,
+                p.FacesBefore,
+                p.FacesAfter,
+                p.SolidsBefore,
+                p.SolidsAfter,
+                p.FreeEdgesBefore,
+                p.FreeEdgesAfter,
+                p.InvalidBefore,
+                p.InvalidAfter,
+                p.ColourConflicts,
+                p.Reverted != 0,
+                p.CanonicalFaces,
+                p.MaxDeviation))];
+        }
     }
 
     public IReadOnlyList<PartCheck> Check(double tolerance = 0.01)

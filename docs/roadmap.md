@@ -54,7 +54,7 @@ Linux and macOS from CI-built binaries.
 - [x] Save STEP (AP214) with colours via `STEPCAFControl_Writer`; save → reload round-trip test
 - [x] CLI `paint` command; app toolbar with RAL palette, Ctrl+Z/Y, Save as
 - [x] Fix: concurrent STEP loads crashed (OCCT translators use global state) — now serialised
-- [x] Manual interoperability check of saved files in FreeCAD (2026-10-13): colours as expected,
+- [x] Manual interoperability check of saved files in FreeCAD 1.1.1 (2026-10-13): colours as expected,
   results in `docs/interop-check.md`
 - [ ] Same check in one commercial CAD
 - [x] Colours in assemblies: only the clicked instance changes; shared definitions are copied

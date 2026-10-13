@@ -56,7 +56,7 @@ Linux and macOS from CI-built binaries.
 - [x] Fix: concurrent STEP loads crashed (OCCT translators use global state) — now serialised
 - [x] Manual interoperability check of saved files in FreeCAD 1.1.1 (2026-10-13): colours as expected,
   results in `docs/interop-check.md`
-- [ ] Same check in one commercial CAD
+- [x] Same check in one commercial CAD: not needed, the FreeCAD check suffices (decision 2026-10-13)
 - [x] Colours in assemblies: only the clicked instance changes; shared definitions are copied
   for it ("make independent", ADR 0009), ids stay stable, save → reload tested
 - [x] AP242 output option: "Save as" file type in the app, `paint --schema ap242` in the CLI;
@@ -76,8 +76,9 @@ Linux and macOS from CI-built binaries.
 - [x] Split partially covered hidden edges: covered stretches (>= 0.1 mm) are cut out, the rest
   keeps its curve type; at most 30 ms per view on the example files
 - [x] Scale 1:1 in mm, no frame/title block by default (decision 2026-10-08, ADR 0006)
+- [x] Default views front, top, left; isometric only on request (`--views ...,iso`; decision 2026-10-13)
 - [ ] Optional (opt-in only): other scales, frame/title block; section views, dimensions
-- [ ] Manual check of exported DXF in a commercial CAD (AutoCAD / DraftSight / LibreCAD)
+- [x] Manual check of exported DXF in a commercial CAD: not needed (decision 2026-10-13)
 - [ ] Fewer polylines from HLR: also exact models give some (cable gland: about 200 of 400 curves),
   e.g. edge-on circles as straight 15-point polylines; classify straight ones as lines, find out
   where HLR returns approximations

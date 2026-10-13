@@ -6,7 +6,7 @@ using UpSTEPer.Export.Dxf;
 namespace UpSTEPer.Cli;
 
 /// <summary>
-/// <c>upsteper export-dxf &lt;input&gt; &lt;output.dxf&gt; [--views front,top,left,iso]</c>:
+/// <c>upsteper export-dxf &lt;input&gt; &lt;output.dxf&gt; [--views front,top,left]</c>:
 /// 2D views with hidden-line removal, arranged in first-angle projection.
 /// </summary>
 internal static class ExportDxfCommand
@@ -28,7 +28,7 @@ internal static class ExportDxfCommand
             CustomParser = result => (double?)Options.ParseInvariantDouble(result),
         };
 
-        var command = new Command("export-dxf", "Export 2D views (front/top/left/iso by default) as DXF.")
+        var command = new Command("export-dxf", "Export 2D views (front/top/left by default; iso on request) as DXF.")
         {
             inputArgument,
             outputArgument,

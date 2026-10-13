@@ -39,7 +39,7 @@
         <Button Content="Repair..." Click="OnRepairClick" IsEnabled="{Binding HasDocument}" Margin="0,0,6,0"
                 ToolTip.Tip="Check the model for defects and repair it (sew gaps, exact surfaces, merge split faces)" />
         <Button Content="Export DXF..." Click="OnExportDxfClick" IsEnabled="{Binding HasDocument}" Margin="0,0,16,0"
-                ToolTip.Tip="Front, top, left and isometric view with hidden lines (first-angle projection)" />
+                ToolTip.Tip="Front, top and left view with hidden lines (first-angle projection)" />
 
         <ListBox ItemsSource="{Binding Palette}" SelectedItem="{Binding SelectedPaletteEntry}"
                  Background="Transparent" Padding="0" Margin="0,0,8,0" VerticalAlignment="Center">

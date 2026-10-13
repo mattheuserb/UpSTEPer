@@ -3,9 +3,12 @@ namespace UpSTEPer.Core.Drawing;
 /// <summary>Projects a model into several standard views and arranges them on one sheet.</summary>
 public static class DrawingBuilder
 {
-    /// <summary>Gets the default view set: front, top, left (first-angle) and isometric.</summary>
+    /// <summary>
+    /// Gets the default view set: front, top and left (first-angle). The isometric view is opt-in
+    /// (decision 2026-10-13, ADR 0006).
+    /// </summary>
     public static IReadOnlyList<ViewDirection> StandardViews { get; } =
-        [ViewDirection.Front, ViewDirection.Top, ViewDirection.Left, ViewDirection.Iso];
+        [ViewDirection.Front, ViewDirection.Top, ViewDirection.Left];
 
     /// <summary>Projects and arranges the views.</summary>
     /// <param name="document">The model.</param>

@@ -19,7 +19,7 @@
         <CheckBox Content="Sew gaps" IsChecked="{Binding Sew}" Margin="0,0,12,0"
                   ToolTip.Tip="Join faces along free edges; closed shells become solids" />
         <CheckBox Content="Exact surfaces" IsChecked="{Binding Canonical}" Margin="0,0,12,0"
-                  ToolTip.Tip="Replace spline faces that are planes, cylinders, cones or spheres by the exact surface" />
+                  ToolTip.Tip="Replace spline faces that are planes, cylinders, cones or spheres, and spline edges that are lines, circles or ellipses, by the exact geometry" />
         <CheckBox Content="Merge faces" IsChecked="{Binding MergeFaces}" Margin="0,0,16,0"
                   ToolTip.Tip="Merge neighbouring faces that lie on the same surface" />
         <TextBlock Text="Tolerance (mm)" VerticalAlignment="Center" Margin="0,0,6,0" />

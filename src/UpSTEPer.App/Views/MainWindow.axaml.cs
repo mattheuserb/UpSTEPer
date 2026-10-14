@@ -2,7 +2,9 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows.Input;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.Input;
 using UpSTEPer.App.Controls;
@@ -46,7 +48,7 @@ internal sealed partial class MainWindow : Window
         RepairCommand = new AsyncRelayCommand(RepairAsync);
         ExportDxfCommand = new AsyncRelayCommand(ExportDxfAsync);
         ShowShortcutsCommand = new AsyncRelayCommand(() => new ShortcutsWindow().ShowDialog(this));
-        OpenColourPanelCommand = new RelayCommand(OpenColourPanel);
+        OpenCustomColourCommand = new RelayCommand(OpenCustomColour);
         ExitCommand = new RelayCommand(Close);
         InitializeComponent();
     }
@@ -69,8 +71,8 @@ internal sealed partial class MainWindow : Window
     /// <summary>Gets the command that lists all mouse and keyboard shortcuts (F1).</summary>
     public ICommand ShowShortcutsCommand { get; }
 
-    /// <summary>Gets the command that opens the colour panel with the custom colour picker.</summary>
-    public ICommand OpenColourPanelCommand { get; }
+    /// <summary>Gets the command that opens the colour panel with the custom colour picker expanded.</summary>
+    public ICommand OpenCustomColourCommand { get; }
 
     /// <summary>Gets the command that closes the window.</summary>
     public ICommand ExitCommand { get; }
@@ -186,20 +188,58 @@ internal sealed partial class MainWindow : Window
         }
     }
 
-    private void OpenColourPanel()
+    private void OpenCustomColour()
     {
         CustomColourExpander.IsExpanded = true;
         ColourButton.Flyout?.ShowAt(ColourButton);
     }
 
-    private void OnUseCustomColorClick(object? sender, RoutedEventArgs e)
+    // Starts at the active colour, so it can be varied rather than picked from scratch.
+    private void OnCustomColourExpanding(object? sender, CancelRoutedEventArgs e)
     {
         if (_viewModel is not null)
         {
-            var color = CustomColorView.Color;
+            CustomSpectrum.Color = Color.Parse(_viewModel.SelectedPaletteEntry.Hex);
+            CustomHexBox.Text = _viewModel.SelectedPaletteEntry.Hex;
+        }
+    }
+
+    private void OnUseCustomColorClick(object? sender, RoutedEventArgs e)
+    {
+        ApplyCustomHex();
+        if (_viewModel is not null)
+        {
+            var color = CustomSpectrum.Color;
             _viewModel.UseCustomColor(ColorRgb.FromBytes(color.R, color.G, color.B));
         }
 
         CustomColourExpander.IsExpanded = false;
+    }
+
+    private void OnCustomSpectrumColorChanged(object? sender, ColorChangedEventArgs e) =>
+        CustomHexBox.Text = $"#{e.NewColor.R:X2}{e.NewColor.G:X2}{e.NewColor.B:X2}";
+
+    private void OnCustomHexKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            ApplyCustomHex();
+            e.Handled = true;
+        }
+    }
+
+    private void OnCustomHexLostFocus(object? sender, RoutedEventArgs e) => ApplyCustomHex();
+
+    // A valid typed value moves the spectrum there; anything else is replaced by the current colour.
+    private void ApplyCustomHex()
+    {
+        var text = CustomHexBox.Text?.Trim() ?? string.Empty;
+        if (Color.TryParse(text.StartsWith('#') ? text : "#" + text, out var color) && text.TrimStart('#').Length == 6)
+        {
+            CustomSpectrum.Color = color;
+        }
+
+        var current = CustomSpectrum.Color;
+        CustomHexBox.Text = $"#{current.R:X2}{current.G:X2}{current.B:X2}";
     }
 }

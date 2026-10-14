@@ -5,6 +5,7 @@
         xmlns:drawing="using:UpSTEPer.Core.Drawing"
         xmlns:controls="using:UpSTEPer.App.Controls"
         xmlns:conv="using:UpSTEPer.App.Converters"
+        xmlns:primitives="using:Avalonia.Controls.Primitives"
         x:Class="UpSTEPer.App.Views.MainWindow"
         x:ClassModifier="internal"
         x:DataType="vm:MainViewModel"
@@ -108,7 +109,7 @@
         <MenuItem Header="_Remove face colour" Command="{Binding ClearFaceColorCommand}">
           <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.Eraser}" /></MenuItem.Icon>
         </MenuItem>
-        <MenuItem Header="_Custom colour..." Command="{Binding #Root.OpenColourPanelCommand}">
+        <MenuItem Header="_Custom colour..." Command="{Binding #Root.OpenCustomColourCommand}">
           <MenuItem.Icon><controls:Icon Data="{StaticResource Icon.Pipette}" /></MenuItem.Icon>
         </MenuItem>
         <Separator />
@@ -231,14 +232,6 @@
                         </DataTemplate>
                       </ListBox.ItemTemplate>
                     </ListBox>
-                    <Expander Header="Custom colour..." x:Name="CustomColourExpander" HorizontalAlignment="Stretch">
-                      <StackPanel Spacing="8">
-                        <ColorView x:Name="CustomColorView" Color="#3366CC"
-                                   IsAlphaEnabled="False" IsAlphaVisible="False" IsAccentColorsVisible="False" />
-                        <Button Content="Use colour" HorizontalAlignment="Right" Click="OnUseCustomColorClick"
-                                ToolTip.Tip="Adds the colour to the palette and makes it the active colour" />
-                      </StackPanel>
-                    </Expander>
                     <TextBlock Classes="header" Text="Apply to" Margin="0,4,0,0" />
                     <Button Command="{Binding ColorFaceCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                             ToolTip.Tip="Colour the selected face (select it by clicking in the 3D view)">
@@ -252,6 +245,28 @@
                             ToolTip.Tip="Remove the selected face's own colour; it shows its body colour again">
                       <StackPanel Orientation="Horizontal" Spacing="8"><controls:Icon Data="{StaticResource Icon.Eraser}" /><TextBlock Text="Remove face colour" /></StackPanel>
                     </Button>
+                    <!-- Compact picker from the colour picker's primitives: the full ColorView does not fit
+                         the panel. Last in the panel, so expanding it does not push the actions away. -->
+                    <Expander x:Name="CustomColourExpander" HorizontalAlignment="Stretch" Margin="0,4,0,0" Expanding="OnCustomColourExpanding">
+                      <Expander.Header>
+                        <StackPanel Orientation="Horizontal" Spacing="8"><controls:Icon Data="{StaticResource Icon.Pipette}" /><TextBlock Text="Custom colour" /></StackPanel>
+                      </Expander.Header>
+                      <StackPanel Spacing="8">
+                        <primitives:ColorSpectrum x:Name="CustomSpectrum" Height="140" Components="HueSaturation" Shape="Box"
+                                                  CornerRadius="4" Color="#3366CC" ColorChanged="OnCustomSpectrumColorChanged" />
+                        <primitives:ColorSlider ColorModel="Hsva" ColorComponent="Component3" Orientation="Horizontal"
+                                                HsvColor="{Binding #CustomSpectrum.HsvColor, Mode=TwoWay}" IsAlphaVisible="False"
+                                                ToolTip.Tip="Brightness" />
+                        <DockPanel>
+                          <Button DockPanel.Dock="Right" x:Name="UseCustomColourButton" Content="Use colour" Click="OnUseCustomColorClick" Margin="8,0,0,0"
+                                  ToolTip.Tip="Adds the colour to the palette and makes it the active colour" />
+                          <Border DockPanel.Dock="Left" Classes="swatch" Width="30" Height="30" Margin="0,0,8,0"
+                                  Background="{Binding #CustomSpectrum.Color, Converter={x:Static conv:ColorToBrushConverter.Instance}}" />
+                          <TextBox x:Name="CustomHexBox" Watermark="#RRGGBB" VerticalAlignment="Center" MaxLength="7"
+                                   KeyDown="OnCustomHexKeyDown" LostFocus="OnCustomHexLostFocus" ToolTip.Tip="Colour value, e.g. #3366CC (Enter applies)" />
+                        </DockPanel>
+                      </StackPanel>
+                    </Expander>
                   </StackPanel>
                 </Flyout>
               </DropDownButton.Flyout>

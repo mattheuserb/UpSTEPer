@@ -1,4 +1,6 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using UpSTEPer.App.ViewModels;
@@ -69,7 +71,7 @@ public class CustomColorTests
     }
 
     [Fact]
-    public async Task UseColourButton_InColourPanel_AddsPickedColourAndKeepsPanelOpenForApplying()
+    public async Task CustomColour_InColourPanel_StartsAtActiveColourAndAddsPickedColour()
     {
         var result = await HeadlessTestApp.Session.Dispatch(
             () =>
@@ -83,17 +85,49 @@ public class CustomColorTests
 
                 var expander = window.FindControl<Expander>("CustomColourExpander")!;
                 expander.IsExpanded = true;
-                window.FindControl<ColorView>("CustomColorView")!.Color = Color.FromRgb(0x12, 0xAB, 0x34);
-                ((Panel)expander.Content!).Children.OfType<Button>().Single().RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                var spectrum = window.FindControl<ColorSpectrum>("CustomSpectrum")!;
+                var startHex = window.FindControl<TextBox>("CustomHexBox")!.Text;
+                spectrum.Color = Color.FromRgb(0x12, 0xAB, 0x34);
+                window.FindControl<Button>("UseCustomColourButton")!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
-                var state = (viewModel.SelectedPaletteEntry.Hex, flyout.IsOpen, expander.IsExpanded);
+                var state = (startHex, viewModel.SelectedPaletteEntry.Hex, flyout.IsOpen, expander.IsExpanded);
                 window.Close();
                 return state;
             },
             TestContext.Current.CancellationToken);
 
+        Assert.Equal(PaletteEntry.Default[0].Hex, result.startHex);
         Assert.Equal("#12AB34", result.Hex);
-        Assert.True(result.IsOpen);
+        Assert.True(result.IsOpen); // stays open for "Apply to"
         Assert.False(result.IsExpanded);
+    }
+
+    [Theory]
+    [InlineData("#12AB34", "#12AB34")]
+    [InlineData("12ab34", "#12AB34")]
+    [InlineData("nonsense", "#C1121C")] // invalid: back to the current colour
+    [InlineData("#FFF", "#C1121C")] // short forms are not accepted
+    public async Task CustomColour_HexInput_MovesPickerOnEnter(string typed, string expected)
+    {
+        var hex = await HeadlessTestApp.Session.Dispatch(
+            () =>
+            {
+                using var viewModel = new MainViewModel(new FakeReader());
+                var window = new MainWindow { DataContext = viewModel };
+                window.Show();
+                var button = window.FindControl<DropDownButton>("ColourButton")!;
+                ((Flyout)button.Flyout!).ShowAt(button);
+                window.FindControl<Expander>("CustomColourExpander")!.IsExpanded = true;
+
+                var box = window.FindControl<TextBox>("CustomHexBox")!;
+                box.Text = typed;
+                box.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
+                var color = window.FindControl<ColorSpectrum>("CustomSpectrum")!.Color;
+                window.Close();
+                return $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(expected, hex);
     }
 }

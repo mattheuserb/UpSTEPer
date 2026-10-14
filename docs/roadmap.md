@@ -112,9 +112,6 @@ Linux and macOS from CI-built binaries.
   parts become analytic too; only exact ones (within the edge's own tolerance, ADR 0011)
 - [x] App: repair dialog ("Repair..."): check report, options (steps, tolerance), result report, undo of the
   last repair via a temporary STEP snapshot; manually tested (2026-10-13)
-- Healing pipeline with a change report; canonical recognition of spline geometry
-- Colour preservation through `BRepTools_History`
-- CLI: `upsteper repair <in> <out> --report`
 
 ## M5 — Repair, tier 3 (faceted → analytic)
 
@@ -152,5 +149,4 @@ rented Mac / by community testers once the repository is public.
   unclear) from the Git history (`git filter-repo`, force push, everyone re-clones) or publish with
   a fresh history. The file left the working tree on 2026-10-09 (`docs/test-data.md`).
 - Packaging: VC++ Redistributable prerequisite on Windows, Velopack/self-contained publish, AppImage, signed/notarised macOS build (needs Apple developer account)
-- Localisation (de, en)
 - API docs with DocFX

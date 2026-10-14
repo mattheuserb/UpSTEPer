@@ -271,7 +271,7 @@
                       <Button DockPanel.Dock="Right" Classes="tool" Padding="6" Command="{Binding SaveFavouriteCommand}" ToolTip.Tip="{loc:Tr Tip_SaveFavourite}">
                         <controls:Icon Data="{StaticResource Icon.Check}" />
                       </Button>
-                      <TextBox x:Name="FavouriteNameBox" Text="{Binding FavouriteDraftName}" Watermark="{loc:Tr Colour_FavouriteName}" MaxLength="60">
+                      <TextBox x:Name="FavouriteNameBox" Text="{Binding FavouriteDraftName}" PlaceholderText="{loc:Tr Colour_FavouriteName}" MaxLength="60">
                         <TextBox.KeyBindings>
                           <KeyBinding Gesture="Enter" Command="{Binding SaveFavouriteCommand}" />
                           <KeyBinding Gesture="Escape" Command="{Binding CancelFavouriteCommand}" />
@@ -344,7 +344,7 @@
                         <StackPanel Orientation="Horizontal" Spacing="8"><controls:Icon Data="{StaticResource Icon.Palette}" /><TextBlock Text="{loc:Tr Colour_RalColours}" /></StackPanel>
                       </Expander.Header>
                       <StackPanel Spacing="6">
-                        <TextBox Text="{Binding RalSearch}" Watermark="{loc:Tr Colour_RalSearch}">
+                        <TextBox Text="{Binding RalSearch}" PlaceholderText="{loc:Tr Colour_RalSearch}">
                           <TextBox.InnerLeftContent>
                             <controls:Icon Data="{StaticResource Icon.Search}" Margin="8,0,0,0" Foreground="{StaticResource TextSecondaryBrush}" />
                           </TextBox.InnerLeftContent>
@@ -378,7 +378,7 @@
                                   ToolTip.Tip="{loc:Tr Tip_UseColour}" />
                           <Border DockPanel.Dock="Left" Classes="swatch" Width="30" Height="30" Margin="0,0,8,0"
                                   Background="{Binding #CustomSpectrum.Color, Converter={x:Static conv:ColorToBrushConverter.Instance}}" />
-                          <TextBox x:Name="CustomHexBox" Watermark="#RRGGBB" VerticalAlignment="Center" MaxLength="7"
+                          <TextBox x:Name="CustomHexBox" PlaceholderText="#RRGGBB" VerticalAlignment="Center" MaxLength="7"
                                    KeyDown="OnCustomHexKeyDown" LostFocus="OnCustomHexLostFocus" ToolTip.Tip="{loc:Tr Tip_HexInput}" />
                         </DockPanel>
                       </StackPanel>

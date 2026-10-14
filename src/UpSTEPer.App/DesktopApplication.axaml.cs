@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
@@ -6,7 +7,9 @@ using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using UpSTEPer.App.Controls;
+using UpSTEPer.App.Localization;
 using UpSTEPer.App.Logging;
+using UpSTEPer.App.Settings;
 using UpSTEPer.App.ViewModels;
 using UpSTEPer.App.Views;
 using UpSTEPer.Core;
@@ -49,6 +52,10 @@ internal sealed partial class DesktopApplication : Application
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
             var occtMessages = OcctMessageRouter.TryStart(loggerFactory.CreateLogger("OCCT"));
             LogUnhandledExceptions(loggerFactory.CreateLogger<DesktopApplication>());
+
+            // The stored language, else the system's (German or English); before any window or text exists.
+            var settings = services.GetRequiredService<SettingsStore>();
+            Localizer.Instance.SetCulture(Localizer.Resolve(settings.Current.Language, CultureInfo.CurrentUICulture));
 
             var viewModel = services.GetRequiredService<MainViewModel>();
             viewModel.DisplayQuality = _options.Quality;

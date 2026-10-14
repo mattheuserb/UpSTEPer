@@ -1,7 +1,7 @@
-using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
+using UpSTEPer.App.Localization;
 using UpSTEPer.Core;
 
 namespace UpSTEPer.App.ViewModels;
@@ -29,19 +29,19 @@ internal sealed partial class MainViewModel
         }
 
         IsBusy = true;
-        Status = "Checking the model ...";
+        Status = Strings.Status_Checking;
         try
         {
             var parts = await _session.RunAsync(document => document.Check(tolerance)).ConfigureAwait(true);
             var withProblems = parts.Count(p => p.HasProblems);
             Status = withProblems == 0
-                ? $"Check: no problems in {parts.Count} part(s)."
-                : $"Check: {withProblems} of {parts.Count} part(s) have problems.";
+                ? Localizer.Format(Strings.Status_CheckNoProblems, parts.Count)
+                : Localizer.Format(Strings.Status_CheckProblems, withProblems, parts.Count);
             return parts;
         }
         catch (GeometryOperationException exception)
         {
-            Status = $"Error: {exception.Message}";
+            Status = Localizer.Format(Strings.Status_Error, exception.Message);
             return null;
         }
         finally
@@ -67,7 +67,7 @@ internal sealed partial class MainViewModel
         var quality = DisplayQuality;
         var snapshot = Path.Combine(Path.GetTempPath(), $"upsteper-before-repair-{Guid.NewGuid():N}.stp");
         IsBusy = true;
-        Status = "Repairing ...";
+        Status = Strings.Status_Repairing;
         var (progress, cancellationToken) = BeginOperation();
         try
         {
@@ -87,22 +87,20 @@ internal sealed partial class MainViewModel
             IsDirty = true;
             CanUndoRepair = true;
             var changed = report.Count(p => p.Changed);
-            Status = string.Create(
-                CultureInfo.CurrentCulture,
-                $"Repair: {changed} of {report.Count} part(s) changed, {report.Sum(p => p.CanonicalFaces)} exact surface(s), {report.Sum(p => p.CanonicalEdges)} exact edge(s); Undo repair restores the previous model.");
+            Status = Localizer.Format(Strings.Status_Repaired, changed, report.Count, report.Sum(p => p.CanonicalFaces), report.Sum(p => p.CanonicalEdges));
             LogRepaired(_logger, changed, report.Count);
             return report;
         }
         catch (OperationCanceledException)
         {
             File.Delete(snapshot);
-            Status = "Repair cancelled; the model is unchanged.";
+            Status = Strings.Status_RepairCancelled;
             return null;
         }
         catch (Exception exception) when (exception is GeometryOperationException or IOException)
         {
             File.Delete(snapshot);
-            Status = $"Error: {exception.Message}";
+            Status = Localizer.Format(Strings.Status_Error, exception.Message);
             LogRepairFailed(_logger, exception);
             return null;
         }
@@ -124,7 +122,7 @@ internal sealed partial class MainViewModel
 
         var quality = DisplayQuality;
         IsBusy = true;
-        Status = "Restoring the model before the repair ...";
+        Status = Strings.Status_RestoringBeforeRepair;
         var (progress, cancellationToken) = BeginOperation();
         try
         {
@@ -134,15 +132,15 @@ internal sealed partial class MainViewModel
             ShowModel(loaded, quality);
             IsDirty = _dirtyBeforeRepair;
             DeleteRepairSnapshot();
-            Status = "Repair undone.";
+            Status = Strings.Status_RepairUndone;
         }
         catch (OperationCanceledException)
         {
-            Status = "Undo repair cancelled; the repaired model stays open.";
+            Status = Strings.Status_UndoRepairCancelled;
         }
         catch (Exception exception) when (exception is FileNotFoundException or StepImportException or GeometryOperationException)
         {
-            Status = $"Error: {exception.Message}";
+            Status = Localizer.Format(Strings.Status_Error, exception.Message);
         }
         finally
         {

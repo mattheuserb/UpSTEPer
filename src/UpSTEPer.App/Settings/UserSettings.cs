@@ -8,6 +8,9 @@ internal sealed record UserSettings
 {
     /// <summary>Gets the most recently opened STEP files, newest first (full paths).</summary>
     public IReadOnlyList<string> RecentFiles { get; init; } = [];
+
+    /// <summary>Gets the UI language chosen by the user ("en", "de"); <see langword="null"/> follows the system.</summary>
+    public string? Language { get; init; }
 }
 
 /// <summary>Source-generated JSON metadata for <see cref="UserSettings"/> (no reflection, trimming-safe).</summary>

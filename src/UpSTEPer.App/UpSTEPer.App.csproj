@@ -7,6 +7,8 @@
     <RootNamespace>UpSTEPer.App</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- English texts are in the main assembly (Localization/Strings.resx); others in satellites. -->
+    <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
 
   <ItemGroup>
@@ -34,6 +36,19 @@
     <!-- Shown by Help > About; binary distributions must include them (see THIRD-PARTY-NOTICES.md). -->
     <None Include="..\..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Strongly typed access (Strings.Key) generated at build time; Strings.de.resx is the German satellite.
+         The class is in the root namespace: dotnet format does not see generated files and would
+         otherwise remove the using of a file that needs only Strings. -->
+    <EmbeddedResource Update="Localization\Strings.resx">
+      <StronglyTypedFileName>$(IntermediateOutputPath)Strings.Designer.cs</StronglyTypedFileName>
+      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
+      <StronglyTypedNamespace>UpSTEPer.App</StronglyTypedNamespace>
+      <StronglyTypedManifestPrefix>UpSTEPer.App.Localization</StronglyTypedManifestPrefix>
+      <StronglyTypedClassName>Strings</StronglyTypedClassName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

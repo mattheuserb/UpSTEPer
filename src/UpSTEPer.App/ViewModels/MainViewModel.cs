@@ -5,6 +5,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using UpSTEPer.App.Converters;
+using UpSTEPer.App.Localization;
 using UpSTEPer.App.Settings;
 using UpSTEPer.Core;
 using UpSTEPer.Core.Drawing;
@@ -74,7 +76,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     /// <summary>Gets or sets the status line text.</summary>
     [ObservableProperty]
-    public partial string Status { get; set; } = "Open a STEP file (.stp, .step).";
+    public partial string Status { get; set; } = Strings.Status_OpenFile;
 
     /// <summary>Gets or sets a value indicating whether an operation is running.</summary>
     [ObservableProperty]
@@ -176,7 +178,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         var fileName = Path.GetFileName(path);
         IsBusy = true;
-        Status = $"Loading {fileName} ...";
+        Status = Localizer.Format(Strings.Status_Loading, fileName);
         var quality = DisplayQuality;
         var watch = Stopwatch.StartNew();
         var (progress, cancellationToken) = BeginOperation();
@@ -191,9 +193,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             ShowModel(loaded, quality);
             IsDirty = false;
             var statistics = loaded.Document.Statistics;
-            Status = string.Create(
-                CultureInfo.CurrentCulture,
-                $"{fileName}: {statistics.SolidCount} solid(s), {statistics.FaceCount} faces, {loaded.Scene.Mesh.TriangleCount:N0} triangles");
+            Status = Localizer.Format(Strings.Status_Loaded, fileName, statistics.SolidCount, statistics.FaceCount, loaded.Scene.Mesh.TriangleCount);
             LogOpened(_logger, path, quality, loaded.Scene.Mesh.TriangleCount, watch.ElapsedMilliseconds);
             UpdateRecentFiles(files => RecentFileList.Add(files, path));
             NotifyHistoryChanged();
@@ -202,13 +202,13 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         }
         catch (OperationCanceledException)
         {
-            Status = HasDocument ? $"Loading {fileName} cancelled; the previous model stays open." : $"Loading {fileName} cancelled.";
+            Status = Localizer.Format(HasDocument ? Strings.Status_LoadCancelledKeepPrevious : Strings.Status_LoadCancelled, fileName);
             LogOpenCancelled(_logger, path);
             return false;
         }
         catch (Exception exception) when (exception is FileNotFoundException or StepImportException or GeometryOperationException)
         {
-            Status = $"Error: {exception.Message}";
+            Status = Localizer.Format(Strings.Status_Error, exception.Message);
             LogOpenFailed(_logger, path, exception);
             return false;
         }
@@ -241,13 +241,13 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
             _fileName = Path.GetFileName(path);
             IsDirty = false;
-            Status = $"Saved {path} ({schema})";
+            Status = Localizer.Format(Strings.Status_Saved, path, schema);
             LogSaved(_logger, path, schema);
             return true;
         }
         catch (Exception exception) when (exception is IOException or GeometryOperationException)
         {
-            Status = $"Error: {exception.Message}";
+            Status = Localizer.Format(Strings.Status_Error, exception.Message);
             LogSaveFailed(_logger, path, exception);
             return false;
         }
@@ -270,7 +270,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         }
 
         IsBusy = true;
-        Status = "Computing views with hidden-line removal ...";
+        Status = Strings.Status_ComputingViews;
         try
         {
             var curveCount = await _session.RunAsync(document =>
@@ -280,13 +280,13 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
                 return views.Sum(v => v.Curves.Count);
             }).ConfigureAwait(true);
 
-            Status = string.Create(CultureInfo.CurrentCulture, $"Exported {curveCount:N0} curves to {path}");
+            Status = Localizer.Format(Strings.Status_Exported, curveCount, path);
             LogExported(_logger, path, curveCount);
             return true;
         }
         catch (Exception exception) when (exception is IOException or GeometryOperationException)
         {
-            Status = $"Error: {exception.Message}";
+            Status = Localizer.Format(Strings.Status_Error, exception.Message);
             LogExportFailed(_logger, path, exception);
             return false;
         }
@@ -320,11 +320,21 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         if (!File.Exists(path))
         {
             UpdateRecentFiles(files => RecentFileList.Remove(files, path));
-            Status = $"{Path.GetFileName(path)} no longer exists; it was removed from the recent files.";
+            Status = Localizer.Format(Strings.Status_RecentMissing, Path.GetFileName(path));
             return;
         }
 
         await LoadAsync(path).ConfigureAwait(true);
+    }
+
+    /// <summary>Switches the UI language and remembers the choice.</summary>
+    /// <param name="language">"en" or "de".</param>
+    [RelayCommand]
+    private void SetLanguage(string language)
+    {
+        var culture = Localizer.Resolve(language, CultureInfo.CurrentUICulture);
+        Localizer.Instance.SetCulture(culture);
+        _settings?.Update(settings => settings with { Language = culture.Name });
     }
 
     /// <summary>Empties the recent files list.</summary>
@@ -354,7 +364,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     private void Cancel()
     {
         _operation?.Cancel();
-        Status = "Cancelling ...";
+        Status = Strings.Status_Cancelling;
     }
 
     /// <summary>Triangulates the open model again with the current <see cref="DisplayQuality"/>, keeping colours, selection and view.</summary>
@@ -369,7 +379,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         var quality = DisplayQuality;
         var watch = Stopwatch.StartNew();
         IsBusy = true;
-        Status = $"Meshing with {quality} display quality ...";
+        Status = Localizer.Format(Strings.Status_Meshing, LocalizedEnumConverter.Text(quality));
         var (progress, cancellationToken) = BeginOperation();
         try
         {
@@ -386,18 +396,18 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
             Scene = scene;
             _meshedQuality = quality;
-            Status = string.Create(CultureInfo.CurrentCulture, $"{quality} display quality: {mesh.TriangleCount:N0} triangles");
+            Status = Localizer.Format(Strings.Status_Meshed, LocalizedEnumConverter.Text(quality), mesh.TriangleCount);
             LogRemeshed(_logger, quality, mesh.TriangleCount, watch.ElapsedMilliseconds);
         }
         catch (OperationCanceledException)
         {
             RestoreDisplayQuality();
-            Status = $"Meshing cancelled; display quality stays {_meshedQuality}.";
+            Status = Localizer.Format(Strings.Status_MeshingCancelled, LocalizedEnumConverter.Text(_meshedQuality));
         }
         catch (GeometryOperationException exception)
         {
             RestoreDisplayQuality();
-            Status = $"Error: {exception.Message}";
+            Status = Localizer.Format(Strings.Status_Error, exception.Message);
             LogRemeshFailed(_logger, quality, exception);
         }
         finally
@@ -509,7 +519,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         ApplyAsync(
             [(ColorTarget.Of(SelectedFace!.Value), SelectedPaletteEntry.Color)],
             record: true,
-            $"Face colour applied: {SelectedPaletteEntry.Name}");
+            Localizer.Format(Strings.Status_FaceColourApplied, SelectedPaletteEntry.Name));
 
     /// <summary>Colours the bodies of the tree selection, or the body of the selected face.</summary>
     [RelayCommand(CanExecute = nameof(CanEditBodies))]
@@ -518,7 +528,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         var bodies = SelectedBodies();
         if (bodies.Count == 0)
         {
-            Status = "The selection does not belong to a body.";
+            Status = Strings.Status_NoBody;
             return Task.CompletedTask;
         }
 
@@ -527,14 +537,14 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             [.. bodies.Select(b => (ColorTarget.Of(b), (ColorRgb?)entry.Color))],
             record: true,
             bodies.Count == 1
-                ? $"Body colour applied: {entry.Name}"
-                : string.Create(CultureInfo.CurrentCulture, $"Body colour applied to {bodies.Count} bodies: {entry.Name}"));
+                ? Localizer.Format(Strings.Status_BodyColourApplied, entry.Name)
+                : Localizer.Format(Strings.Status_BodiesColourApplied, bodies.Count, entry.Name));
     }
 
     /// <summary>Removes the selected face's own colour, so it shows its body colour again.</summary>
     [RelayCommand(CanExecute = nameof(CanEditFace))]
     private Task ClearFaceColorAsync() =>
-        ApplyAsync([(ColorTarget.Of(SelectedFace!.Value), null)], record: true, "Face colour removed; the face shows its body colour.");
+        ApplyAsync([(ColorTarget.Of(SelectedFace!.Value), null)], record: true, Strings.Status_FaceColourRemoved);
 
     /// <summary>Reverts the last colour change (one step, possibly several bodies).</summary>
     [RelayCommand(CanExecute = nameof(CanUndo))]
@@ -607,13 +617,13 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             Scene = scene.WithFaceColors(face => face.Value < faceColors.Length ? faceColors[face.Value] : null);
             IsDirty = true;
             Status = successStatus ?? (changes.Count == 1
-                ? $"{changes[0].Target}: {changes[0].Color?.ToHex() ?? "colour removed"}"
-                : $"{changes.Count} targets changed");
+                ? $"{changes[0].Target}: {changes[0].Color?.ToHex() ?? Strings.Status_ColourRemoved}"
+                : Localizer.Format(Strings.Status_TargetsChanged, changes.Count));
             UpdateSelectionInfo();
         }
         catch (Exception exception) when (exception is GeometryOperationException or ArgumentException)
         {
-            Status = $"Error: {exception.Message}";
+            Status = Localizer.Format(Strings.Status_Error, exception.Message);
             LogColourFailed(_logger, exception);
         }
         finally
@@ -652,7 +662,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     partial void OnIsDirtyChanged(bool value) => UpdateTitle();
 
     partial void OnHoveredFaceChanged(FaceId? value) =>
-        HoverInfo = value is { } face ? $"Face {face.Value}: {Scene?.GetFaceColor(face)?.ToHex() ?? "no colour"}" : string.Empty;
+        HoverInfo = value is { } face ? Localizer.Format(Strings.Status_HoverFace, face.Value, Scene?.GetFaceColor(face)?.ToHex() ?? Strings.Status_NoColour) : string.Empty;
 
     partial void OnSceneChanged(SceneData? value)
     {
@@ -693,10 +703,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     private void UpdateSelectionInfo() =>
         SelectionInfo = (SelectedFace, SelectedNode) switch
         {
-            ({ } face, _) => $"Selected: face {face.Value}, colour {Scene?.GetFaceColor(face)?.ToHex() ?? "none (default grey)"}",
-            (_, { } node) => string.Create(
-                CultureInfo.CurrentCulture,
-                $"Selected: {node.DisplayName} ({node.GetBodies().Count()} bodies, {HighlightedFaces.Count} faces)"),
+            ({ } face, _) => Localizer.Format(Strings.Status_SelectedFace, face.Value, Scene?.GetFaceColor(face)?.ToHex() ?? Strings.Status_NoColourDefault),
+            (_, { } node) => Localizer.Format(Strings.Status_SelectedNode, node.DisplayName, node.GetBodies().Count(), HighlightedFaces.Count),
             _ => string.Empty,
         };
 

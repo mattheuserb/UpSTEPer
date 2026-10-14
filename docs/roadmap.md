@@ -55,7 +55,8 @@ Linux and macOS from CI-built binaries.
   findings / changes with details of the selected part, usable down to 560×440
 - [x] Settings file (`settings.json` next to the logs), File → Recent files (last 5 opened), Help → About
   (versions, system, log folder, third-party notices) (2026-10-14)
-- [ ] Multi-language UI: English and German, switchable at run time (View → Language)
+- [x] Multi-language UI: English and German, switchable at run time (View → Language); first start
+  follows the system language; numbers keep the regional format; CLI and logs stay English (2026-10-14)
 - [ ] More RAL colours: searchable RAL Classic list in the colour panel; named favourite colours
 
 ## M2 — Colouring

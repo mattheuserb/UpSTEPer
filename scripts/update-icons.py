@@ -12,10 +12,10 @@ import xml.etree.ElementTree as ET
 
 VERSION = "1.56.0"
 ICONS = [
-    "axis-3d", "box", "boxes", "check", "chevron-down", "circle-check", "circle-x", "ellipsis",
+    "arrow-down", "arrow-up", "axis-3d", "box", "boxes", "check", "chevron-down", "circle-check", "circle-x", "ellipsis",
     "eraser", "eye", "file-output", "folder-open", "frame", "gauge", "info", "keyboard",
-    "list-tree", "loader-circle", "paint-bucket", "paintbrush", "palette", "panel-left", "pipette",
-    "plus", "redo-2", "rotate-3d", "save", "scan", "scan-search", "square", "triangle",
+    "list-tree", "loader-circle", "paint-bucket", "paintbrush", "palette", "panel-left", "pencil", "pipette",
+    "plus", "redo-2", "rotate-3d", "save", "scan", "scan-search", "search", "square", "star", "trash-2", "triangle",
     "triangle-alert", "undo-2", "wrench", "x",
 ]
 OUTPUT = os.path.join(os.path.dirname(__file__), "..", "src", "UpSTEPer.App", "Themes", "Icons.axaml")

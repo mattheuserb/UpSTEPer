@@ -130,6 +130,10 @@ public sealed class LanguageSwitchTests : IDisposable
         Assert.Contains("Item[]", changed);
         Assert.Equal("de", new SettingsStore(_settingsPath).Current.Language);
 
+        // RAL colours in the palette are renamed at once.
+        Assert.Equal("RAL 3020 Verkehrsrot", viewModel.Palette[0].Name);
+        Assert.Contains(viewModel.RalColours, e => e.Name == "RAL 7030 Steingrau");
+
         // New messages come in the new language, with the system's number format.
         viewModel.SelectedNode = null;
         Assert.Equal("Keine Probleme", new CheckRow(new PartCheck("P", 1, 1, 0, 0, 0, 0, 0, 0)).Findings);

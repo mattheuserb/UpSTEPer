@@ -35,9 +35,16 @@
   <data name="Changes_Solids" xml:space="preserve"><value>Solids</value></data>
   <data name="Changes_StepFailed" xml:space="preserve"><value>a step failed</value></data>
   <data name="Colour_Active" xml:space="preserve"><value>Active colour</value></data>
+  <data name="Colour_AddFavourite" xml:space="preserve"><value>Add to favourites</value></data>
   <data name="Colour_ApplyTo" xml:space="preserve"><value>Apply to</value></data>
   <data name="Colour_Custom" xml:space="preserve"><value>Custom colour</value></data>
+  <data name="Colour_CustomName" xml:space="preserve"><value>Custom {0}</value></data>
+  <data name="Colour_FavouriteName" xml:space="preserve"><value>Name, e.g. Housing cover</value></data>
+  <data name="Colour_Favourites" xml:space="preserve"><value>Favourites</value></data>
+  <data name="Colour_NoFavourites" xml:space="preserve"><value>No favourites yet: add the active colour with a name of your own.</value></data>
   <data name="Colour_Palette" xml:space="preserve"><value>Palette</value></data>
+  <data name="Colour_RalColours" xml:space="preserve"><value>RAL colours</value></data>
+  <data name="Colour_RalSearch" xml:space="preserve"><value>Number or name, e.g. 7030 or stone</value></data>
   <data name="Colour_Use" xml:space="preserve"><value>Use colour</value></data>
   <data name="Command_ColourBody" xml:space="preserve"><value>Colour body</value></data>
   <data name="Command_ColourFace" xml:space="preserve"><value>Colour face</value></data>
@@ -57,6 +64,7 @@
   <data name="Common_Close" xml:space="preserve"><value>Close</value></data>
   <data name="Common_DetailsFor" xml:space="preserve"><value>Details:</value></data>
   <data name="Common_No" xml:space="preserve"><value>No</value></data>
+  <data name="Common_Save" xml:space="preserve"><value>Save</value></data>
   <data name="Common_Yes" xml:space="preserve"><value>Yes</value></data>
   <data name="Detail_Changed" xml:space="preserve"><value>Changed</value></data>
   <data name="Detail_ColourConflicts" xml:space="preserve"><value>Colour conflicts</value></data>
@@ -120,11 +128,15 @@
   <data name="Menu_KeyboardShortcuts" xml:space="preserve"><value>_Keyboard shortcuts</value></data>
   <data name="Menu_Language" xml:space="preserve"><value>_Language</value></data>
   <data name="Menu_ModelPanel" xml:space="preserve"><value>_Model panel</value></data>
+  <data name="Menu_MoveDown" xml:space="preserve"><value>Move down</value></data>
+  <data name="Menu_MoveUp" xml:space="preserve"><value>Move up</value></data>
   <data name="Menu_Open" xml:space="preserve"><value>_Open STEP...</value></data>
   <data name="Menu_Orthographic" xml:space="preserve"><value>_Orthographic</value></data>
   <data name="Menu_RecentFiles" xml:space="preserve"><value>Recent _files</value></data>
   <data name="Menu_Redo" xml:space="preserve"><value>_Redo</value></data>
+  <data name="Menu_Remove" xml:space="preserve"><value>Remove</value></data>
   <data name="Menu_RemoveFaceColour" xml:space="preserve"><value>_Remove face colour</value></data>
+  <data name="Menu_Rename" xml:space="preserve"><value>Rename</value></data>
   <data name="Menu_Repair" xml:space="preserve"><value>_Repair...</value></data>
   <data name="Menu_SaveAs" xml:space="preserve"><value>_Save as...</value></data>
   <data name="Menu_ShortcutHints" xml:space="preserve"><value>_Shortcut hints</value></data>
@@ -221,6 +233,7 @@
   <data name="Status_FaceColourApplied" xml:space="preserve"><value>Face colour applied: {0}</value></data>
   <data name="Status_FaceColourRemoved" xml:space="preserve"><value>Face colour removed; the face shows its body colour.</value></data>
   <data name="Status_Faces" xml:space="preserve"><value>faces</value></data>
+  <data name="Status_FavouriteAdded" xml:space="preserve"><value>Favourite added: {0}</value></data>
   <data name="Status_HoverFace" xml:space="preserve"><value>Face {0}: {1}</value></data>
   <data name="Status_LoadCancelled" xml:space="preserve"><value>Loading {0} cancelled.</value></data>
   <data name="Status_LoadCancelledKeepPrevious" xml:space="preserve"><value>Loading {0} cancelled; the previous model stays open.</value></data>
@@ -246,7 +259,9 @@
   <data name="Status_TargetsChanged" xml:space="preserve"><value>{0} targets changed</value></data>
   <data name="Status_Triangles" xml:space="preserve"><value>triangles</value></data>
   <data name="Status_UndoRepairCancelled" xml:space="preserve"><value>Undo repair cancelled; the repaired model stays open.</value></data>
+  <data name="Tip_AddFavourite" xml:space="preserve"><value>Saves the active colour as a favourite with a name of your own</value></data>
   <data name="Tip_Brightness" xml:space="preserve"><value>Brightness</value></data>
+  <data name="Tip_CancelFavourite" xml:space="preserve"><value>Cancel (Esc)</value></data>
   <data name="Tip_ColourBody" xml:space="preserve"><value>Colour the bodies selected in the model tree, or the body of the selected face</value></data>
   <data name="Tip_ColourButton" xml:space="preserve"><value>Active colour, palette and colouring actions</value></data>
   <data name="Tip_ColourFace" xml:space="preserve"><value>Colour the selected face with the active colour</value></data>
@@ -262,11 +277,13 @@
   <data name="Tip_Orthographic" xml:space="preserve"><value>Parallel projection without perspective (Num 5)</value></data>
   <data name="Tip_PartCount" xml:space="preserve"><value>Part placements in the model tree</value></data>
   <data name="Tip_Quality" xml:space="preserve"><value>Display quality: how finely curved faces are triangulated (the model itself is not changed)</value></data>
+  <data name="Tip_RalList" xml:space="preserve"><value>RAL Classic. Screen colours are approximations: RAL publishes no official sRGB values.</value></data>
   <data name="Tip_Redo" xml:space="preserve"><value>Redo (Ctrl+Y)</value></data>
   <data name="Tip_RemoveFaceColour" xml:space="preserve"><value>Remove the selected face's own colour</value></data>
   <data name="Tip_RemoveFaceColourPanel" xml:space="preserve"><value>Remove the selected face's own colour; it shows its body colour again</value></data>
   <data name="Tip_Repair" xml:space="preserve"><value>Check the model for defects and repair it (sew gaps, exact surfaces, merge split faces)</value></data>
   <data name="Tip_SaveAs" xml:space="preserve"><value>Save the model with its colours as STEP AP214 or AP242 (Ctrl+S)</value></data>
+  <data name="Tip_SaveFavourite" xml:space="preserve"><value>Save the favourite (Enter)</value></data>
   <data name="Tip_TriangleCount" xml:space="preserve"><value>Triangles displayed at the current display quality</value></data>
   <data name="Tip_Undo" xml:space="preserve"><value>Undo the last colour change (Ctrl+Z)</value></data>
   <data name="Tip_UseColour" xml:space="preserve"><value>Adds the colour to the palette and makes it the active colour</value></data>

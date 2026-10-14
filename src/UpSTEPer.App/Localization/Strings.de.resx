@@ -35,9 +35,16 @@
   <data name="Changes_Solids" xml:space="preserve"><value>Körper</value></data>
   <data name="Changes_StepFailed" xml:space="preserve"><value>ein Schritt schlug fehl</value></data>
   <data name="Colour_Active" xml:space="preserve"><value>Aktive Farbe</value></data>
+  <data name="Colour_AddFavourite" xml:space="preserve"><value>Zu Favoriten</value></data>
   <data name="Colour_ApplyTo" xml:space="preserve"><value>Anwenden auf</value></data>
   <data name="Colour_Custom" xml:space="preserve"><value>Eigene Farbe</value></data>
+  <data name="Colour_CustomName" xml:space="preserve"><value>Eigene Farbe {0}</value></data>
+  <data name="Colour_FavouriteName" xml:space="preserve"><value>Name, z. B. Gehäusedeckel</value></data>
+  <data name="Colour_Favourites" xml:space="preserve"><value>Favoriten</value></data>
+  <data name="Colour_NoFavourites" xml:space="preserve"><value>Noch keine Favoriten: Fügen Sie die aktive Farbe mit eigenem Namen hinzu.</value></data>
   <data name="Colour_Palette" xml:space="preserve"><value>Palette</value></data>
+  <data name="Colour_RalColours" xml:space="preserve"><value>RAL-Farben</value></data>
+  <data name="Colour_RalSearch" xml:space="preserve"><value>Nummer oder Name, z. B. 7030 oder Stein</value></data>
   <data name="Colour_Use" xml:space="preserve"><value>Farbe übernehmen</value></data>
   <data name="Command_ColourBody" xml:space="preserve"><value>Körper einfärben</value></data>
   <data name="Command_ColourFace" xml:space="preserve"><value>Fläche einfärben</value></data>
@@ -57,6 +64,7 @@
   <data name="Common_Close" xml:space="preserve"><value>Schließen</value></data>
   <data name="Common_DetailsFor" xml:space="preserve"><value>Details:</value></data>
   <data name="Common_No" xml:space="preserve"><value>Nein</value></data>
+  <data name="Common_Save" xml:space="preserve"><value>Speichern</value></data>
   <data name="Common_Yes" xml:space="preserve"><value>Ja</value></data>
   <data name="Detail_Changed" xml:space="preserve"><value>Geändert</value></data>
   <data name="Detail_ColourConflicts" xml:space="preserve"><value>Farbkonflikte</value></data>
@@ -120,11 +128,15 @@
   <data name="Menu_KeyboardShortcuts" xml:space="preserve"><value>_Tastenkürzel</value></data>
   <data name="Menu_Language" xml:space="preserve"><value>_Sprache</value></data>
   <data name="Menu_ModelPanel" xml:space="preserve"><value>_Modellbereich</value></data>
+  <data name="Menu_MoveDown" xml:space="preserve"><value>Nach unten</value></data>
+  <data name="Menu_MoveUp" xml:space="preserve"><value>Nach oben</value></data>
   <data name="Menu_Open" xml:space="preserve"><value>STEP ö_ffnen...</value></data>
   <data name="Menu_Orthographic" xml:space="preserve"><value>_Orthografisch</value></data>
   <data name="Menu_RecentFiles" xml:space="preserve"><value>_Zuletzt geöffnet</value></data>
   <data name="Menu_Redo" xml:space="preserve"><value>_Wiederherstellen</value></data>
+  <data name="Menu_Remove" xml:space="preserve"><value>Entfernen</value></data>
   <data name="Menu_RemoveFaceColour" xml:space="preserve"><value>Flächenfarbe _entfernen</value></data>
+  <data name="Menu_Rename" xml:space="preserve"><value>Umbenennen</value></data>
   <data name="Menu_Repair" xml:space="preserve"><value>_Reparieren...</value></data>
   <data name="Menu_SaveAs" xml:space="preserve"><value>Speichern _unter...</value></data>
   <data name="Menu_ShortcutHints" xml:space="preserve"><value>_Hinweiszeile</value></data>
@@ -221,6 +233,7 @@
   <data name="Status_FaceColourApplied" xml:space="preserve"><value>Flächenfarbe angewendet: {0}</value></data>
   <data name="Status_FaceColourRemoved" xml:space="preserve"><value>Flächenfarbe entfernt; die Fläche zeigt die Körperfarbe.</value></data>
   <data name="Status_Faces" xml:space="preserve"><value>Flächen</value></data>
+  <data name="Status_FavouriteAdded" xml:space="preserve"><value>Favorit hinzugefügt: {0}</value></data>
   <data name="Status_HoverFace" xml:space="preserve"><value>Fläche {0}: {1}</value></data>
   <data name="Status_LoadCancelled" xml:space="preserve"><value>Laden von {0} abgebrochen.</value></data>
   <data name="Status_LoadCancelledKeepPrevious" xml:space="preserve"><value>Laden von {0} abgebrochen; das vorherige Modell bleibt geöffnet.</value></data>
@@ -246,7 +259,9 @@
   <data name="Status_TargetsChanged" xml:space="preserve"><value>{0} Ziele geändert</value></data>
   <data name="Status_Triangles" xml:space="preserve"><value>Dreiecke</value></data>
   <data name="Status_UndoRepairCancelled" xml:space="preserve"><value>Rückgängig abgebrochen; das reparierte Modell bleibt geöffnet.</value></data>
+  <data name="Tip_AddFavourite" xml:space="preserve"><value>Speichert die aktive Farbe als Favorit mit eigenem Namen</value></data>
   <data name="Tip_Brightness" xml:space="preserve"><value>Helligkeit</value></data>
+  <data name="Tip_CancelFavourite" xml:space="preserve"><value>Abbrechen (Esc)</value></data>
   <data name="Tip_ColourBody" xml:space="preserve"><value>Im Modellbaum gewählte Körper einfärben, oder den Körper der gewählten Fläche</value></data>
   <data name="Tip_ColourButton" xml:space="preserve"><value>Aktive Farbe, Palette und Einfärben</value></data>
   <data name="Tip_ColourFace" xml:space="preserve"><value>Gewählte Fläche mit der aktiven Farbe einfärben</value></data>
@@ -262,11 +277,13 @@
   <data name="Tip_Orthographic" xml:space="preserve"><value>Parallelprojektion ohne Perspektive (Num 5)</value></data>
   <data name="Tip_PartCount" xml:space="preserve"><value>Platzierte Teile im Modellbaum</value></data>
   <data name="Tip_Quality" xml:space="preserve"><value>Darstellungsqualität: wie fein gekrümmte Flächen trianguliert werden (das Modell selbst bleibt unverändert)</value></data>
+  <data name="Tip_RalList" xml:space="preserve"><value>RAL Classic. Die Bildschirmfarben sind Näherungen: RAL veröffentlicht keine verbindlichen sRGB-Werte.</value></data>
   <data name="Tip_Redo" xml:space="preserve"><value>Wiederherstellen (Strg+Y)</value></data>
   <data name="Tip_RemoveFaceColour" xml:space="preserve"><value>Eigene Farbe der gewählten Fläche entfernen</value></data>
   <data name="Tip_RemoveFaceColourPanel" xml:space="preserve"><value>Eigene Farbe der gewählten Fläche entfernen; sie zeigt wieder die Körperfarbe</value></data>
   <data name="Tip_Repair" xml:space="preserve"><value>Modell auf Fehler prüfen und reparieren (Spalte schließen, exakte Flächen, geteilte Flächen zusammenführen)</value></data>
   <data name="Tip_SaveAs" xml:space="preserve"><value>Modell mit Farben als STEP AP214 oder AP242 speichern (Strg+S)</value></data>
+  <data name="Tip_SaveFavourite" xml:space="preserve"><value>Favorit speichern (Enter)</value></data>
   <data name="Tip_TriangleCount" xml:space="preserve"><value>Dargestellte Dreiecke bei der aktuellen Darstellungsqualität</value></data>
   <data name="Tip_Undo" xml:space="preserve"><value>Letzte Farbänderung rückgängig machen (Strg+Z)</value></data>
   <data name="Tip_UseColour" xml:space="preserve"><value>Fügt die Farbe der Palette hinzu und macht sie zur aktiven Farbe</value></data>

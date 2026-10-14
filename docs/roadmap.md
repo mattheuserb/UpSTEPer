@@ -57,7 +57,10 @@ Linux and macOS from CI-built binaries.
   (versions, system, log folder, third-party notices) (2026-10-14)
 - [x] Multi-language UI: English and German, switchable at run time (View → Language); first start
   follows the system language; numbers keep the regional format; CLI and logs stay English (2026-10-14)
-- [ ] More RAL colours: searchable RAL Classic list in the colour panel; named favourite colours
+- [x] RAL Classic list in the colour panel (211 colours from Wikidata, CC0, `scripts/update-ral.py`):
+  search by number or name, names in the UI language; the toolbar palette uses the same values.
+  Favourite colours with own names in their own section (rename, reorder, remove), stored in the
+  settings (2026-10-14). RAL 6021 is missing: Wikidata has no value for it
 
 ## M2 — Colouring
 

@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using UpSTEPer.App.Colours;
 using UpSTEPer.App.Converters;
 using UpSTEPer.App.Localization;
 using UpSTEPer.App.Settings;
@@ -48,6 +49,9 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         _settings = settings;
         SelectedPaletteEntry = Palette[0];
         RefreshRecentFiles();
+        LoadFavourites();
+        RalColours = [.. RalCatalogue.All.Select(PaletteEntry.FromRal)];
+        Localizer.Instance.PropertyChanged += OnLanguageChanged;
     }
 
     /// <summary>Gets the maximum number of picked colours kept in the palette.</summary>
@@ -299,6 +303,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
+        Localizer.Instance.PropertyChanged -= OnLanguageChanged;
         DeleteRepairSnapshot();
         // Let a running load or meshing stop early instead of blocking the shutdown. The native
         // callback only reads IsCancellationRequested, which stays valid after Dispose.
@@ -493,25 +498,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     /// colour drops out beyond <see cref="MaxCustomColors"/>) and makes it the active colour.
     /// </summary>
     /// <param name="color">The picked colour.</param>
-    public void UseCustomColor(ColorRgb color)
-    {
-        // Same hex = same entry: picking a colour twice must not fill the palette with duplicates.
-        var existing = Palette.FirstOrDefault(entry => entry.Hex == color.ToHex());
-        if (existing is not null)
-        {
-            SelectedPaletteEntry = existing;
-            return;
-        }
-
-        var entry = PaletteEntry.Custom(color);
-        Palette.Add(entry);
-        if (Palette.Count - PaletteEntry.Default.Count > MaxCustomColors)
-        {
-            Palette.RemoveAt(PaletteEntry.Default.Count);
-        }
-
-        SelectedPaletteEntry = entry;
-    }
+    public void UseCustomColor(ColorRgb color) => UseColour(PaletteEntry.Custom(color));
 
     /// <summary>Gives the selected face the selected palette colour.</summary>
     [RelayCommand(CanExecute = nameof(CanEditFace))]

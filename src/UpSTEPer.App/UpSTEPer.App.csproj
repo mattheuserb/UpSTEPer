@@ -39,6 +39,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- RAL Classic colours, generated from Wikidata by scripts/update-ral.py (see RalCatalogue). -->
+    <EmbeddedResource Include="Colours/ral-classic.json" LogicalName="UpSTEPer.App.Colours.ral-classic.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Strongly typed access (Strings.Key) generated at build time; Strings.de.resx is the German satellite.
          The class is in the root namespace: dotnet format does not see generated files and would
          otherwise remove the using of a file that needs only Strings. -->

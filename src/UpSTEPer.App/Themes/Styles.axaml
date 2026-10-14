@@ -99,6 +99,12 @@
     <Setter Property="BorderBrush" Value="#80000000" />
   </Style>
 
+  <!-- Colour lists with names (favourites, RAL colours): compact rows -->
+  <Style Selector="ListBox.colourList ListBoxItem">
+    <Setter Property="Padding" Value="6,3" />
+    <Setter Property="MinHeight" Value="0" />
+  </Style>
+
   <Style Selector="TextBlock.secondary">
     <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
   </Style>

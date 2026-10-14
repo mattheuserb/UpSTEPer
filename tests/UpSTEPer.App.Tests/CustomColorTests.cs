@@ -20,7 +20,7 @@ public class CustomColorTests
         viewModel.UseCustomColor(color);
 
         Assert.Equal(PaletteEntry.Default.Count + 1, viewModel.Palette.Count);
-        Assert.Equal(PaletteEntry.Custom(color), viewModel.Palette[^1]);
+        Assert.Equal(("#123456", null), (viewModel.Palette[^1].Hex, viewModel.Palette[^1].Ral));
         Assert.Same(viewModel.Palette[^1], viewModel.SelectedPaletteEntry);
         Assert.Equal("Custom #123456", viewModel.SelectedPaletteEntry.Name);
     }

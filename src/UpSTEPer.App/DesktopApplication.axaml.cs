@@ -23,6 +23,8 @@ internal sealed partial class DesktopApplication : Application
 {
     private const int ScreenshotTimeoutExitCode = 2;
     private const int RenderingFailedExitCode = 3;
+    private const double WindowScreenshotWidth = 1280;
+    private const double WindowScreenshotHeight = 800;
     private static readonly TimeSpan _screenshotTimeout = TimeSpan.FromSeconds(60);
 
     private readonly AppOptions _options;
@@ -36,6 +38,9 @@ internal sealed partial class DesktopApplication : Application
     /// <summary>Initializes a new instance of the <see cref="DesktopApplication"/> class.</summary>
     /// <param name="options">Command-line options.</param>
     public DesktopApplication(AppOptions options) => _options = options;
+
+    // The 3D frame of a whole-window screenshot, before it is combined with the rest of the window.
+    private string ViewScreenshotPath => _options.ScreenshotPath + ".view.png";
 
     /// <inheritdoc />
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
@@ -55,7 +60,7 @@ internal sealed partial class DesktopApplication : Application
 
             // The stored language, else the system's (German or English); before any window or text exists.
             var settings = services.GetRequiredService<SettingsStore>();
-            Localizer.Instance.SetCulture(Localizer.Resolve(settings.Current.Language, CultureInfo.CurrentUICulture));
+            Localizer.Instance.SetCulture(Localizer.Resolve(_options.Language ?? settings.Current.Language, CultureInfo.CurrentUICulture));
 
             var viewModel = services.GetRequiredService<MainViewModel>();
             viewModel.DisplayQuality = _options.Quality;
@@ -73,7 +78,23 @@ internal sealed partial class DesktopApplication : Application
             {
                 // The screenshot itself is requested after loading and selection (below), so the
                 // frame reflects both.
-                window.ModelView.ScreenshotSaved += (_, _) => desktop.Shutdown(0);
+                window.ModelView.ScreenshotSaved += (_, _) =>
+                {
+                    if (_options.WindowScreenshot)
+                    {
+                        WindowCapture.Save(window, window.ModelView, ViewScreenshotPath, _options.ScreenshotPath);
+                        File.Delete(ViewScreenshotPath);
+                    }
+
+                    desktop.Shutdown(0);
+                };
+                if (_options.WindowScreenshot)
+                {
+                    // Fixed size, so pictures in the documentation look the same on every machine.
+                    window.Width = WindowScreenshotWidth;
+                    window.Height = WindowScreenshotHeight;
+                }
+
                 window.ModelView.RenderingFailed += (_, _) => desktop.Shutdown(RenderingFailedExitCode);
 
                 // Never hang in automation (CI): give up when no frame was rendered in time.
@@ -107,7 +128,7 @@ internal sealed partial class DesktopApplication : Application
                         window.ModelView.ShowView(view);
                     }
 
-                    window.ModelView.ScreenshotPath = _options.ScreenshotPath;
+                    window.ModelView.ScreenshotPath = _options.WindowScreenshot ? ViewScreenshotPath : _options.ScreenshotPath;
                 };
             }
         }

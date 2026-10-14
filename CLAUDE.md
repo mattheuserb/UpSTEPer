@@ -24,7 +24,8 @@ dotnet run --project src/UpSTEPer.Cli -- check <file.stp>   # defects per part (
 dotnet run --project src/UpSTEPer.Cli -- repair <in.stp> <out.stp> [--steps fix,sew,canonical,merge]   # heal + exact surfaces/edges, keep colours, report
 dotnet run --project src/UpSTEPer.Cli -- export-dxf <in.stp> <out.dxf> [--views front,top,left]  # 2D views; add ",iso" for the isometric one
 dotnet run --project src/UpSTEPer.App -- <file.stp>       # desktop viewer
-dotnet run --project src/UpSTEPer.App -- <file.stp> --screenshot out.png [--select-face N] [--view front|top|iso|...] [--ortho] [--quality coarse|normal|fine] [--hover-face N]   # render 1 frame to PNG and exit
+dotnet run --project src/UpSTEPer.App -- <file.stp> --screenshot out.png [--select-face N] [--view front|top|iso|...] [--ortho] [--quality coarse|normal|fine] [--hover-face N] [--window] [--language en|de]   # render 1 frame to PNG and exit; --window: whole window
+./scripts/update-screenshots.ps1   # regenerate docs/images (README pictures) after visible UI changes
 
 # Native bridge (needs C++ toolchain, CMake >= 3.24, Ninja, VCPKG_ROOT) — see docs/development.md
 powershell -File scripts/build-native.ps1 -VcpkgRoot C:\vcpkg [-Tools]   # Windows: sets up MSVC env itself; -Tools: test data generators

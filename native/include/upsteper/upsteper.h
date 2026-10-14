@@ -380,7 +380,8 @@ typedef struct ups_projection_params
 
 /**
  * Projects the model with exact hidden-line removal (HLRBRep_Algo). Lines, circles, arcs and
- * ellipses stay analytic; other curves become polylines within params->deflection.
+ * ellipses stay analytic, straight splines become lines; other curves become polylines within
+ * params->deflection.
  */
 UPS_API ups_status ups_document_project(
     ups_document* document, const ups_projection_params* params, ups_drawing** out_drawing);

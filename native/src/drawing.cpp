@@ -4,6 +4,8 @@
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepLib.hxx>
 #include <GCPnts_QuasiUniformDeflection.hxx>
+#include <Geom_BSplineCurve.hxx>
+#include <Geom_BezierCurve.hxx>
 #include <HLRAlgo_Projector.hxx>
 #include <HLRBRep_Algo.hxx>
 #include <HLRBRep_HLRToShape.hxx>
@@ -17,6 +19,7 @@
 #include <algorithm>
 #include <cmath>
 #include <memory>
+#include <vector>
 
 struct ups_drawing
 {
@@ -71,21 +74,76 @@ ups_drawing_curve MakeCurve(ups_curve_type type, int32_t kind)
     return curve;
 }
 
+// HLR has no straight-line result for some edges (e.g. circles seen edge-on) and returns them as
+// B-splines, often degree-1 approximations with 15 poles. A spline whose poles all lie on the chord
+// is that segment (the curve stays inside the convex hull of its poles); folded curves stay polylines.
+constexpr double StraightTolerance = 1e-6; // mm
+
+void AppendLine(ups_drawing& drawing, const gp_Pnt& a, const gp_Pnt& b, int32_t kind)
+{
+    ups_drawing_curve curve = MakeCurve(UPS_CURVE_LINE, kind);
+    curve.data[0] = a.X();
+    curve.data[1] = a.Y();
+    curve.data[2] = b.X();
+    curve.data[3] = b.Y();
+    drawing.curves.push_back(curve);
+}
+
+// Parameter of p along the segment a -> b (0 at a, length at b), and its distance from that line.
+void ProjectOnSegment(const gp_Pnt& a, const gp_Pnt& b, double length, double x, double y, double& along, double& off)
+{
+    const double ux = (b.X() - a.X()) / length;
+    const double uy = (b.Y() - a.Y()) / length;
+    along = ((x - a.X()) * ux) + ((y - a.Y()) * uy);
+    off = std::abs(((x - a.X()) * uy) - ((y - a.Y()) * ux));
+}
+
+bool PolesOnChord(const BRepAdaptor_Curve& adaptor, const gp_Pnt& a, const gp_Pnt& b, double length)
+{
+    std::vector<gp_Pnt> poles;
+    if (adaptor.GetType() == GeomAbs_BSplineCurve)
+    {
+        const Handle(Geom_BSplineCurve) spline = adaptor.BSpline();
+        for (int i = 1; i <= spline->NbPoles(); ++i)
+        {
+            poles.push_back(spline->Pole(i));
+        }
+    }
+    else if (adaptor.GetType() == GeomAbs_BezierCurve)
+    {
+        const Handle(Geom_BezierCurve) bezier = adaptor.Bezier();
+        for (int i = 1; i <= bezier->NbPoles(); ++i)
+        {
+            poles.push_back(bezier->Pole(i));
+        }
+    }
+    else
+    {
+        return false;
+    }
+
+    // BSpline() and Bezier() return the curve with the edge's location already applied.
+    return std::all_of(poles.begin(), poles.end(), [&](const gp_Pnt& pole) {
+        double along = 0.0;
+        double off = 0.0;
+        ProjectOnSegment(a, b, length, pole.X(), pole.Y(), along, off);
+        return off <= StraightTolerance;
+    });
+}
+
 void AppendPolyline(ups_drawing& drawing, const BRepAdaptor_Curve& adaptor, int32_t kind, double deflection)
 {
     const double first = adaptor.FirstParameter();
     const double last = adaptor.LastParameter();
 
-    ups_drawing_curve curve = MakeCurve(UPS_CURVE_POLYLINE, kind);
-    curve.first_point = static_cast<int32_t>(drawing.points.size() / 2);
-
+    std::vector<double> points;
     GCPnts_QuasiUniformDeflection sampler(adaptor, deflection, first, last);
     if (sampler.IsDone() && sampler.NbPoints() >= 2)
     {
         for (int i = 1; i <= sampler.NbPoints(); ++i)
         {
             const gp_Pnt p = sampler.Value(i);
-            drawing.points.insert(drawing.points.end(), {p.X(), p.Y()});
+            points.insert(points.end(), {p.X(), p.Y()});
         }
     }
     else
@@ -94,11 +152,42 @@ void AppendPolyline(ups_drawing& drawing, const BRepAdaptor_Curve& adaptor, int3
         for (int i = 0; i <= Samples; ++i)
         {
             const gp_Pnt p = adaptor.Value(first + ((last - first) * i / Samples));
-            drawing.points.insert(drawing.points.end(), {p.X(), p.Y()});
+            points.insert(points.end(), {p.X(), p.Y()});
         }
     }
 
-    curve.point_count = static_cast<int32_t>(drawing.points.size() / 2) - curve.first_point;
+    const gp_Pnt a = adaptor.Value(first);
+    const gp_Pnt b = adaptor.Value(last);
+    if (points.size() == 4)
+    {
+        // Two samples already describe a segment within the deflection: write it as one.
+        AppendLine(drawing, gp_Pnt(points[0], points[1], 0.0), gp_Pnt(points[2], points[3], 0.0), kind);
+        return;
+    }
+    const double length = std::hypot(b.X() - a.X(), b.Y() - a.Y());
+    if (length > StraightTolerance && PolesOnChord(adaptor, a, b, length))
+    {
+        // Straight, but it could still run back and forth along the line: only a curve whose
+        // samples stay between its end points is that one segment.
+        bool between = true;
+        for (std::size_t i = 0; i + 1 < points.size() && between; i += 2)
+        {
+            double along = 0.0;
+            double off = 0.0;
+            ProjectOnSegment(a, b, length, points[i], points[i + 1], along, off);
+            between = along >= -StraightTolerance && along <= length + StraightTolerance;
+        }
+        if (between)
+        {
+            AppendLine(drawing, a, b, kind);
+            return;
+        }
+    }
+
+    ups_drawing_curve curve = MakeCurve(UPS_CURVE_POLYLINE, kind);
+    curve.first_point = static_cast<int32_t>(drawing.points.size() / 2);
+    curve.point_count = static_cast<int32_t>(points.size() / 2);
+    drawing.points.insert(drawing.points.end(), points.begin(), points.end());
     drawing.curves.push_back(curve);
 }
 
@@ -121,14 +210,7 @@ void AppendEdges(ups_drawing& drawing, TopoDS_Shape shape, int32_t kind, double 
         {
         case GeomAbs_Line:
         {
-            const gp_Pnt a = adaptor.Value(first);
-            const gp_Pnt b = adaptor.Value(last);
-            ups_drawing_curve curve = MakeCurve(UPS_CURVE_LINE, kind);
-            curve.data[0] = a.X();
-            curve.data[1] = a.Y();
-            curve.data[2] = b.X();
-            curve.data[3] = b.Y();
-            drawing.curves.push_back(curve);
+            AppendLine(drawing, adaptor.Value(first), adaptor.Value(last), kind);
             break;
         }
         case GeomAbs_Circle:
@@ -186,12 +268,9 @@ void AppendEdges(ups_drawing& drawing, TopoDS_Shape shape, int32_t kind, double 
                     hi = 1.0;
                 }
                 const double r = ellipse.MajorRadius();
-                ups_drawing_curve curve = MakeCurve(UPS_CURVE_LINE, kind);
-                curve.data[0] = center.X() + (major.X() * r * lo);
-                curve.data[1] = center.Y() + (major.Y() * r * lo);
-                curve.data[2] = center.X() + (major.X() * r * hi);
-                curve.data[3] = center.Y() + (major.Y() * r * hi);
-                drawing.curves.push_back(curve);
+                AppendLine(drawing,
+                    gp_Pnt(center.X() + (major.X() * r * lo), center.Y() + (major.Y() * r * lo), 0.0),
+                    gp_Pnt(center.X() + (major.X() * r * hi), center.Y() + (major.Y() * r * hi), 0.0), kind);
                 break;
             }
 

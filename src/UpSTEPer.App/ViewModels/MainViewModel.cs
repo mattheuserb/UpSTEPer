@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using UpSTEPer.App.Settings;
 using UpSTEPer.Core;
 using UpSTEPer.Core.Drawing;
 using UpSTEPer.Export.Dxf;
@@ -19,6 +20,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     private readonly IStepReader _reader;
     private readonly ILogger _logger;
+    private readonly SettingsStore? _settings;
     private readonly EditHistory _history = new();
     private DocumentSession? _session;
     private string? _fileName;
@@ -36,11 +38,14 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     /// <summary>Initializes a new instance of the <see cref="MainViewModel"/> class.</summary>
     /// <param name="reader">Reader used to load STEP files.</param>
     /// <param name="logger">Logs loads, saves and failures; <see langword="null"/> for none.</param>
-    public MainViewModel(IStepReader reader, ILogger<MainViewModel>? logger = null)
+    /// <param name="settings">Remembers recent files between runs; <see langword="null"/> remembers nothing.</param>
+    public MainViewModel(IStepReader reader, ILogger<MainViewModel>? logger = null, SettingsStore? settings = null)
     {
         _reader = reader ?? throw new ArgumentNullException(nameof(reader));
         _logger = logger ?? NullLogger<MainViewModel>.Instance;
+        _settings = settings;
         SelectedPaletteEntry = Palette[0];
+        RefreshRecentFiles();
     }
 
     /// <summary>Gets the maximum number of picked colours kept in the palette.</summary>
@@ -48,6 +53,12 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     /// <summary>Gets the colours offered in the toolbar: the RAL defaults, then colours picked by the user.</summary>
     public ObservableCollection<PaletteEntry> Palette { get; } = [.. PaletteEntry.Default];
+
+    /// <summary>Gets the most recently opened files (File → Recent files), newest first.</summary>
+    public ObservableCollection<RecentFileEntry> RecentFiles { get; } = [];
+
+    /// <summary>Gets a value indicating whether there are recent files.</summary>
+    public bool HasRecentFiles => RecentFiles.Count > 0;
 
     /// <summary>Gets or sets the scene shown in the 3D view.</summary>
     [ObservableProperty]
@@ -184,6 +195,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
                 CultureInfo.CurrentCulture,
                 $"{fileName}: {statistics.SolidCount} solid(s), {statistics.FaceCount} faces, {loaded.Scene.Mesh.TriangleCount:N0} triangles");
             LogOpened(_logger, path, quality, loaded.Scene.Mesh.TriangleCount, watch.ElapsedMilliseconds);
+            UpdateRecentFiles(files => RecentFileList.Add(files, path));
             NotifyHistoryChanged();
             OnPropertyChanged(nameof(HasDocument));
             return true;
@@ -293,6 +305,48 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         _operation?.Cancel();
         _operation?.Dispose();
         _session?.Dispose();
+    }
+
+    /// <summary>Opens a recent file; one that no longer exists is removed from the list.</summary>
+    /// <param name="path">The file.</param>
+    [RelayCommand]
+    private async Task OpenRecentAsync(string path)
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        if (!File.Exists(path))
+        {
+            UpdateRecentFiles(files => RecentFileList.Remove(files, path));
+            Status = $"{Path.GetFileName(path)} no longer exists; it was removed from the recent files.";
+            return;
+        }
+
+        await LoadAsync(path).ConfigureAwait(true);
+    }
+
+    /// <summary>Empties the recent files list.</summary>
+    [RelayCommand]
+    private void ClearRecentFiles() => UpdateRecentFiles(_ => []);
+
+    private void UpdateRecentFiles(Func<IReadOnlyList<string>, IReadOnlyList<string>> change)
+    {
+        _settings?.Update(settings => settings with { RecentFiles = change(settings.RecentFiles) });
+        RefreshRecentFiles();
+    }
+
+    private void RefreshRecentFiles()
+    {
+        RecentFiles.Clear();
+        var number = 1;
+        foreach (var file in _settings?.Current.RecentFiles ?? [])
+        {
+            RecentFiles.Add(new RecentFileEntry(number++, file, OpenRecentCommand));
+        }
+
+        OnPropertyChanged(nameof(HasRecentFiles));
     }
 
     /// <summary>Requests cancellation of the running load or meshing operation.</summary>

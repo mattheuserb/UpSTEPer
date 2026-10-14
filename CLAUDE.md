@@ -100,6 +100,9 @@ Never reference OCCT or native types from Core. UI projects (planned) depend on 
 - Windows native build: `Enter-VsDevShell` overwrites `VCPKG_ROOT` with the VS-bundled vcpkg;
   `scripts/build-native.ps1` re-sets it afterwards. OCCT object paths exceed MAX_PATH unless
   vcpkg buildtrees live on a short path (`VCPKG_INSTALL_OPTIONS` in `CMakePresets.json`).
+- The app keeps user settings (recent files, later language and favourites) in `settings.json` next
+  to the log folder (`SettingsStore`); add members with defaults so older files still load. Tests and
+  `--screenshot` runs must use their own settings path, never the user's file.
 - Parse numbers in the CLI with `Options.InvariantDouble`, never culture-dependent: on a German
   system `0.05` would otherwise become 5.
 - OCCT never prints to the console: `messages.cpp` routes its messages to `OcctMessageRouter`

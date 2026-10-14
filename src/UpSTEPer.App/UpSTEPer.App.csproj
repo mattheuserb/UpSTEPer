@@ -31,6 +31,9 @@
 
   <ItemGroup>
     <None Include="Themes\Lucide-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Shown by Help > About; binary distributions must include them (see THIRD-PARTY-NOTICES.md). -->
+    <None Include="..\..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,20 @@
+# Version updates: one grouped pull request per ecosystem and week, so CI runs once per batch.
+# Security updates are enabled separately in the repository settings and come immediately.
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      nuget:
+        patterns: ["*"]
+    labels: [dependencies]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+    labels: [dependencies]

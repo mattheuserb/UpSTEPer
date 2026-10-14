@@ -156,7 +156,8 @@ downloadable release (v0.1.0-alpha).
   and most commits carry a private e-mail address. Rewrite locally (`git filter-repo`: drop the
   file, map the address to the GitHub `noreply` one) and push to a **new** public repository;
   a force push is not enough, GitHub keeps the commits of the old PRs under `refs/pull/*`
-- [ ] Check that the name "UpSTEPer" is free (GitHub, NuGet, trademarks)
+- [ ] Check that the name "UpSTEPer" is free: GitHub, NuGet and a web search found nothing
+  (2026-10-14); trademark registers (DPMA, EUIPO) not checked yet
 
 **Phase 1 — first impression**
 

@@ -49,9 +49,21 @@ def points(a, close):
     return "M" + "L".join(f"{x} {y}" for x, y in zip(p[0::2], p[1::2])) + ("Z" if close else "")
 
 
+def path(a):
+    # A path's first "m" is absolute, but the coordinate pairs after it are relative line-tos.
+    # The paths are concatenated, so write the start as "M x y" and the rest as an explicit "l".
+    d = a["d"].strip()
+    match = re.match(r"m\s*(-?[\d.]+)[\s,]*(-?[\d.]+)\s*,?\s*(.*)", d, re.S)
+    if not match:
+        return d
+    x, y, rest = match.groups()
+    if rest and not rest[0].isalpha():
+        rest = "l" + rest
+    return f"M{x} {y}{rest}"
+
+
 CONVERTERS = {
-    # A path's first moveto is absolute even when written "m"; the paths are concatenated, so make it explicit.
-    "path": lambda a: "M" + a["d"].strip()[1:] if a["d"].strip().startswith("m") else a["d"].strip(),
+    "path": path,
     "rect": rect,
     "circle": circle,
     "line": lambda a: f"M{a['x1']} {a['y1']}L{a['x2']} {a['y2']}",

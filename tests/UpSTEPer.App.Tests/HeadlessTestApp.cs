@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Markup.Xaml.Styling;
@@ -31,7 +32,9 @@ internal sealed class HeadlessTestApp : Application
             Source = new Uri("avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"),
         });
 
-        // The app's own resources and styles, as DesktopApplication.axaml includes them.
+        // The app's own resources and styles, as DesktopApplication.axaml includes them. avares://
+        // only finds loaded assemblies: load the app explicitly, or a UI test that runs first fails.
+        RuntimeHelpers.RunClassConstructor(typeof(UpSTEPer.App.Controls.Icon).TypeHandle);
         Resources.MergedDictionaries.Add(new ResourceInclude(new Uri("avares://UpSTEPer.App.Tests/"))
         {
             Source = new Uri("avares://UpSTEPer/Themes/AppResources.axaml"),

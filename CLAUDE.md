@@ -24,7 +24,8 @@ dotnet run --project src/UpSTEPer.Cli -- check <file.stp>   # defects per part (
 dotnet run --project src/UpSTEPer.Cli -- repair <in.stp> <out.stp> [--steps fix,sew,canonical,merge]   # heal + exact surfaces/edges, keep colours, report
 dotnet run --project src/UpSTEPer.Cli -- export-dxf <in.stp> <out.dxf> [--views front,top,left]  # 2D views; add ",iso" for the isometric one
 dotnet run --project src/UpSTEPer.App -- <file.stp>       # desktop viewer
-dotnet run --project src/UpSTEPer.App -- <file.stp> --screenshot out.png [--select-face N] [--view front|top|iso|...] [--ortho] [--quality coarse|normal|fine] [--hover-face N]   # render 1 frame to PNG and exit
+dotnet run --project src/UpSTEPer.App -- <file.stp> --screenshot out.png [--select-face N] [--view front|top|iso|...] [--ortho] [--quality coarse|normal|fine] [--hover-face N] [--window] [--language en|de]   # render 1 frame to PNG and exit; --window: whole window
+./scripts/update-screenshots.ps1   # regenerate docs/images (README pictures) after visible UI changes
 
 # Native bridge (needs C++ toolchain, CMake >= 3.24, Ninja, VCPKG_ROOT) — see docs/development.md
 powershell -File scripts/build-native.ps1 -VcpkgRoot C:\vcpkg [-Tools]   # Windows: sets up MSVC env itself; -Tools: test data generators
@@ -74,6 +75,8 @@ Never reference OCCT or native types from Core. UI projects (planned) depend on 
 - P/Invokes: `upsteper_native` is loaded only by absolute path from the app directory
   (`NativeLibraryResolver`); do not add other native libraries without the same treatment.
 - Package versions only in `Directory.Packages.props` (Central Package Management).
+  A new package the app or the CLI ships (also a transitive one) needs a row in
+  `THIRD-PARTY-NOTICES.md`; `ThirdPartyNoticesTests` checks this.
 - App UI: colours, spacing and type sizes only from `src/UpSTEPer.App/Themes/Tokens.axaml`; icons are
   Lucide geometries (`Themes/Icons.axaml`, regenerate with `scripts/update-icons.py`, never edit by
   hand) drawn by the `Icon` control. Every command must stay reachable from the menu; toolbars only

@@ -15,6 +15,11 @@ namespace UpSTEPer.App;
 /// <param name="Orthographic">Whether to start with the orthographic projection.</param>
 /// <param name="Quality">The display quality to load the model with.</param>
 /// <param name="HoverFace">A face to show as hovered after loading (verifies the hover highlight).</param>
+/// <param name="WindowScreenshot">
+/// Whether the screenshot shows the whole window (menu, toolbars, panels) at a fixed size instead
+/// of the 3D view only; used for the pictures in the documentation.
+/// </param>
+/// <param name="Language">A UI language (<c>en</c>, <c>de</c>) instead of the stored or system one.</param>
 internal sealed record AppOptions(
     string? FilePath,
     string? ScreenshotPath,
@@ -22,13 +27,15 @@ internal sealed record AppOptions(
     ViewDirection? View = null,
     bool Orthographic = false,
     DisplayQuality Quality = DisplayQuality.Normal,
-    int? HoverFace = null)
+    int? HoverFace = null,
+    bool WindowScreenshot = false,
+    string? Language = null)
 {
     /// <summary>Gets options for a plain start without arguments.</summary>
     public static AppOptions Default { get; } = new(null, null, null);
 
     /// <summary>
-    /// Parses <c>[file] [--screenshot &lt;png&gt;] [--select-face &lt;id&gt;] [--view &lt;front|back|left|right|top|bottom|iso&gt;] [--ortho] [--quality &lt;coarse|normal|fine&gt;] [--hover-face &lt;id&gt;]</c>.
+    /// Parses <c>[file] [--screenshot &lt;png&gt;] [--select-face &lt;id&gt;] [--view &lt;front|back|left|right|top|bottom|iso&gt;] [--ortho] [--quality &lt;coarse|normal|fine&gt;] [--hover-face &lt;id&gt;] [--window] [--language &lt;en|de&gt;]</c>.
     /// </summary>
     /// <param name="args">The command-line arguments.</param>
     /// <returns>The options.</returns>
@@ -44,6 +51,8 @@ internal sealed record AppOptions(
         ViewDirection? view = null;
         var orthographic = false;
         var quality = DisplayQuality.Normal;
+        var window = false;
+        string? language = null;
         for (var i = 0; i < args.Count; i++)
         {
             switch (args[i])
@@ -70,6 +79,17 @@ internal sealed record AppOptions(
                 case "--ortho":
                     orthographic = true;
                     break;
+                case "--window":
+                    window = true;
+                    break;
+                case "--language":
+                    language = Value(args, ++i, "--language requires a language code.") switch
+                    {
+                        var code when code.Equals("en", StringComparison.OrdinalIgnoreCase) => "en",
+                        var code when code.Equals("de", StringComparison.OrdinalIgnoreCase) => "de",
+                        _ => throw new ArgumentException("--language must be en or de.", nameof(args)),
+                    };
+                    break;
                 default:
                     file = args[i];
                     break;
@@ -81,7 +101,12 @@ internal sealed record AppOptions(
             throw new ArgumentException("--screenshot, --select-face and --hover-face require a STEP file.", nameof(args));
         }
 
-        return new AppOptions(file, screenshot, selectFace, view, orthographic, quality, hoverFace);
+        if (window && screenshot is null)
+        {
+            throw new ArgumentException("--window requires --screenshot.", nameof(args));
+        }
+
+        return new AppOptions(file, screenshot, selectFace, view, orthographic, quality, hoverFace, window, language);
     }
 
     // Names only: Enum.TryParse would also accept numbers such as "1".

@@ -42,8 +42,22 @@ public class AppOptionsTests
         Assert.Equal(7, AppOptions.Parse(["model.stp", "--hover-face", "7"]).HoverFace);
     }
 
+    [Fact]
+    public void Parse_WindowScreenshotAndLanguage()
+    {
+        var options = AppOptions.Parse(["model.stp", "--screenshot", "out.png", "--window", "--language", "EN"]);
+
+        Assert.True(options.WindowScreenshot);
+        Assert.Equal("en", options.Language);
+        Assert.False(AppOptions.Parse(["model.stp"]).WindowScreenshot);
+        Assert.Null(AppOptions.Parse(["model.stp"]).Language);
+    }
+
     [Theory]
     [InlineData("model.stp", "--hover-face", "x")]
+    [InlineData("model.stp", "--window")]
+    [InlineData("model.stp", "--language")]
+    [InlineData("model.stp", "--language", "fr")]
     [InlineData("--hover-face", "3")]
     [InlineData("model.stp", "--quality")]
     [InlineData("model.stp", "--quality", "ultra")]

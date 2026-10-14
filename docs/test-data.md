@@ -78,8 +78,8 @@ ignored. Nothing in the test suite requires them; they are for performance measu
 - Source: Siemens SiePortal, product 3VA9877-0CH72,
   <https://sieportal.siemens.com/en-ww/products-services/detail/3VA9877-0CH72> (CAD download,
   publicly accessible; 0.4 m assembly, 8 solids, 532 faces, AP214 with colours).
-- Licence: unclear (Siemens terms of use). It was committed with M3 and removed from the
-  repository on 2026-10-09; it is still in the Git history (see "Later" in `docs/roadmap.md`).
+- Licence: unclear (Siemens terms of use). It was committed with M3, removed from the
+  repository on 2026-10-09 and from the Git history before the repository went public.
 - Download it from SiePortal and save it under the name above. OCCT reports 16 "Incorrect record"
   messages for it (unit and B-spline complex types), useful for checking `--verbose` output.
 

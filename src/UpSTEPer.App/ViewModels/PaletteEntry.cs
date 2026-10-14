@@ -25,6 +25,9 @@ internal sealed record PaletteEntry(string Name, ColorRgb Color)
     /// <summary>Gets the colour as <c>#RRGGBB</c> (bindable as a brush in XAML).</summary>
     public string Hex => Color.ToHex();
 
+    /// <summary>Gets the name with the colour value, e.g. "RAL 3020 Traffic red (#C1121C)" (tooltips).</summary>
+    public string Description => Name.EndsWith(Hex, StringComparison.Ordinal) ? Name : $"{Name} ({Hex})";
+
     /// <summary>Creates an entry for a colour picked by the user.</summary>
     /// <param name="color">The colour.</param>
     /// <returns>The entry, named after its hex value.</returns>

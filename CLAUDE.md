@@ -74,6 +74,10 @@ Never reference OCCT or native types from Core. UI projects (planned) depend on 
 - P/Invokes: `upsteper_native` is loaded only by absolute path from the app directory
   (`NativeLibraryResolver`); do not add other native libraries without the same treatment.
 - Package versions only in `Directory.Packages.props` (Central Package Management).
+- App UI: colours, spacing and type sizes only from `src/UpSTEPer.App/Themes/Tokens.axaml`; icons are
+  Lucide geometries (`Themes/Icons.axaml`, regenerate with `scripts/update-icons.py`, never edit by
+  hand) drawn by the `Icon` control. Every command must stay reachable from the menu; toolbars only
+  hide labels or the inline palette in narrow windows (container queries), they never wrap.
 - C++17, OCCT naming in native code (`PascalCase` functions inside `ups::detail`), `ups_` prefix
   and `snake_case` for exported C symbols.
 - OCCT 8 deprecated the `TopTools_*`/`TDF_LabelSequence` typedefs: use the aliases in

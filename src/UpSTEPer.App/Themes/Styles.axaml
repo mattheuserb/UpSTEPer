@@ -1,0 +1,110 @@
+<!-- App-wide styles built on the tokens in Tokens.axaml. Style classes:
+     tool       toolbar Button / ToggleButton / DropDownButton: icon plus optional TextBlock.label
+     label      the text of a tool button; hidden in narrow windows (container queries in MainWindow)
+     palette    ListBox of colour swatches; the active colour gets an accent frame and a check mark
+     secondary  muted text (hints, kinds, captions)
+     header     heading of a panel or flyout section -->
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:UpSTEPer.App.Controls">
+
+  <Style Selector=":is(Button).tool">
+    <Setter Property="Padding" Value="8,5" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+  </Style>
+  <Style Selector=":is(Button).tool:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource AccentHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+  </Style>
+  <Style Selector=":is(Button).tool:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="Foreground" Value="{StaticResource TextDisabledBrush}" />
+  </Style>
+  <Style Selector="ToggleButton.tool:checked /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource AccentHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource AccentPressedBrush}" />
+  </Style>
+  <Style Selector=":is(Button).tool > StackPanel">
+    <Setter Property="Orientation" Value="Horizontal" />
+    <Setter Property="Spacing" Value="6" />
+  </Style>
+  <Style Selector=":is(Button).tool TextBlock.label">
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <!-- Separator between toolbar groups -->
+  <Style Selector="Border.toolSeparator">
+    <Setter Property="Width" Value="1" />
+    <Setter Property="Height" Value="22" />
+    <Setter Property="Margin" Value="6,0" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Background" Value="{StaticResource BorderBrush}" />
+  </Style>
+
+  <!-- Colour swatches -->
+  <Style Selector="ListBox.palette">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="ListBox.palette ListBoxItem">
+    <Setter Property="Padding" Value="2" />
+    <Setter Property="Margin" Value="1" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+  </Style>
+  <Style Selector="ListBox.palette ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+  </Style>
+  <Style Selector="ListBox.palette ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource AccentHoverBrush}" />
+  </Style>
+  <!-- A check mark on the active swatch, so it does not rely on the frame colour alone -->
+  <Style Selector="Border.selectedBadge">
+    <Setter Property="Width" Value="12" />
+    <Setter Property="Height" Value="12" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+    <Setter Property="BorderBrush" Value="White" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="HorizontalAlignment" Value="Right" />
+    <Setter Property="VerticalAlignment" Value="Bottom" />
+    <Setter Property="Margin" Value="0,0,-3,-3" />
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+  <Style Selector="Border.selectedBadge > controls|Icon">
+    <Setter Property="Width" Value="8" />
+    <Setter Property="Height" Value="8" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="ListBox.palette ListBoxItem:selected Border.selectedBadge">
+    <Setter Property="IsVisible" Value="True" />
+  </Style>
+  <Style Selector="Border.swatch">
+    <Setter Property="Width" Value="{StaticResource SwatchSize}" />
+    <Setter Property="Height" Value="{StaticResource SwatchSize}" />
+    <Setter Property="CornerRadius" Value="3" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="#80000000" />
+  </Style>
+
+  <Style Selector="TextBlock.secondary">
+    <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+  </Style>
+  <Style Selector="TextBlock.header">
+    <Setter Property="FontSize" Value="{StaticResource FontSizeGroup}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+  </Style>
+</Styles>

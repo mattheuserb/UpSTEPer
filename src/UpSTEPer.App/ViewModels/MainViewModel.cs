@@ -132,6 +132,26 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial string ProgressText { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets a value indicating whether the model tree panel is shown.</summary>
+    [ObservableProperty]
+    public partial bool IsModelPanelVisible { get; set; } = true;
+
+    /// <summary>Gets or sets a value indicating whether the line with mouse and keyboard hints is shown.</summary>
+    [ObservableProperty]
+    public partial bool ShowShortcutHints { get; set; } = true;
+
+    /// <summary>Gets or sets the number of part nodes (placements) in the model tree.</summary>
+    [ObservableProperty]
+    public partial int PartCount { get; set; }
+
+    /// <summary>Gets or sets the number of faces of the open model.</summary>
+    [ObservableProperty]
+    public partial int FaceCount { get; set; }
+
+    /// <summary>Gets or sets the number of triangles currently displayed.</summary>
+    [ObservableProperty]
+    public partial int TriangleCount { get; set; }
+
     /// <summary>Gets a value indicating whether a cancellable operation (loading, meshing) is running.</summary>
     public bool IsCancellable => _operation is not null;
 
@@ -387,6 +407,19 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         CancelCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Sets the display quality (menu entries; the toolbar binds <see cref="DisplayQuality"/> directly).</summary>
+    /// <param name="quality">The quality.</param>
+    [RelayCommand]
+    private void SetDisplayQuality(DisplayQuality quality) => DisplayQuality = quality;
+
+    /// <summary>Shows or hides the model tree panel.</summary>
+    [RelayCommand]
+    private void ToggleModelPanel() => IsModelPanelVisible = !IsModelPanelVisible;
+
+    /// <summary>Shows or hides the line with mouse and keyboard hints.</summary>
+    [RelayCommand]
+    private void ToggleShortcutHints() => ShowShortcutHints = !ShowShortcutHints;
+
     /// <summary>Switches between perspective and orthographic projection.</summary>
     [RelayCommand]
     private void ToggleProjection() => IsOrthographic = !IsOrthographic;
@@ -419,7 +452,10 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     /// <summary>Gives the selected face the selected palette colour.</summary>
     [RelayCommand(CanExecute = nameof(CanEditFace))]
     private Task ColorFaceAsync() =>
-        ApplyAsync([(ColorTarget.Of(SelectedFace!.Value), SelectedPaletteEntry.Color)], record: true);
+        ApplyAsync(
+            [(ColorTarget.Of(SelectedFace!.Value), SelectedPaletteEntry.Color)],
+            record: true,
+            $"Face colour applied: {SelectedPaletteEntry.Name}");
 
     /// <summary>Colours the bodies of the tree selection, or the body of the selected face.</summary>
     [RelayCommand(CanExecute = nameof(CanEditBodies))]
@@ -432,13 +468,19 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             return Task.CompletedTask;
         }
 
-        return ApplyAsync([.. bodies.Select(b => (ColorTarget.Of(b), (ColorRgb?)SelectedPaletteEntry.Color))], record: true);
+        var entry = SelectedPaletteEntry;
+        return ApplyAsync(
+            [.. bodies.Select(b => (ColorTarget.Of(b), (ColorRgb?)entry.Color))],
+            record: true,
+            bodies.Count == 1
+                ? $"Body colour applied: {entry.Name}"
+                : string.Create(CultureInfo.CurrentCulture, $"Body colour applied to {bodies.Count} bodies: {entry.Name}"));
     }
 
     /// <summary>Removes the selected face's own colour, so it shows its body colour again.</summary>
     [RelayCommand(CanExecute = nameof(CanEditFace))]
     private Task ClearFaceColorAsync() =>
-        ApplyAsync([(ColorTarget.Of(SelectedFace!.Value), null)], record: true);
+        ApplyAsync([(ColorTarget.Of(SelectedFace!.Value), null)], record: true, "Face colour removed; the face shows its body colour.");
 
     /// <summary>Reverts the last colour change (one step, possibly several bodies).</summary>
     [RelayCommand(CanExecute = nameof(CanUndo))]
@@ -477,7 +519,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             : [];
     }
 
-    private async Task ApplyAsync(IReadOnlyList<(ColorTarget Target, ColorRgb? Color)> changes, bool record)
+    // successStatus: the status after success; null describes the change technically (undo/redo).
+    private async Task ApplyAsync(IReadOnlyList<(ColorTarget Target, ColorRgb? Color)> changes, bool record, string? successStatus = null)
     {
         if (_session is null || Scene is not { } scene)
         {
@@ -509,9 +552,9 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
             Scene = scene.WithFaceColors(face => face.Value < faceColors.Length ? faceColors[face.Value] : null);
             IsDirty = true;
-            Status = changes.Count == 1
+            Status = successStatus ?? (changes.Count == 1
                 ? $"{changes[0].Target}: {changes[0].Color?.ToHex() ?? "colour removed"}"
-                : $"{changes.Count} targets changed";
+                : $"{changes.Count} targets changed");
             UpdateSelectionInfo();
         }
         catch (Exception exception) when (exception is GeometryOperationException or ArgumentException)
@@ -557,7 +600,16 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     partial void OnHoveredFaceChanged(FaceId? value) =>
         HoverInfo = value is { } face ? $"Face {face.Value}: {Scene?.GetFaceColor(face)?.ToHex() ?? "no colour"}" : string.Empty;
 
-    partial void OnSceneChanged(SceneData? value) => UpdateTitle();
+    partial void OnSceneChanged(SceneData? value)
+    {
+        TriangleCount = value?.Mesh.TriangleCount ?? 0;
+        UpdateTitle();
+    }
+
+    partial void OnModelTreeChanged(IReadOnlyList<ModelNode> value) => PartCount = CountParts(value);
+
+    private static int CountParts(IEnumerable<ModelNode> nodes) =>
+        nodes.Sum(node => (node.Kind == ModelNodeKind.Part ? 1 : 0) + CountParts(node.Children));
 
     private void UpdateHighlight()
     {
@@ -627,6 +679,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         _history.Clear();
         _faceBodies = model.FaceBodies;
+        FaceCount = model.FaceBodies.Length;
         SelectedFace = null;
         SelectedNode = null;
         HoveredFace = null;

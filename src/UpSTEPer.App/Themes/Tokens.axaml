@@ -1,0 +1,65 @@
+<!-- Design tokens: the only place for colours, spacing and type sizes of the app's own UI.
+     Views reference these keys; the 3D view's colours live in UpSTEPer.Rendering (SceneData,
+     MeshRenderer) because the renderer does not depend on Avalonia. -->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="using:System">
+  <!-- Surfaces and text -->
+  <Color x:Key="WindowColor">#F5F6F8</Color>
+  <Color x:Key="PanelColor">#FFFFFF</Color>
+  <Color x:Key="SubtleColor">#EEF1F4</Color>
+  <Color x:Key="BorderColor">#D5DAE0</Color>
+  <Color x:Key="TextPrimaryColor">#20252B</Color>
+  <Color x:Key="TextSecondaryColor">#606A75</Color>
+  <Color x:Key="TextDisabledColor">#939BA4</Color>
+
+  <!-- Interaction -->
+  <Color x:Key="AccentColor">#1769AA</Color>
+  <Color x:Key="AccentHoverColor">#DCEEFF</Color>
+  <Color x:Key="AccentPressedColor">#0E4F85</Color>
+
+  <!-- Status: always shown together with an icon and text, never by colour alone -->
+  <Color x:Key="SuccessColor">#16803D</Color>
+  <Color x:Key="WarningColor">#B54708</Color>
+  <Color x:Key="ErrorColor">#B42318</Color>
+  <Color x:Key="InfoColor">#1769AA</Color>
+
+  <SolidColorBrush x:Key="WindowBrush" Color="{StaticResource WindowColor}" />
+  <SolidColorBrush x:Key="PanelBrush" Color="{StaticResource PanelColor}" />
+  <SolidColorBrush x:Key="SubtleBrush" Color="{StaticResource SubtleColor}" />
+  <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+  <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
+  <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
+  <SolidColorBrush x:Key="TextDisabledBrush" Color="{StaticResource TextDisabledColor}" />
+  <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+  <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}" />
+  <SolidColorBrush x:Key="AccentPressedBrush" Color="{StaticResource AccentPressedColor}" />
+  <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
+  <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
+  <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}" />
+  <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}" />
+
+  <!-- FluentTheme accent (checked toggle buttons, focus, selection in lists) -->
+  <Color x:Key="SystemAccentColor">#1769AA</Color>
+  <Color x:Key="SystemAccentColorDark1">#0E4F85</Color>
+  <Color x:Key="SystemAccentColorLight1">#3D86C4</Color>
+
+  <!-- Spacing (DIP) -->
+  <sys:Double x:Key="SpaceXxs">2</sys:Double>
+  <sys:Double x:Key="SpaceXs">4</sys:Double>
+  <sys:Double x:Key="SpaceS">8</sys:Double>
+  <sys:Double x:Key="SpaceM">12</sys:Double>
+  <sys:Double x:Key="SpaceL">16</sys:Double>
+  <sys:Double x:Key="SpaceXl">24</sys:Double>
+
+  <!-- Type sizes (DIP) -->
+  <sys:Double x:Key="FontSizeTitle">16</sys:Double>
+  <sys:Double x:Key="FontSizeGroup">13</sys:Double>
+  <sys:Double x:Key="FontSizeBody">13</sys:Double>
+  <sys:Double x:Key="FontSizeTable">12</sys:Double>
+  <sys:Double x:Key="FontSizeStatus">12</sys:Double>
+
+  <!-- Icons -->
+  <sys:Double x:Key="IconSize">16</sys:Double>
+  <sys:Double x:Key="SwatchSize">20</sys:Double>
+</ResourceDictionary>

@@ -8,6 +8,7 @@ components. Binary distributions must include this file and the referenced licen
 | [Open CASCADE Technology](https://dev.opencascade.org/) 8.x | Geometry kernel, STEP I/O | LGPL-2.1 with Open CASCADE exception | Dynamic, unmodified |
 | [FreeType](https://freetype.org/) (OCCT dependency) | Font rendering in OCCT | FreeType License (BSD-style) | Dynamic |
 | [System.CommandLine](https://github.com/dotnet/command-line-api) | CLI parsing | MIT | NuGet |
+| [Lucide](https://lucide.dev/) 1.56.0 | Icons in the app (converted to geometry resources, `src/UpSTEPer.App/Themes/Icons.axaml`) | ISC (`src/UpSTEPer.App/Themes/Lucide-LICENSE.txt`) | Embedded in the app assembly |
 | [xUnit.net](https://xunit.net/) | Tests only, not distributed | Apache-2.0 | NuGet |
 
 Planned: Avalonia (MIT), Silk.NET (MIT), CommunityToolkit.Mvvm (MIT), ACadSharp (MIT).

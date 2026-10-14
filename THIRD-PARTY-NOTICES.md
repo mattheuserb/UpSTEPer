@@ -40,6 +40,7 @@ must ship those files.
 | [zlib](https://zlib.net/) | Compression | zlib License |
 | [bzip2](https://sourceware.org/bzip2/) (FreeType dependency) | Compression | bzip2 License (BSD-style) |
 | [Brotli](https://github.com/google/brotli) (FreeType dependency) | Compression | MIT |
+| Microsoft Visual C++ runtime (`msvcp140.dll`, `vcruntime140*.dll`; Windows only) | C++ runtime of the native libraries, shipped next to them | Distributable Code under the Microsoft Visual Studio licence terms |
 
 Portions of this software are copyright © The FreeType Project (www.freetype.org). All rights
 reserved.

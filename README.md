@@ -100,6 +100,7 @@ Details: [docs/architecture.md](docs/architecture.md) · Decisions: [docs/adr/](
 | [docs/roadmap.md](docs/roadmap.md) | Milestones and open work |
 | [docs/adr/](docs/adr/) | Why things are the way they are |
 | [docs/test-data.md](docs/test-data.md) | Test files and what they cover |
+| [docs/packaging.md](docs/packaging.md) | Distribution folder and Windows installer |
 | [CLAUDE.md](CLAUDE.md) | Working on this repo with Claude Code (also a good human cheat-sheet) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Workflow, conventions, PR checklist |
 

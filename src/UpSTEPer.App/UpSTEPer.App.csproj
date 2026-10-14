@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <Description>UpSTEPer desktop application (Avalonia).</Description>
-    <AssemblyName>UpSTEPer</AssemblyName>
+    <AssemblyName>UpSTEPer.Desktop</AssemblyName>
     <RootNamespace>UpSTEPer.App</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>

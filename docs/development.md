@@ -31,7 +31,7 @@ Keep `VCPKG_ROOT` on a short path without spaces. The presets build vcpkg ports 
 `x64-windows-release` triplet (dynamic, release only), which halves the OCCT build time.
 
 The MSVC runtime (`vcruntime140*.dll`, `msvcp140*.dll`) is intentionally not copied to
-`artifacts/native`; end users need the VC++ Redistributable (to be handled by the installer).
+`artifacts/native`; `scripts/publish.ps1` adds it to the distribution (see `docs/packaging.md`).
 
 **Manually (all platforms):**
 

@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using UpSTEPer.App.Controls;
 using UpSTEPer.App.ViewModels;
@@ -98,10 +99,26 @@ internal sealed partial class MainWindow : Window
         base.OnDataContextChanged(e);
     }
 
-    // The splitter sets an absolute width on the panel column; hiding the panel must free it.
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(MainViewModel.IsModelPanelVisible) || _viewModel is null)
+        if (_viewModel is null)
+        {
+            return;
+        }
+
+        // Typing starts right away; the suggested name is selected so it can be overwritten.
+        if (e.PropertyName == nameof(MainViewModel.IsEditingFavourite) && _viewModel.IsEditingFavourite)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                FavouriteNameBox.Focus();
+                FavouriteNameBox.SelectAll();
+            });
+            return;
+        }
+
+        // The splitter sets an absolute width on the panel column; hiding the panel must free it.
+        if (e.PropertyName != nameof(MainViewModel.IsModelPanelVisible))
         {
             return;
         }

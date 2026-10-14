@@ -1,0 +1,54 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:UpSTEPer.App.ViewModels"
+        xmlns:controls="using:UpSTEPer.App.Controls"
+        x:Class="UpSTEPer.App.Views.AboutWindow"
+        x:ClassModifier="internal"
+        x:DataType="vm:AboutInfo"
+        Title="About UpSTEPer"
+        Width="560" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource PanelBrush}">
+  <Window.Styles>
+    <Style Selector="Grid.info > TextBlock">
+      <Setter Property="Margin" Value="0,3" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style Selector="Grid.info > TextBlock.label">
+      <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+      <Setter Property="Margin" Value="0,3,16,3" />
+    </Style>
+  </Window.Styles>
+  <DockPanel Margin="20,16">
+    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,16,0,0">
+      <Button Content="Copy info" Click="OnCopyClick" ToolTip.Tip="Copies these details, e.g. for a bug report" />
+      <Button Content="Open log folder" Click="OnOpenLogsClick" />
+      <Button Content="Third-party notices" Click="OnOpenNoticesClick" />
+      <Button Content="Close" IsDefault="True" IsCancel="True" Click="OnCloseClick" />
+    </StackPanel>
+    <StackPanel Spacing="12">
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <controls:Icon Data="{StaticResource Icon.Box}" Width="36" Height="36" Foreground="{StaticResource AccentBrush}" />
+        <StackPanel VerticalAlignment="Center">
+          <TextBlock Text="UpSTEPer" FontSize="20" FontWeight="SemiBold" />
+          <TextBlock Classes="secondary" Text="View, colour, repair and convert STEP CAD models" />
+        </StackPanel>
+      </StackPanel>
+      <Grid Classes="info" ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+        <TextBlock Grid.Row="0" Classes="label" Text="Version" />
+        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AppVersion}" FontWeight="SemiBold" />
+        <TextBlock Grid.Row="1" Classes="label" Text="Geometry" />
+        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding GeometryVersion}" />
+        <TextBlock Grid.Row="2" Classes="label" Text="Runtime" />
+        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Runtime}" />
+        <TextBlock Grid.Row="3" Classes="label" Text="System" />
+        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding OperatingSystem}" />
+        <TextBlock Grid.Row="4" Classes="label" Text="Logs" />
+        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding LogDirectory}" />
+        <TextBlock Grid.Row="5" Classes="label" Text="Licence" />
+        <TextBlock Grid.Row="5" Grid.Column="1"
+                   Text="MIT. Uses Open CASCADE Technology (LGPL 2.1 with exception), Avalonia, Lucide icons and other components; see the third-party notices." />
+      </Grid>
+    </StackPanel>
+  </DockPanel>
+</Window>

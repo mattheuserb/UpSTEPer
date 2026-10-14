@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using UpSTEPer.App.Logging;
+using UpSTEPer.App.Settings;
 using UpSTEPer.App.ViewModels;
 using UpSTEPer.Core;
 using UpSTEPer.Occt;
@@ -16,8 +17,9 @@ internal static class AppServices
     /// </summary>
     /// <param name="logDirectory">Where log files are written.</param>
     /// <param name="logToConsole">Also log to stderr (automation, CI).</param>
+    /// <param name="settingsPath">The settings file; <see langword="null"/> for <see cref="SettingsStore.DefaultPath"/>.</param>
     /// <returns>The provider; dispose it at exit.</returns>
-    public static ServiceProvider Build(string logDirectory, bool logToConsole) =>
+    public static ServiceProvider Build(string logDirectory, bool logToConsole, string? settingsPath = null) =>
         new ServiceCollection()
             .AddLogging(logging =>
             {
@@ -32,6 +34,7 @@ internal static class AppServices
                 }
             })
             .AddSingleton<IStepReader, OcctStepReader>()
+            .AddSingleton(services => new SettingsStore(settingsPath ?? SettingsStore.DefaultPath, services.GetService<ILogger<SettingsStore>>()))
             .AddTransient<MainViewModel>()
             .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
 }

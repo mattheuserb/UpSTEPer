@@ -13,7 +13,7 @@ public sealed class AppServicesTests : IDisposable
     [Fact]
     public void Build_ResolvesReaderAndViewModel_AndLogsToFile()
     {
-        using (var services = AppServices.Build(_directory, logToConsole: false))
+        using (var services = AppServices.Build(_directory, logToConsole: false, Path.Combine(_directory, "settings.json")))
         {
             Assert.IsType<OcctStepReader>(services.GetRequiredService<IStepReader>());
             using var viewModel = services.GetRequiredService<MainViewModel>();

@@ -53,6 +53,10 @@ Linux and macOS from CI-built binaries.
 - [x] UI redesign, check and repair dialog (2026-10-14): summary of the current report, status per
   part as icon + text + colour (changed is not success by itself, unchanged not a failure), one-line
   findings / changes with details of the selected part, usable down to 560×440
+- [x] Settings file (`settings.json` next to the logs), File → Recent files (last 5 opened), Help → About
+  (versions, system, log folder, third-party notices) (2026-10-14)
+- [ ] Multi-language UI: English and German, switchable at run time (View → Language)
+- [ ] More RAL colours: searchable RAL Classic list in the colour panel; named favourite colours
 
 ## M2 — Colouring
 

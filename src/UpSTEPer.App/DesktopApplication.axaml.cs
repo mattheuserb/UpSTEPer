@@ -43,7 +43,9 @@ internal sealed partial class DesktopApplication : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Automation mode (screenshot) also logs to stderr, so CI shows GL and OCCT diagnostics.
-            var services = AppServices.Build(FileLoggerProvider.DefaultDirectory, logToConsole: _options.ScreenshotPath is not null);
+            // Screenshot runs (automation, CI) must not add their file to the user's recent files.
+            var settingsPath = _options.ScreenshotPath is null ? null : Path.Combine(Path.GetTempPath(), $"upsteper-settings-{Guid.NewGuid():N}.json");
+            var services = AppServices.Build(FileLoggerProvider.DefaultDirectory, logToConsole: _options.ScreenshotPath is not null, settingsPath);
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
             var occtMessages = OcctMessageRouter.TryStart(loggerFactory.CreateLogger("OCCT"));
             LogUnhandledExceptions(loggerFactory.CreateLogger<DesktopApplication>());

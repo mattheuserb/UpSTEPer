@@ -12,7 +12,7 @@ public class RepairWithOcctTests
     [Fact]
     public async Task RepairThenUndo_RestoresTheOriginalModel()
     {
-        RequireNativeLibrary();
+        NativeLibrary.Require();
         using var main = new MainViewModel(new OcctStepReader());
         Assert.True(await main.LoadAsync(_damagedParts));
         Assert.Equal(21, CountFaces(main));
@@ -34,18 +34,6 @@ public class RepairWithOcctTests
 
     // Faces of the scene: the highest face id in the mesh + 1.
     private static int CountFaces(MainViewModel main) => main.Scene!.Mesh.TriangleFaceIds.ToArray().Max() + 1;
-
-    private static void RequireNativeLibrary()
-    {
-        const string Reason = "upsteper_native not built; see docs/development.md.";
-        if (Environment.GetEnvironmentVariable("UPS_REQUIRE_NATIVE") == "1")
-        {
-            Assert.True(OcctRuntime.IsAvailable, Reason);
-            return;
-        }
-
-        Assert.SkipUnless(OcctRuntime.IsAvailable, Reason);
-    }
 
     private static string FindRepoRoot()
     {

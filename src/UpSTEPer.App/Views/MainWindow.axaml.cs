@@ -48,6 +48,7 @@ internal sealed partial class MainWindow : Window
         RepairCommand = new AsyncRelayCommand(RepairAsync);
         ExportDxfCommand = new AsyncRelayCommand(ExportDxfAsync);
         ShowShortcutsCommand = new AsyncRelayCommand(() => new ShortcutsWindow().ShowDialog(this));
+        ShowAboutCommand = new AsyncRelayCommand(() => new AboutWindow { DataContext = AboutInfo.ForThisApp() }.ShowDialog(this));
         OpenCustomColourCommand = new RelayCommand(OpenCustomColour);
         ExitCommand = new RelayCommand(Close);
         InitializeComponent();
@@ -70,6 +71,9 @@ internal sealed partial class MainWindow : Window
 
     /// <summary>Gets the command that lists all mouse and keyboard shortcuts (F1).</summary>
     public ICommand ShowShortcutsCommand { get; }
+
+    /// <summary>Gets the command that shows version and system information (Help → About).</summary>
+    public ICommand ShowAboutCommand { get; }
 
     /// <summary>Gets the command that opens the colour panel with the custom colour picker expanded.</summary>
     public ICommand OpenCustomColourCommand { get; }

@@ -46,3 +46,8 @@ ACadSharp can also write DWG; enabling it later is a small change if ever needed
   edges running between two visible ones).
 - Circles seen edge-on come out of HLR as ellipses with a vanishing minor axis, which DXF readers
   reject; the native layer emits them as lines.
+- HLR returns many straight edges as B-splines (mostly degree-1 approximations with 15 poles).
+  The native layer writes a B-spline or Bezier edge as a line when all its poles lie on the chord
+  (within 1e-6 mm; the curve stays inside the convex hull of its poles) and it does not run back
+  along itself, and any curve sampled to just two points as well (2026-10-14). Cable gland, three
+  views: 204 of 482 DXF entities were polylines, now 31; the rest are genuinely curved splines.

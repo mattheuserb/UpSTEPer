@@ -94,9 +94,9 @@ Linux and macOS from CI-built binaries.
 - [x] Default views front, top, left; isometric only on request (`--views ...,iso`; decision 2026-10-13)
 - [ ] Optional (opt-in only): other scales, frame/title block; section views, dimensions
 - [x] Manual check of exported DXF in a commercial CAD: not needed (decision 2026-10-13)
-- [ ] Fewer polylines from HLR: also exact models give some (cable gland: about 200 of 400 curves),
-  e.g. edge-on circles as straight 15-point polylines; classify straight ones as lines, find out
-  where HLR returns approximations
+- [x] Fewer polylines from HLR: HLR returns many straight edges as B-splines (degree-1, 15 poles);
+  straight ones (poles on the chord) are written as lines. Cable gland, three views: polylines in
+  the DXF 204 → 31, the rest are genuinely curved (2026-10-14)
 
 ## M4 — Repair, tiers 1–2
 

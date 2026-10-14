@@ -30,6 +30,26 @@ public class ProjectionTests(ITestOutputHelper output)
         Assert.All(view.Curves.OfType<EllipseCurve>(), e => Assert.InRange(e.Ratio, 1e-6, 1.0));
     }
 
+    [Theory]
+    [InlineData(ViewDirection.Front)]
+    [InlineData(ViewDirection.Top)]
+    [InlineData(ViewDirection.Left)]
+    [InlineData(ViewDirection.Iso)]
+    public void Project_CableGland_ReturnsStraightSplinesAsLines(ViewDirection direction)
+    {
+        TestFiles.RequireNativeLibrary();
+        using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
+
+        var view = document.Project(direction, ProjectionOptions.Default);
+
+        // HLR returns many straight edges as B-splines (degree-1 approximations with 15 poles); before
+        // they were classified, about two thirds of all curves in these views were polylines.
+        var polylines = view.Curves.OfType<PolylineCurve>().ToList();
+        output.WriteLine($"{direction}: {polylines.Count} polylines of {view.Curves.Count} curves");
+        Assert.DoesNotContain(polylines, IsStraight);
+        Assert.InRange(polylines.Count, 0, view.Curves.Count / 5);
+    }
+
     [Fact]
     public void Project_ViewsAgreeOnSharedDimensions()
     {
@@ -65,5 +85,13 @@ public class ProjectionTests(ITestOutputHelper output)
         using var document = _reader.Load(TestFiles.CableGland, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Throws<ArgumentException>(() => document.Project(ViewDirection.Front, ProjectionOptions.Default with { Deflection = 0 }));
+    }
+
+    private static bool IsStraight(PolylineCurve polyline)
+    {
+        var start = polyline.Points[0];
+        var end = polyline.Points[^1];
+        var length = Math.Sqrt(((end.X - start.X) * (end.X - start.X)) + ((end.Y - start.Y) * (end.Y - start.Y)));
+        return length > 1e-9 && polyline.Points.All(p => Math.Abs(((end.X - start.X) * (p.Y - start.Y)) - ((end.Y - start.Y) * (p.X - start.X))) / length <= 1e-6);
     }
 }

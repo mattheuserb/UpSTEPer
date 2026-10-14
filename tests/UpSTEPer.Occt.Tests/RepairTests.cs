@@ -58,8 +58,7 @@ public sealed class RepairTests : IDisposable
 
         document.Repair(new RepairOptions(RepairSteps.Canonical), cancellationToken: TestContext.Current.CancellationToken);
 
-        // Circles and arcs of the converted edges now come out as circles, arcs or ellipses. (Straight
-        // polylines are a separate matter: HLR returns some edge-on circles as approximations.)
+        // Circles and arcs of the converted edges now come out as circles, arcs or ellipses.
         var view = document.Project(direction, ProjectionOptions.Default);
         Assert.DoesNotContain(view.Curves, IsCurvedPolyline);
         Assert.Contains(view.Curves, c => c is CircleCurve or ArcCurve or EllipseCurve);

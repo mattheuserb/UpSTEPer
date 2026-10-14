@@ -183,8 +183,12 @@ Windows and Linux, CLI only for macOS.
 
 - [ ] Release workflow on tags `v*`: self-contained `dotnet publish` per platform with the native
   library, OCCT and its dependencies, the vcpkg `copyright` files and this notices file
-- [ ] Windows: ZIP (C++ runtime shipped or documented as prerequisite); Linux: tar.gz; macOS: CLI
-  only at first (the app is unsigned and its 3D view unverified)
+- [x] Windows installer (Inno Setup, `scripts/build-installer.ps1`, `docs/packaging.md`): per user
+  without admin rights or for all users, "Open with" for .stp/.step, optional PATH entry for the
+  CLI, MSVC runtime app-local; 45 MB. Silent install/uninstall tested locally (2026-10-15)
+- [ ] Windows ZIP; Linux: tar.gz; macOS: CLI only at first (the app is unsigned and its 3D view
+  unverified)
+- [ ] Manual installer test in Windows Sandbox and as all-users installation
 - [ ] Smoke test of the packages on a clean machine (Windows Sandbox, fresh Linux container)
 - [ ] Later: installer (Velopack), AppImage, code signing (Windows SmartScreen, macOS notarisation)
 

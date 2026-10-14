@@ -25,6 +25,8 @@ dotnet run --project src/UpSTEPer.Cli -- repair <in.stp> <out.stp> [--steps fix,
 dotnet run --project src/UpSTEPer.Cli -- export-dxf <in.stp> <out.dxf> [--views front,top,left]  # 2D views; add ",iso" for the isometric one
 dotnet run --project src/UpSTEPer.App -- <file.stp>       # desktop viewer
 dotnet run --project src/UpSTEPer.App -- <file.stp> --screenshot out.png [--select-face N] [--view front|top|iso|...] [--ortho] [--quality coarse|normal|fine] [--hover-face N] [--window] [--language en|de]   # render 1 frame to PNG and exit; --window: whole window
+./scripts/publish.ps1 [-Rid win-x64] [-Version 0.1.0-alpha]   # self-contained app + CLI + native libs → artifacts/publish/<rid>
+./scripts/build-installer.ps1 [-Version ...] [-SkipPublish]      # Windows installer (Inno Setup 6) → artifacts/installer; docs/packaging.md
 ./scripts/update-screenshots.ps1   # regenerate docs/images (README pictures) after visible UI changes
 
 # Native bridge (needs C++ toolchain, CMake >= 3.24, Ninja, VCPKG_ROOT) — see docs/development.md
@@ -43,7 +45,7 @@ rather than claiming those tests pass; CI (`.github/workflows/ci.yml`) is the so
 | `src/UpSTEPer.Core` | Domain types (`ColorRgb`, `FaceId`, `MeshData`, ...) and interfaces (`IStepReader`, `IStepDocument`) | BCL only |
 | `src/UpSTEPer.Occt` | Implements Core via P/Invoke (`Native/`) | Core |
 | `src/UpSTEPer.Rendering` | OpenGL renderer (Silk.NET), `OrbitCamera`, `SceneData`; no UI framework | Core |
-| `src/UpSTEPer.App` | Avalonia desktop app (MVVM), `ModelView` hosts the renderer | Core, Occt, Rendering |
+| `src/UpSTEPer.App` | Avalonia desktop app (MVVM), `ModelView` hosts the renderer; assembly/exe `UpSTEPer.Desktop` | Core, Occt, Rendering |
 | `src/UpSTEPer.Cli` | Composition root + commands | Core, Occt |
 | `native/` | C++ facade over OCCT, public header `native/include/upsteper/upsteper.h` | OCCT |
 | `tests/*` | xUnit v3 tests, one project per production project | project under test |

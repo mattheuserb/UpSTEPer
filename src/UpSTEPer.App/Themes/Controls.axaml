@@ -18,4 +18,39 @@
       </ControlTemplate>
     </Setter>
   </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type controls:StatusBadge}" TargetType="controls:StatusBadge">
+    <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <controls:Icon x:Name="PART_Icon" Foreground="{TemplateBinding Foreground}" />
+          <TextBlock Text="{TemplateBinding Text}" Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center" />
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+    <!-- Unchanged: neutral info icon; the status pseudo-classes replace icon and colour. -->
+    <Style Selector="^ /template/ controls|Icon#PART_Icon">
+      <Setter Property="Data" Value="{StaticResource Icon.Info}" />
+    </Style>
+    <Style Selector="^:ok">
+      <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+      <Style Selector="^ /template/ controls|Icon#PART_Icon">
+        <Setter Property="Data" Value="{StaticResource Icon.CircleCheck}" />
+      </Style>
+    </Style>
+    <Style Selector="^:warning">
+      <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+      <Style Selector="^ /template/ controls|Icon#PART_Icon">
+        <Setter Property="Data" Value="{StaticResource Icon.TriangleAlert}" />
+      </Style>
+    </Style>
+    <Style Selector="^:error">
+      <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
+      <Style Selector="^ /template/ controls|Icon#PART_Icon">
+        <Setter Property="Data" Value="{StaticResource Icon.CircleX}" />
+      </Style>
+    </Style>
+  </ControlTheme>
 </ResourceDictionary>

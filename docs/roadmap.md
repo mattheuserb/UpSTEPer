@@ -50,7 +50,9 @@ Linux and macOS from CI-built binaries.
   (narrow windows: icons only, palette in the colour panel), colour panel with active colour,
   right-click menu in the 3D view, collapsible model panel, status bar with counts, optional hint
   line, keyboard shortcut list (F1); design tokens and Lucide icons. Selection stays orange (#FF8C1A)
-- [ ] UI redesign, check and repair dialog: summary first, status per part, compact before/after
+- [x] UI redesign, check and repair dialog (2026-10-14): summary of the current report, status per
+  part as icon + text + colour (changed is not success by itself, unchanged not a failure), one-line
+  findings / changes with details of the selected part, usable down to 560×440
 
 ## M2 — Colouring
 

@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- UI texts. Strings.resx is English (the neutral language), Strings.de.resx German; every key
+     must exist in both (LocalizationTests). Placeholders {0}, {1} ... are filled with the current
+     regional number format. -->
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="About_Copy" xml:space="preserve"><value>Copy info</value></data>
+  <data name="About_Geometry" xml:space="preserve"><value>Geometry</value></data>
+  <data name="About_Licence" xml:space="preserve"><value>Licence</value></data>
+  <data name="About_LicenceText" xml:space="preserve"><value>MIT. Uses Open CASCADE Technology (LGPL 2.1 with exception), Avalonia, Lucide icons and other components; see the third-party notices.</value></data>
+  <data name="About_Logs" xml:space="preserve"><value>Logs</value></data>
+  <data name="About_Notices" xml:space="preserve"><value>Third-party notices</value></data>
+  <data name="About_OpenLogs" xml:space="preserve"><value>Open log folder</value></data>
+  <data name="About_Runtime" xml:space="preserve"><value>Runtime</value></data>
+  <data name="About_System" xml:space="preserve"><value>System</value></data>
+  <data name="About_Tagline" xml:space="preserve"><value>View, colour, repair and convert STEP CAD models</value></data>
+  <data name="About_TipCopy" xml:space="preserve"><value>Copies these details, e.g. for a bug report</value></data>
+  <data name="About_Title" xml:space="preserve"><value>About UpSTEPer</value></data>
+  <data name="About_Version" xml:space="preserve"><value>Version</value></data>
+  <data name="Changes_ColourConflicts_Many" xml:space="preserve"><value>{0:N0} colour conflicts</value></data>
+  <data name="Changes_ColourConflicts_One" xml:space="preserve"><value>{0:N0} colour conflict</value></data>
+  <data name="Changes_ExactEdges_Many" xml:space="preserve"><value>{0:N0} exact edges</value></data>
+  <data name="Changes_ExactEdges_One" xml:space="preserve"><value>{0:N0} exact edge</value></data>
+  <data name="Changes_ExactSurfaces_Many" xml:space="preserve"><value>{0:N0} exact surfaces</value></data>
+  <data name="Changes_ExactSurfaces_One" xml:space="preserve"><value>{0:N0} exact surface</value></data>
+  <data name="Changes_Faces" xml:space="preserve"><value>Faces</value></data>
+  <data name="Changes_FreeEdges" xml:space="preserve"><value>Free edges</value></data>
+  <data name="Changes_Invalid" xml:space="preserve"><value>Invalid</value></data>
+  <data name="Changes_MaxDeviation" xml:space="preserve"><value>max. deviation {0} mm</value></data>
+  <data name="Changes_None" xml:space="preserve"><value>No changes</value></data>
+  <data name="Changes_Skipped" xml:space="preserve"><value>a step made it worse and was skipped</value></data>
+  <data name="Changes_Solids" xml:space="preserve"><value>Solids</value></data>
+  <data name="Changes_StepFailed" xml:space="preserve"><value>a step failed</value></data>
+  <data name="Colour_Active" xml:space="preserve"><value>Active colour</value></data>
+  <data name="Colour_ApplyTo" xml:space="preserve"><value>Apply to</value></data>
+  <data name="Colour_Custom" xml:space="preserve"><value>Custom colour</value></data>
+  <data name="Colour_Palette" xml:space="preserve"><value>Palette</value></data>
+  <data name="Colour_Use" xml:space="preserve"><value>Use colour</value></data>
+  <data name="Command_ColourBody" xml:space="preserve"><value>Colour body</value></data>
+  <data name="Command_ColourFace" xml:space="preserve"><value>Colour face</value></data>
+  <data name="Command_Edges" xml:space="preserve"><value>Edges</value></data>
+  <data name="Command_ExportDxf" xml:space="preserve"><value>Export DXF...</value></data>
+  <data name="Command_Fit" xml:space="preserve"><value>Fit model</value></data>
+  <data name="Command_Open" xml:space="preserve"><value>Open STEP...</value></data>
+  <data name="Command_Orthographic" xml:space="preserve"><value>Orthographic</value></data>
+  <data name="Command_Quality" xml:space="preserve"><value>Quality</value></data>
+  <data name="Command_Redo" xml:space="preserve"><value>Redo</value></data>
+  <data name="Command_RemoveFaceColour" xml:space="preserve"><value>Remove face colour</value></data>
+  <data name="Command_Repair" xml:space="preserve"><value>Repair...</value></data>
+  <data name="Command_SaveAs" xml:space="preserve"><value>Save as...</value></data>
+  <data name="Command_Undo" xml:space="preserve"><value>Undo</value></data>
+  <data name="Command_View" xml:space="preserve"><value>View</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Common_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Common_DetailsFor" xml:space="preserve"><value>Details:</value></data>
+  <data name="Common_No" xml:space="preserve"><value>No</value></data>
+  <data name="Common_Yes" xml:space="preserve"><value>Yes</value></data>
+  <data name="Detail_Changed" xml:space="preserve"><value>Changed</value></data>
+  <data name="Detail_ColourConflicts" xml:space="preserve"><value>Colour conflicts</value></data>
+  <data name="Detail_ExactEdges" xml:space="preserve"><value>Exact edges</value></data>
+  <data name="Detail_ExactSurfaces" xml:space="preserve"><value>Exact surfaces</value></data>
+  <data name="Detail_Faces" xml:space="preserve"><value>Faces</value></data>
+  <data name="Detail_FailedChecks" xml:space="preserve"><value>Failed sub-checks</value></data>
+  <data name="Detail_FreeEdges" xml:space="preserve"><value>Free edges</value></data>
+  <data name="Detail_Invalid" xml:space="preserve"><value>Invalid sub-shapes</value></data>
+  <data name="Detail_MaxDeviation" xml:space="preserve"><value>Max. deviation (mm)</value></data>
+  <data name="Detail_Mergeable" xml:space="preserve"><value>Mergeable faces</value></data>
+  <data name="Detail_SmallEdges" xml:space="preserve"><value>Small edges</value></data>
+  <data name="Detail_Solids" xml:space="preserve"><value>Solids</value></data>
+  <data name="Detail_SplineEdges" xml:space="preserve"><value>Spline edges (exact possible)</value></data>
+  <data name="Detail_SplineFaces" xml:space="preserve"><value>Spline faces (exact possible)</value></data>
+  <data name="Detail_StepFailed" xml:space="preserve"><value>Step failed</value></data>
+  <data name="Detail_StepSkipped" xml:space="preserve"><value>Step skipped (worse)</value></data>
+  <data name="DisplayQuality_Coarse" xml:space="preserve"><value>Coarse</value></data>
+  <data name="DisplayQuality_Fine" xml:space="preserve"><value>Fine</value></data>
+  <data name="DisplayQuality_Normal" xml:space="preserve"><value>Normal</value></data>
+  <data name="Findings_CanonicalEdges_Many" xml:space="preserve"><value>{0:N0} spline edges can be exact</value></data>
+  <data name="Findings_CanonicalEdges_One" xml:space="preserve"><value>{0:N0} spline edge can be exact</value></data>
+  <data name="Findings_CanonicalFaces_Many" xml:space="preserve"><value>{0:N0} spline faces can be exact</value></data>
+  <data name="Findings_CanonicalFaces_One" xml:space="preserve"><value>{0:N0} spline face can be exact</value></data>
+  <data name="Findings_FailedChecks_Many" xml:space="preserve"><value>{0:N0} sub-checks failed</value></data>
+  <data name="Findings_FailedChecks_One" xml:space="preserve"><value>{0:N0} sub-check failed</value></data>
+  <data name="Findings_FreeEdges_Many" xml:space="preserve"><value>{0:N0} free edges</value></data>
+  <data name="Findings_FreeEdges_One" xml:space="preserve"><value>{0:N0} free edge</value></data>
+  <data name="Findings_Invalid_Many" xml:space="preserve"><value>{0:N0} invalid sub-shapes</value></data>
+  <data name="Findings_Invalid_One" xml:space="preserve"><value>{0:N0} invalid sub-shape</value></data>
+  <data name="Findings_Mergeable_Many" xml:space="preserve"><value>{0:N0} mergeable faces</value></data>
+  <data name="Findings_Mergeable_One" xml:space="preserve"><value>{0:N0} mergeable face</value></data>
+  <data name="Findings_None" xml:space="preserve"><value>No problems</value></data>
+  <data name="Findings_SmallEdges_Many" xml:space="preserve"><value>{0:N0} small edges</value></data>
+  <data name="Findings_SmallEdges_One" xml:space="preserve"><value>{0:N0} small edge</value></data>
+  <data name="Hints_Line" xml:space="preserve"><value>LMB: Rotate · RMB/MMB drag: Pan · Right-click: Menu · Wheel: Zoom · Double-click: Fit · Click: Select face · F1: All shortcuts</value></data>
+  <data name="Keys_F1" xml:space="preserve"><value>F1</value></data>
+  <data name="Keys_Num0" xml:space="preserve"><value>Num 0</value></data>
+  <data name="Keys_Num1" xml:space="preserve"><value>Num 1 / Ctrl+Num 1</value></data>
+  <data name="Keys_Num3" xml:space="preserve"><value>Num 3 / Ctrl+Num 3</value></data>
+  <data name="Keys_Num5" xml:space="preserve"><value>Num 5</value></data>
+  <data name="Keys_Num7" xml:space="preserve"><value>Num 7 / Ctrl+Num 7</value></data>
+  <data name="Keys_Open" xml:space="preserve"><value>Ctrl+O</value></data>
+  <data name="Keys_Redo" xml:space="preserve"><value>Ctrl+Y / Ctrl+Shift+Z</value></data>
+  <data name="Keys_Save" xml:space="preserve"><value>Ctrl+S</value></data>
+  <data name="Keys_Undo" xml:space="preserve"><value>Ctrl+Z</value></data>
+  <data name="Menu_About" xml:space="preserve"><value>_About UpSTEPer</value></data>
+  <data name="Menu_CheckAndRepair" xml:space="preserve"><value>Check and _repair...</value></data>
+  <data name="Menu_ClearRecentFiles" xml:space="preserve"><value>Clear recent files</value></data>
+  <data name="Menu_ColourBody" xml:space="preserve"><value>Colour _body</value></data>
+  <data name="Menu_ColourFace" xml:space="preserve"><value>Colour _face</value></data>
+  <data name="Menu_CustomColour" xml:space="preserve"><value>_Custom colour...</value></data>
+  <data name="Menu_DisplayQuality" xml:space="preserve"><value>Display _quality</value></data>
+  <data name="Menu_Edges" xml:space="preserve"><value>_Edges</value></data>
+  <data name="Menu_Edit" xml:space="preserve"><value>_Edit</value></data>
+  <data name="Menu_Exit" xml:space="preserve"><value>E_xit</value></data>
+  <data name="Menu_ExportDxf" xml:space="preserve"><value>_Export DXF...</value></data>
+  <data name="Menu_File" xml:space="preserve"><value>_File</value></data>
+  <data name="Menu_Fit" xml:space="preserve"><value>_Fit model</value></data>
+  <data name="Menu_Help" xml:space="preserve"><value>_Help</value></data>
+  <data name="Menu_KeyboardShortcuts" xml:space="preserve"><value>_Keyboard shortcuts</value></data>
+  <data name="Menu_Language" xml:space="preserve"><value>_Language</value></data>
+  <data name="Menu_ModelPanel" xml:space="preserve"><value>_Model panel</value></data>
+  <data name="Menu_Open" xml:space="preserve"><value>_Open STEP...</value></data>
+  <data name="Menu_Orthographic" xml:space="preserve"><value>_Orthographic</value></data>
+  <data name="Menu_RecentFiles" xml:space="preserve"><value>Recent _files</value></data>
+  <data name="Menu_Redo" xml:space="preserve"><value>_Redo</value></data>
+  <data name="Menu_RemoveFaceColour" xml:space="preserve"><value>_Remove face colour</value></data>
+  <data name="Menu_Repair" xml:space="preserve"><value>_Repair...</value></data>
+  <data name="Menu_SaveAs" xml:space="preserve"><value>_Save as...</value></data>
+  <data name="Menu_ShortcutHints" xml:space="preserve"><value>_Shortcut hints</value></data>
+  <data name="Menu_Tools" xml:space="preserve"><value>_Tools</value></data>
+  <data name="Menu_Undo" xml:space="preserve"><value>_Undo</value></data>
+  <data name="Menu_View" xml:space="preserve"><value>_View</value></data>
+  <data name="ModelNodeKind_Assembly" xml:space="preserve"><value>Assembly</value></data>
+  <data name="ModelNodeKind_Body" xml:space="preserve"><value>Body</value></data>
+  <data name="ModelNodeKind_Part" xml:space="preserve"><value>Part</value></data>
+  <data name="Panel_Model" xml:space="preserve"><value>Model</value></data>
+  <data name="Panel_ModelEmpty" xml:space="preserve"><value>Open a STEP file to see its assemblies, parts and bodies.</value></data>
+  <data name="PartStatus_CheckFailed" xml:space="preserve"><value>Check failed</value></data>
+  <data name="PartStatus_ColoursMerged" xml:space="preserve"><value>Colours merged</value></data>
+  <data name="PartStatus_DefectsRemain" xml:space="preserve"><value>Defects remain</value></data>
+  <data name="PartStatus_Ok" xml:space="preserve"><value>OK</value></data>
+  <data name="PartStatus_Problems" xml:space="preserve"><value>Problems</value></data>
+  <data name="PartStatus_Repaired" xml:space="preserve"><value>Repaired</value></data>
+  <data name="PartStatus_StepFailed" xml:space="preserve"><value>Step failed</value></data>
+  <data name="PartStatus_StepSkipped" xml:space="preserve"><value>Step skipped</value></data>
+  <data name="PartStatus_Unchanged" xml:space="preserve"><value>Unchanged</value></data>
+  <data name="Repair_Canonical" xml:space="preserve"><value>Exact surfaces</value></data>
+  <data name="Repair_Check" xml:space="preserve"><value>Check</value></data>
+  <data name="Repair_CheckResults" xml:space="preserve"><value>Check results</value></data>
+  <data name="Repair_ColumnChanges" xml:space="preserve"><value>Changes</value></data>
+  <data name="Repair_ColumnFindings" xml:space="preserve"><value>Findings</value></data>
+  <data name="Repair_ColumnPart" xml:space="preserve"><value>Part</value></data>
+  <data name="Repair_ColumnStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="Repair_Explanation" xml:space="preserve"><value>Check lists defects per part. Repair heals parts and keeps colours; a step that would make a part worse is skipped. Face ids change, so selection and colour undo are reset; Undo repair restores the previous model.</value></data>
+  <data name="Repair_Failed" xml:space="preserve"><value>failed</value></data>
+  <data name="Repair_Fix" xml:space="preserve"><value>Fix</value></data>
+  <data name="Repair_Merge" xml:space="preserve"><value>Merge faces</value></data>
+  <data name="Repair_NeedAttention" xml:space="preserve"><value>need attention</value></data>
+  <data name="Repair_NoResults" xml:space="preserve"><value>No results yet: Check lists what a repair would change.</value></data>
+  <data name="Repair_PartsChecked" xml:space="preserve"><value>parts checked</value></data>
+  <data name="Repair_Repair" xml:space="preserve"><value>Repair</value></data>
+  <data name="Repair_Repaired" xml:space="preserve"><value>repaired</value></data>
+  <data name="Repair_Report" xml:space="preserve"><value>Repair report</value></data>
+  <data name="Repair_Sew" xml:space="preserve"><value>Sew gaps</value></data>
+  <data name="Repair_Steps" xml:space="preserve"><value>Repair steps</value></data>
+  <data name="Repair_SummaryStart" xml:space="preserve"><value>Check the model to see what a repair would change.</value></data>
+  <data name="Repair_TipCanonical" xml:space="preserve"><value>Replace spline faces that are planes, cylinders, cones or spheres, and spline edges that are lines, circles or ellipses, by the exact geometry</value></data>
+  <data name="Repair_TipCheck" xml:space="preserve"><value>List defects per part (does not change the model)</value></data>
+  <data name="Repair_TipFix" xml:space="preserve"><value>General fixes: tolerances, orientation, wires, small defects</value></data>
+  <data name="Repair_TipMerge" xml:space="preserve"><value>Merge neighbouring faces that lie on the same surface</value></data>
+  <data name="Repair_TipNeedAttention" xml:space="preserve"><value>Defects remain, a step was skipped as worse, or merged faces had different colours</value></data>
+  <data name="Repair_TipPartsChecked" xml:space="preserve"><value>Part definitions checked (a part placed several times is checked once)</value></data>
+  <data name="Repair_TipRepair" xml:space="preserve"><value>Repair with the selected steps</value></data>
+  <data name="Repair_TipSew" xml:space="preserve"><value>Join faces along free edges; closed shells become solids</value></data>
+  <data name="Repair_TipTolerance" xml:space="preserve"><value>Gaps up to this size are sewn; splines within it become exact geometry. Check also uses it for exact geometry and small edges.</value></data>
+  <data name="Repair_TipUndo" xml:space="preserve"><value>Restore the model as it was before the last repair</value></data>
+  <data name="Repair_Title" xml:space="preserve"><value>Check and repair</value></data>
+  <data name="Repair_Tolerance" xml:space="preserve"><value>Tolerance (mm)</value></data>
+  <data name="Repair_Unchanged" xml:space="preserve"><value>unchanged</value></data>
+  <data name="Repair_Undo" xml:space="preserve"><value>Undo repair</value></data>
+  <data name="Repair_WithFailedChecks" xml:space="preserve"><value>with failed checks</value></data>
+  <data name="Repair_WithProblems" xml:space="preserve"><value>with problems</value></data>
+  <data name="Repair_WithoutProblems" xml:space="preserve"><value>without problems</value></data>
+  <data name="Shortcuts_Cancel" xml:space="preserve"><value>Cancel loading or meshing</value></data>
+  <data name="Shortcuts_Click" xml:space="preserve"><value>Click</value></data>
+  <data name="Shortcuts_ClickAction" xml:space="preserve"><value>Select the face under the pointer (background: clear)</value></data>
+  <data name="Shortcuts_Commands" xml:space="preserve"><value>Commands</value></data>
+  <data name="Shortcuts_DoubleClick" xml:space="preserve"><value>Double-click</value></data>
+  <data name="Shortcuts_Fit" xml:space="preserve"><value>Fit the model into the view</value></data>
+  <data name="Shortcuts_FrontBack" xml:space="preserve"><value>Front / back</value></data>
+  <data name="Shortcuts_LeftDrag" xml:space="preserve"><value>Left drag</value></data>
+  <data name="Shortcuts_Mouse" xml:space="preserve"><value>Mouse (3D view)</value></data>
+  <data name="Shortcuts_Open" xml:space="preserve"><value>Open STEP</value></data>
+  <data name="Shortcuts_Orthographic" xml:space="preserve"><value>Orthographic on / off</value></data>
+  <data name="Shortcuts_Pan" xml:space="preserve"><value>Pan</value></data>
+  <data name="Shortcuts_RightClick" xml:space="preserve"><value>Right-click</value></data>
+  <data name="Shortcuts_RightClickAction" xml:space="preserve"><value>Select the face and open its menu</value></data>
+  <data name="Shortcuts_RightDrag" xml:space="preserve"><value>Right / middle drag</value></data>
+  <data name="Shortcuts_RightLeft" xml:space="preserve"><value>Right / left</value></data>
+  <data name="Shortcuts_Rotate" xml:space="preserve"><value>Rotate</value></data>
+  <data name="Shortcuts_SaveAs" xml:space="preserve"><value>Save as</value></data>
+  <data name="Shortcuts_ThisList" xml:space="preserve"><value>This list</value></data>
+  <data name="Shortcuts_Title" xml:space="preserve"><value>Keyboard shortcuts</value></data>
+  <data name="Shortcuts_TopBottom" xml:space="preserve"><value>Top / bottom</value></data>
+  <data name="Shortcuts_Undo" xml:space="preserve"><value>Undo colour change</value></data>
+  <data name="Shortcuts_Views" xml:space="preserve"><value>Views (numeric keypad)</value></data>
+  <data name="Shortcuts_Wheel" xml:space="preserve"><value>Wheel</value></data>
+  <data name="Shortcuts_Zoom" xml:space="preserve"><value>Zoom</value></data>
+  <data name="Status_ActiveColour" xml:space="preserve"><value>Active colour:</value></data>
+  <data name="Status_BodiesColourApplied" xml:space="preserve"><value>Body colour applied to {0} bodies: {1}</value></data>
+  <data name="Status_BodyColourApplied" xml:space="preserve"><value>Body colour applied: {0}</value></data>
+  <data name="Status_Cancelling" xml:space="preserve"><value>Cancelling ...</value></data>
+  <data name="Status_CheckNoProblems" xml:space="preserve"><value>Check: no problems in {0} part(s).</value></data>
+  <data name="Status_CheckProblems" xml:space="preserve"><value>Check: {0} of {1} part(s) have problems.</value></data>
+  <data name="Status_Checking" xml:space="preserve"><value>Checking the model ...</value></data>
+  <data name="Status_ColourRemoved" xml:space="preserve"><value>colour removed</value></data>
+  <data name="Status_ComputingViews" xml:space="preserve"><value>Computing views with hidden-line removal ...</value></data>
+  <data name="Status_Error" xml:space="preserve"><value>Error: {0}</value></data>
+  <data name="Status_Exported" xml:space="preserve"><value>Exported {0:N0} curves to {1}</value></data>
+  <data name="Status_FaceColourApplied" xml:space="preserve"><value>Face colour applied: {0}</value></data>
+  <data name="Status_FaceColourRemoved" xml:space="preserve"><value>Face colour removed; the face shows its body colour.</value></data>
+  <data name="Status_Faces" xml:space="preserve"><value>faces</value></data>
+  <data name="Status_HoverFace" xml:space="preserve"><value>Face {0}: {1}</value></data>
+  <data name="Status_LoadCancelled" xml:space="preserve"><value>Loading {0} cancelled.</value></data>
+  <data name="Status_LoadCancelledKeepPrevious" xml:space="preserve"><value>Loading {0} cancelled; the previous model stays open.</value></data>
+  <data name="Status_Loaded" xml:space="preserve"><value>{0}: {1} solid(s), {2} faces, {3:N0} triangles</value></data>
+  <data name="Status_Loading" xml:space="preserve"><value>Loading {0} ...</value></data>
+  <data name="Status_Meshed" xml:space="preserve"><value>{0} display quality: {1:N0} triangles</value></data>
+  <data name="Status_Meshing" xml:space="preserve"><value>Meshing with {0} display quality ...</value></data>
+  <data name="Status_MeshingCancelled" xml:space="preserve"><value>Meshing cancelled; display quality stays {0}.</value></data>
+  <data name="Status_NoBody" xml:space="preserve"><value>The selection does not belong to a body.</value></data>
+  <data name="Status_NoColour" xml:space="preserve"><value>no colour</value></data>
+  <data name="Status_NoColourDefault" xml:space="preserve"><value>none (default grey)</value></data>
+  <data name="Status_OpenFile" xml:space="preserve"><value>Open a STEP file (.stp, .step).</value></data>
+  <data name="Status_Parts" xml:space="preserve"><value>parts</value></data>
+  <data name="Status_RecentMissing" xml:space="preserve"><value>{0} no longer exists; it was removed from the recent files.</value></data>
+  <data name="Status_RepairCancelled" xml:space="preserve"><value>Repair cancelled; the model is unchanged.</value></data>
+  <data name="Status_RepairUndone" xml:space="preserve"><value>Repair undone.</value></data>
+  <data name="Status_Repaired" xml:space="preserve"><value>Repair: {0} of {1} part(s) changed, {2} exact surface(s), {3} exact edge(s); Undo repair restores the previous model.</value></data>
+  <data name="Status_Repairing" xml:space="preserve"><value>Repairing ...</value></data>
+  <data name="Status_RestoringBeforeRepair" xml:space="preserve"><value>Restoring the model before the repair ...</value></data>
+  <data name="Status_Saved" xml:space="preserve"><value>Saved {0} ({1})</value></data>
+  <data name="Status_SelectedFace" xml:space="preserve"><value>Selected: face {0}, colour {1}</value></data>
+  <data name="Status_SelectedNode" xml:space="preserve"><value>Selected: {0} ({1} bodies, {2} faces)</value></data>
+  <data name="Status_TargetsChanged" xml:space="preserve"><value>{0} targets changed</value></data>
+  <data name="Status_Triangles" xml:space="preserve"><value>triangles</value></data>
+  <data name="Status_UndoRepairCancelled" xml:space="preserve"><value>Undo repair cancelled; the repaired model stays open.</value></data>
+  <data name="Tip_Brightness" xml:space="preserve"><value>Brightness</value></data>
+  <data name="Tip_ColourBody" xml:space="preserve"><value>Colour the bodies selected in the model tree, or the body of the selected face</value></data>
+  <data name="Tip_ColourButton" xml:space="preserve"><value>Active colour, palette and colouring actions</value></data>
+  <data name="Tip_ColourFace" xml:space="preserve"><value>Colour the selected face with the active colour</value></data>
+  <data name="Tip_ColourFacePanel" xml:space="preserve"><value>Colour the selected face (select it by clicking in the 3D view)</value></data>
+  <data name="Tip_Edges" xml:space="preserve"><value>Show model edges</value></data>
+  <data name="Tip_Esc" xml:space="preserve"><value>Esc</value></data>
+  <data name="Tip_ExportDxf" xml:space="preserve"><value>Front, top and left view with hidden lines (first-angle projection)</value></data>
+  <data name="Tip_HexInput" xml:space="preserve"><value>Colour value, e.g. #3366CC (Enter applies)</value></data>
+  <data name="Tip_HideHints" xml:space="preserve"><value>Hide hints (View → Shortcut hints)</value></data>
+  <data name="Tip_HideModelPanel" xml:space="preserve"><value>Hide the model panel</value></data>
+  <data name="Tip_ModelPanel" xml:space="preserve"><value>Show or hide the model panel</value></data>
+  <data name="Tip_Open" xml:space="preserve"><value>Open a STEP file (Ctrl+O)</value></data>
+  <data name="Tip_Orthographic" xml:space="preserve"><value>Parallel projection without perspective (Num 5)</value></data>
+  <data name="Tip_PartCount" xml:space="preserve"><value>Part placements in the model tree</value></data>
+  <data name="Tip_Quality" xml:space="preserve"><value>Display quality: how finely curved faces are triangulated (the model itself is not changed)</value></data>
+  <data name="Tip_Redo" xml:space="preserve"><value>Redo (Ctrl+Y)</value></data>
+  <data name="Tip_RemoveFaceColour" xml:space="preserve"><value>Remove the selected face's own colour</value></data>
+  <data name="Tip_RemoveFaceColourPanel" xml:space="preserve"><value>Remove the selected face's own colour; it shows its body colour again</value></data>
+  <data name="Tip_Repair" xml:space="preserve"><value>Check the model for defects and repair it (sew gaps, exact surfaces, merge split faces)</value></data>
+  <data name="Tip_SaveAs" xml:space="preserve"><value>Save the model with its colours as STEP AP214 or AP242 (Ctrl+S)</value></data>
+  <data name="Tip_TriangleCount" xml:space="preserve"><value>Triangles displayed at the current display quality</value></data>
+  <data name="Tip_Undo" xml:space="preserve"><value>Undo the last colour change (Ctrl+Z)</value></data>
+  <data name="Tip_UseColour" xml:space="preserve"><value>Adds the colour to the palette and makes it the active colour</value></data>
+  <data name="Tip_View" xml:space="preserve"><value>Standard views (Num 1/3/7/0, Ctrl: opposite side) and fit</value></data>
+  <data name="View_Back" xml:space="preserve"><value>Back</value></data>
+  <data name="View_Bottom" xml:space="preserve"><value>Bottom</value></data>
+  <data name="View_Front" xml:space="preserve"><value>Front</value></data>
+  <data name="View_Isometric" xml:space="preserve"><value>Isometric</value></data>
+  <data name="View_Left" xml:space="preserve"><value>Left</value></data>
+  <data name="View_Right" xml:space="preserve"><value>Right</value></data>
+  <data name="View_Top" xml:space="preserve"><value>Top</value></data>
+</root>

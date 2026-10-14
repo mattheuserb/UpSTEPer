@@ -1,4 +1,5 @@
 using System.Globalization;
+using UpSTEPer.App.Localization;
 using UpSTEPer.Core;
 
 namespace UpSTEPer.App.ViewModels;
@@ -34,9 +35,9 @@ internal sealed record CheckRow(PartCheck Part)
     /// <summary>Gets the status as text.</summary>
     public string StatusText => Status switch
     {
-        PartStatus.Error => "Check failed",
-        PartStatus.Warning => "Problems",
-        _ => "OK",
+        PartStatus.Error => Strings.PartStatus_CheckFailed,
+        PartStatus.Warning => Strings.PartStatus_Problems,
+        _ => Strings.PartStatus_Ok,
     };
 
     /// <summary>Gets the findings in one line, e.g. "24 free edges · 3 mergeable faces".</summary>
@@ -45,36 +46,37 @@ internal sealed record CheckRow(PartCheck Part)
         get
         {
             var parts = new List<string>();
-            Add(parts, Part.FreeEdges, "free edge", "free edges");
-            Add(parts, Part.InvalidShapes, "invalid sub-shape", "invalid sub-shapes");
-            Add(parts, Part.CanonicalFaces, "spline face can be exact", "spline faces can be exact");
-            Add(parts, Part.CanonicalEdges, "spline edge can be exact", "spline edges can be exact");
-            Add(parts, Part.MergeableFaces, "mergeable face", "mergeable faces");
-            Add(parts, Part.SmallEdges, "small edge", "small edges");
-            Add(parts, Part.FailedChecks, "sub-check failed", "sub-checks failed");
-            return parts.Count == 0 ? "No problems" : string.Join(" · ", parts);
+            Add(parts, Part.FreeEdges, Strings.Findings_FreeEdges_One, Strings.Findings_FreeEdges_Many);
+            Add(parts, Part.InvalidShapes, Strings.Findings_Invalid_One, Strings.Findings_Invalid_Many);
+            Add(parts, Part.CanonicalFaces, Strings.Findings_CanonicalFaces_One, Strings.Findings_CanonicalFaces_Many);
+            Add(parts, Part.CanonicalEdges, Strings.Findings_CanonicalEdges_One, Strings.Findings_CanonicalEdges_Many);
+            Add(parts, Part.MergeableFaces, Strings.Findings_Mergeable_One, Strings.Findings_Mergeable_Many);
+            Add(parts, Part.SmallEdges, Strings.Findings_SmallEdges_One, Strings.Findings_SmallEdges_Many);
+            Add(parts, Part.FailedChecks, Strings.Findings_FailedChecks_One, Strings.Findings_FailedChecks_Many);
+            return parts.Count == 0 ? Strings.Findings_None : string.Join(" · ", parts);
         }
     }
 
     /// <summary>Gets every value of the check.</summary>
     public IReadOnlyList<DetailItem> Details =>
     [
-        Item("Solids", Part.SolidCount),
-        Item("Faces", Part.FaceCount),
-        Item("Free edges", Part.FreeEdges),
-        Item("Invalid sub-shapes", Part.InvalidShapes),
-        new("Spline faces (exact possible)", Pair(Part.SplineFaces, Part.CanonicalFaces)),
-        new("Spline edges (exact possible)", Pair(Part.SplineEdges, Part.CanonicalEdges)),
-        Item("Mergeable faces", Part.MergeableFaces),
-        Item("Small edges", Part.SmallEdges),
-        Item("Failed sub-checks", Part.FailedChecks),
+        Item(Strings.Detail_Solids, Part.SolidCount),
+        Item(Strings.Detail_Faces, Part.FaceCount),
+        Item(Strings.Detail_FreeEdges, Part.FreeEdges),
+        Item(Strings.Detail_Invalid, Part.InvalidShapes),
+        new(Strings.Detail_SplineFaces, Pair(Part.SplineFaces, Part.CanonicalFaces)),
+        new(Strings.Detail_SplineEdges, Pair(Part.SplineEdges, Part.CanonicalEdges)),
+        Item(Strings.Detail_Mergeable, Part.MergeableFaces),
+        Item(Strings.Detail_SmallEdges, Part.SmallEdges),
+        Item(Strings.Detail_FailedChecks, Part.FailedChecks),
     ];
 
-    internal static void Add(List<string> parts, int count, string singular, string plural)
+    // one / many: formats with the count as {0}.
+    internal static void Add(List<string> parts, int count, string one, string many)
     {
         if (count > 0)
         {
-            parts.Add(string.Create(CultureInfo.CurrentCulture, $"{count:N0} {(count == 1 ? singular : plural)}"));
+            parts.Add(Localizer.Format(count == 1 ? one : many, count));
         }
     }
 
@@ -100,12 +102,12 @@ internal sealed record RepairRow(PartRepair Part)
     /// <summary>Gets the status as text.</summary>
     public string StatusText => Status switch
     {
-        PartStatus.Error => "Step failed",
-        PartStatus.Warning when Part.Reverted => "Step skipped",
-        PartStatus.Warning when Part.FreeEdgesAfter > 0 || Part.InvalidAfter > 0 => "Defects remain",
-        PartStatus.Warning => "Colours merged",
-        PartStatus.Ok => "Repaired",
-        _ => "Unchanged",
+        PartStatus.Error => Strings.PartStatus_StepFailed,
+        PartStatus.Warning when Part.Reverted => Strings.PartStatus_StepSkipped,
+        PartStatus.Warning when Part.FreeEdgesAfter > 0 || Part.InvalidAfter > 0 => Strings.PartStatus_DefectsRemain,
+        PartStatus.Warning => Strings.PartStatus_ColoursMerged,
+        PartStatus.Ok => Strings.PartStatus_Repaired,
+        _ => Strings.PartStatus_Unchanged,
     };
 
     /// <summary>Gets the changes in one line, e.g. "Faces 6 → 3 · Free edges 24 → 0 · 3 exact surfaces".</summary>
@@ -114,47 +116,49 @@ internal sealed record RepairRow(PartRepair Part)
         get
         {
             var parts = new List<string>();
-            AddChange(parts, "Faces", Part.FacesBefore, Part.FacesAfter);
-            AddChange(parts, "Solids", Part.SolidsBefore, Part.SolidsAfter);
-            AddChange(parts, "Free edges", Part.FreeEdgesBefore, Part.FreeEdgesAfter);
-            AddChange(parts, "Invalid", Part.InvalidBefore, Part.InvalidAfter);
-            CheckRow.Add(parts, Part.CanonicalFaces, "exact surface", "exact surfaces");
-            CheckRow.Add(parts, Part.CanonicalEdges, "exact edge", "exact edges");
+            AddChange(parts, Strings.Changes_Faces, Part.FacesBefore, Part.FacesAfter);
+            AddChange(parts, Strings.Changes_Solids, Part.SolidsBefore, Part.SolidsAfter);
+            AddChange(parts, Strings.Changes_FreeEdges, Part.FreeEdgesBefore, Part.FreeEdgesAfter);
+            AddChange(parts, Strings.Changes_Invalid, Part.InvalidBefore, Part.InvalidAfter);
+            CheckRow.Add(parts, Part.CanonicalFaces, Strings.Changes_ExactSurfaces_One, Strings.Changes_ExactSurfaces_Many);
+            CheckRow.Add(parts, Part.CanonicalEdges, Strings.Changes_ExactEdges_One, Strings.Changes_ExactEdges_Many);
             if (Part.CanonicalFaces + Part.CanonicalEdges > 0)
             {
-                parts.Add($"max. deviation {Deviation(Part.MaxDeviation)} mm");
+                parts.Add(Localizer.Format(Strings.Changes_MaxDeviation, Deviation(Part.MaxDeviation)));
             }
 
-            CheckRow.Add(parts, Part.ColourConflicts, "colour conflict", "colour conflicts");
+            CheckRow.Add(parts, Part.ColourConflicts, Strings.Changes_ColourConflicts_One, Strings.Changes_ColourConflicts_Many);
             if (Part.Reverted)
             {
-                parts.Add("a step made it worse and was skipped");
+                parts.Add(Strings.Changes_Skipped);
             }
 
             if (Part.Failed)
             {
-                parts.Add("a step failed");
+                parts.Add(Strings.Changes_StepFailed);
             }
 
-            return parts.Count == 0 ? "No changes" : string.Join(" · ", parts);
+            return parts.Count == 0 ? Strings.Changes_None : string.Join(" · ", parts);
         }
     }
 
     /// <summary>Gets every value of the repair report.</summary>
     public IReadOnlyList<DetailItem> Details =>
     [
-        new("Changed", Part.Changed ? "Yes" : "No"),
-        Change("Faces", Part.FacesBefore, Part.FacesAfter),
-        Change("Solids", Part.SolidsBefore, Part.SolidsAfter),
-        Change("Free edges", Part.FreeEdgesBefore, Part.FreeEdgesAfter),
-        Change("Invalid sub-shapes", Part.InvalidBefore, Part.InvalidAfter),
-        CheckRow.Item("Exact surfaces", Part.CanonicalFaces),
-        CheckRow.Item("Exact edges", Part.CanonicalEdges),
-        new("Max. deviation (mm)", Deviation(Part.MaxDeviation)),
-        CheckRow.Item("Colour conflicts", Part.ColourConflicts),
-        new("Step skipped (worse)", Part.Reverted ? "Yes" : "No"),
-        new("Step failed", Part.Failed ? "Yes" : "No"),
+        new(Strings.Detail_Changed, YesNo(Part.Changed)),
+        Change(Strings.Detail_Faces, Part.FacesBefore, Part.FacesAfter),
+        Change(Strings.Detail_Solids, Part.SolidsBefore, Part.SolidsAfter),
+        Change(Strings.Detail_FreeEdges, Part.FreeEdgesBefore, Part.FreeEdgesAfter),
+        Change(Strings.Detail_Invalid, Part.InvalidBefore, Part.InvalidAfter),
+        CheckRow.Item(Strings.Detail_ExactSurfaces, Part.CanonicalFaces),
+        CheckRow.Item(Strings.Detail_ExactEdges, Part.CanonicalEdges),
+        new(Strings.Detail_MaxDeviation, Deviation(Part.MaxDeviation)),
+        CheckRow.Item(Strings.Detail_ColourConflicts, Part.ColourConflicts),
+        new(Strings.Detail_StepSkipped, YesNo(Part.Reverted)),
+        new(Strings.Detail_StepFailed, YesNo(Part.Failed)),
     ];
+
+    private static string YesNo(bool value) => value ? Strings.Common_Yes : Strings.Common_No;
 
     // Four decimals; a deviation that would round to zero but is not zero says so.
     private static string Deviation(double millimetres) =>

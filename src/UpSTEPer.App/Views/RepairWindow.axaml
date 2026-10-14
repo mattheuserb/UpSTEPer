@@ -1,11 +1,12 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="using:UpSTEPer.App.Localization"
         xmlns:vm="using:UpSTEPer.App.ViewModels"
         xmlns:controls="using:UpSTEPer.App.Controls"
         x:Class="UpSTEPer.App.Views.RepairWindow"
         x:ClassModifier="internal"
         x:DataType="vm:RepairViewModel"
-        Title="Check and repair"
+        Title="{loc:Tr Repair_Title}"
         Width="1000" Height="660" MinWidth="560" MinHeight="440"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource PanelBrush}">
@@ -58,43 +59,43 @@
     <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,10">
       <StackPanel Orientation="Horizontal" Spacing="8" ToolTip.Tip="{Binding #Explanation.Text}">
         <controls:Icon Data="{StaticResource Icon.Wrench}" Width="18" Height="18" />
-        <TextBlock Text="Check and repair" FontSize="{StaticResource FontSizeTitle}" FontWeight="SemiBold" VerticalAlignment="Center" />
+        <TextBlock Text="{loc:Tr Repair_Title}" FontSize="{StaticResource FontSizeTitle}" FontWeight="SemiBold" VerticalAlignment="Center" />
       </StackPanel>
       <TextBlock x:Name="Explanation" Classes="secondary explanation" TextWrapping="Wrap"
-                 Text="Check lists defects per part. Repair heals parts and keeps colours; a step that would make a part worse is skipped. Face ids change, so selection and colour undo are reset; Undo repair restores the previous model." />
+                 Text="{loc:Tr Repair_Explanation}" />
     </StackPanel>
 
     <!-- 2 Summary, computed from the results -->
     <StackPanel DockPanel.Dock="Top">
       <TextBlock Classes="secondary" Margin="0,0,0,8" IsVisible="{Binding !HasCheckResults}"
-                 Text="No results yet: Check lists what a repair would change." />
+                 Text="{loc:Tr Repair_NoResults}" />
       <WrapPanel IsVisible="{Binding ShowsCheckSummary}">
-        <Border Classes="tile" ToolTip.Tip="Part definitions checked (a part placed several times is checked once)">
+        <Border Classes="tile" ToolTip.Tip="{loc:Tr Repair_TipPartsChecked}">
           <StackPanel Orientation="Horizontal" Spacing="6">
             <controls:Icon Data="{StaticResource Icon.Box}" />
             <TextBlock Classes="count" Text="{Binding PartsChecked}" />
-            <TextBlock Classes="caption" Text="parts checked" />
+            <TextBlock Classes="caption" Text="{loc:Tr Repair_PartsChecked}" />
           </StackPanel>
         </Border>
         <Border Classes="tile">
           <StackPanel Orientation="Horizontal" Spacing="6">
             <controls:StatusBadge Status="Ok" />
             <TextBlock Classes="count" Text="{Binding PartsOk}" />
-            <TextBlock Classes="caption" Text="without problems" />
+            <TextBlock Classes="caption" Text="{loc:Tr Repair_WithoutProblems}" />
           </StackPanel>
         </Border>
         <Border Classes="tile">
           <StackPanel Orientation="Horizontal" Spacing="6">
             <controls:StatusBadge Status="Warning" />
             <TextBlock Classes="count" Text="{Binding PartsWithProblems}" />
-            <TextBlock Classes="caption" Text="with problems" />
+            <TextBlock Classes="caption" Text="{loc:Tr Repair_WithProblems}" />
           </StackPanel>
         </Border>
         <Border Classes="tile" IsVisible="{Binding PartsWithCheckErrors}">
           <StackPanel Orientation="Horizontal" Spacing="6">
             <controls:StatusBadge Status="Error" />
             <TextBlock Classes="count" Text="{Binding PartsWithCheckErrors}" />
-            <TextBlock Classes="caption" Text="with failed checks" />
+            <TextBlock Classes="caption" Text="{loc:Tr Repair_WithFailedChecks}" />
           </StackPanel>
         </Border>
       </WrapPanel>
@@ -103,28 +104,28 @@
           <StackPanel Orientation="Horizontal" Spacing="6">
             <controls:StatusBadge Status="Ok" />
             <TextBlock Classes="count" Text="{Binding PartsRepaired}" />
-            <TextBlock Classes="caption" Text="repaired" />
+            <TextBlock Classes="caption" Text="{loc:Tr Repair_Repaired}" />
           </StackPanel>
         </Border>
         <Border Classes="tile">
           <StackPanel Orientation="Horizontal" Spacing="6">
             <controls:StatusBadge Status="Unchanged" />
             <TextBlock Classes="count" Text="{Binding PartsUnchanged}" />
-            <TextBlock Classes="caption" Text="unchanged" />
+            <TextBlock Classes="caption" Text="{loc:Tr Repair_Unchanged}" />
           </StackPanel>
         </Border>
-        <Border Classes="tile" ToolTip.Tip="Defects remain, a step was skipped as worse, or merged faces had different colours">
+        <Border Classes="tile" ToolTip.Tip="{loc:Tr Repair_TipNeedAttention}">
           <StackPanel Orientation="Horizontal" Spacing="6">
             <controls:StatusBadge Status="Warning" />
             <TextBlock Classes="count" Text="{Binding PartsNeedingAttention}" />
-            <TextBlock Classes="caption" Text="need attention" />
+            <TextBlock Classes="caption" Text="{loc:Tr Repair_NeedAttention}" />
           </StackPanel>
         </Border>
         <Border Classes="tile" IsVisible="{Binding PartsFailed}">
           <StackPanel Orientation="Horizontal" Spacing="6">
             <controls:StatusBadge Status="Error" />
             <TextBlock Classes="count" Text="{Binding PartsFailed}" />
-            <TextBlock Classes="caption" Text="failed" />
+            <TextBlock Classes="caption" Text="{loc:Tr Repair_Failed}" />
           </StackPanel>
         </Border>
       </WrapPanel>
@@ -133,21 +134,21 @@
     <!-- 6 + 7 Actions, progress and result line: always visible at the bottom -->
     <DockPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
       <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8">
-        <Button Command="{Binding CheckCommand}" IsEnabled="{Binding !Main.IsBusy}" ToolTip.Tip="List defects per part (does not change the model)">
-          <StackPanel Orientation="Horizontal" Spacing="6"><controls:Icon Data="{StaticResource Icon.ScanSearch}" /><TextBlock Text="Check" /></StackPanel>
+        <Button Command="{Binding CheckCommand}" IsEnabled="{Binding !Main.IsBusy}" ToolTip.Tip="{loc:Tr Repair_TipCheck}">
+          <StackPanel Orientation="Horizontal" Spacing="6"><controls:Icon Data="{StaticResource Icon.ScanSearch}" /><TextBlock Text="{loc:Tr Repair_Check}" /></StackPanel>
         </Button>
-        <Button Classes="accent" Command="{Binding RepairCommand}" IsEnabled="{Binding !Main.IsBusy}" ToolTip.Tip="Repair with the selected steps">
-          <StackPanel Orientation="Horizontal" Spacing="6"><controls:Icon Data="{StaticResource Icon.Wrench}" /><TextBlock Text="Repair" /></StackPanel>
+        <Button Classes="accent" Command="{Binding RepairCommand}" IsEnabled="{Binding !Main.IsBusy}" ToolTip.Tip="{loc:Tr Repair_TipRepair}">
+          <StackPanel Orientation="Horizontal" Spacing="6"><controls:Icon Data="{StaticResource Icon.Wrench}" /><TextBlock Text="{loc:Tr Repair_Repair}" /></StackPanel>
         </Button>
-        <Button Command="{Binding Main.UndoRepairCommand}" IsEnabled="{Binding !Main.IsBusy}" ToolTip.Tip="Restore the model as it was before the last repair">
-          <StackPanel Orientation="Horizontal" Spacing="6"><controls:Icon Data="{StaticResource Icon.Undo2}" /><TextBlock Text="Undo repair" /></StackPanel>
+        <Button Command="{Binding Main.UndoRepairCommand}" IsEnabled="{Binding !Main.IsBusy}" ToolTip.Tip="{loc:Tr Repair_TipUndo}">
+          <StackPanel Orientation="Horizontal" Spacing="6"><controls:Icon Data="{StaticResource Icon.Undo2}" /><TextBlock Text="{loc:Tr Repair_Undo}" /></StackPanel>
         </Button>
-        <Button Content="Close" Click="OnCloseClick" />
+        <Button Content="{loc:Tr Common_Close}" Click="OnCloseClick" />
       </StackPanel>
       <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6" Margin="0,0,12,0" IsVisible="{Binding Main.IsCancellable}">
         <TextBlock FontSize="{StaticResource FontSizeStatus}" Text="{Binding Main.ProgressText}" VerticalAlignment="Center" />
         <ProgressBar Width="120" Minimum="0" Maximum="1" Value="{Binding Main.ProgressFraction}" VerticalAlignment="Center" />
-        <Button Content="Cancel" Command="{Binding Main.CancelCommand}" Padding="8,2" FontSize="{StaticResource FontSizeStatus}" ToolTip.Tip="Esc" />
+        <Button Content="{loc:Tr Common_Cancel}" Command="{Binding Main.CancelCommand}" Padding="8,2" FontSize="{StaticResource FontSizeStatus}" ToolTip.Tip="{loc:Tr Tip_Esc}" />
       </StackPanel>
       <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" VerticalAlignment="Center" FontSize="{StaticResource FontSizeStatus}" />
     </DockPanel>
@@ -155,26 +156,26 @@
     <!-- 5 Repair options -->
     <Border DockPanel.Dock="Bottom" Background="{StaticResource SubtleBrush}" CornerRadius="6" Padding="10,6" Margin="0,10,0,0">
       <WrapPanel>
-        <TextBlock Classes="header" Text="Repair steps" VerticalAlignment="Center" Margin="0,0,12,0" />
-        <CheckBox Content="Fix" IsChecked="{Binding Fix}" Margin="0,0,12,0"
-                  ToolTip.Tip="General fixes: tolerances, orientation, wires, small defects" />
-        <CheckBox Content="Sew gaps" IsChecked="{Binding Sew}" Margin="0,0,12,0"
-                  ToolTip.Tip="Join faces along free edges; closed shells become solids" />
-        <CheckBox Content="Exact surfaces" IsChecked="{Binding Canonical}" Margin="0,0,12,0"
-                  ToolTip.Tip="Replace spline faces that are planes, cylinders, cones or spheres, and spline edges that are lines, circles or ellipses, by the exact geometry" />
-        <CheckBox Content="Merge faces" IsChecked="{Binding MergeFaces}" Margin="0,0,20,0"
-                  ToolTip.Tip="Merge neighbouring faces that lie on the same surface" />
+        <TextBlock Classes="header" Text="{loc:Tr Repair_Steps}" VerticalAlignment="Center" Margin="0,0,12,0" />
+        <CheckBox Content="{loc:Tr Repair_Fix}" IsChecked="{Binding Fix}" Margin="0,0,12,0"
+                  ToolTip.Tip="{loc:Tr Repair_TipFix}" />
+        <CheckBox Content="{loc:Tr Repair_Sew}" IsChecked="{Binding Sew}" Margin="0,0,12,0"
+                  ToolTip.Tip="{loc:Tr Repair_TipSew}" />
+        <CheckBox Content="{loc:Tr Repair_Canonical}" IsChecked="{Binding Canonical}" Margin="0,0,12,0"
+                  ToolTip.Tip="{loc:Tr Repair_TipCanonical}" />
+        <CheckBox Content="{loc:Tr Repair_Merge}" IsChecked="{Binding MergeFaces}" Margin="0,0,20,0"
+                  ToolTip.Tip="{loc:Tr Repair_TipMerge}" />
         <StackPanel Orientation="Horizontal" Spacing="6">
-          <TextBlock Text="Tolerance (mm)" VerticalAlignment="Center" />
+          <TextBlock Text="{loc:Tr Repair_Tolerance}" VerticalAlignment="Center" />
           <NumericUpDown Value="{Binding Tolerance}" Minimum="0.001" Maximum="1" Increment="0.01" FormatString="0.###" Width="130"
-                         ToolTip.Tip="Gaps up to this size are sewn; splines within it become exact geometry. Check also uses it for exact geometry and small edges." />
+                         ToolTip.Tip="{loc:Tr Repair_TipTolerance}" />
         </StackPanel>
       </WrapPanel>
     </Border>
 
     <!-- 3 + 4 Tables with details of the selected part -->
     <TabControl SelectedIndex="{Binding SelectedReportIndex}" Padding="0,6,0,0">
-      <TabItem Header="Check results">
+      <TabItem Header="{loc:Tr Repair_CheckResults}">
         <Grid RowDefinitions="*,Auto" Container.Name="report" Container.Sizing="Height">
           <Grid.Styles>
             <!-- Low: the table keeps the space; status and summary are in its rows. -->
@@ -186,15 +187,15 @@
           </Grid.Styles>
           <DataGrid x:Name="CheckGrid" MinHeight="90" ItemsSource="{Binding CheckRows}" SelectedItem="{Binding SelectedCheckRow}">
             <DataGrid.Columns>
-              <DataGridTemplateColumn Header="Status" Width="135">
+              <DataGridTemplateColumn Header="{loc:Tr Repair_ColumnStatus}" Width="Auto" MinWidth="120">
                 <DataGridTemplateColumn.CellTemplate>
                   <DataTemplate x:DataType="vm:CheckRow">
                     <controls:StatusBadge Status="{Binding Status}" Text="{Binding StatusText}" Margin="8,0" />
                   </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
               </DataGridTemplateColumn>
-              <DataGridTextColumn x:DataType="vm:CheckRow" Header="Part" Binding="{Binding Part.DisplayName}" Width="2*" MinWidth="140" />
-              <DataGridTextColumn x:DataType="vm:CheckRow" Header="Findings" Binding="{Binding Findings}" Width="3*" MinWidth="180" />
+              <DataGridTextColumn x:DataType="vm:CheckRow" Header="{loc:Tr Repair_ColumnPart}" Binding="{Binding Part.DisplayName}" Width="2*" MinWidth="140" />
+              <DataGridTextColumn x:DataType="vm:CheckRow" Header="{loc:Tr Repair_ColumnFindings}" Binding="{Binding Findings}" Width="3*" MinWidth="180" />
             </DataGrid.Columns>
           </DataGrid>
           <!-- Own IsVisible binding inside: a local value would override the height query. -->
@@ -202,7 +203,7 @@
             <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="0,8,0,0" Margin="0,6,0,0"
                     IsVisible="{Binding SelectedCheckRow, Converter={x:Static ObjectConverters.IsNotNull}}">
               <StackPanel Spacing="4">
-                <TextBlock Classes="header" Text="{Binding SelectedCheckRow.Part.DisplayName, StringFormat='Details: {0}'}" />
+                <TextBlock Classes="header"><Run Text="{loc:Tr Common_DetailsFor}" /><Run Text=" " /><Run Text="{Binding SelectedCheckRow.Part.DisplayName}" /></TextBlock>
                 <ItemsControl ItemsSource="{Binding SelectedCheckRow.Details}">
                   <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
@@ -221,7 +222,7 @@
           </Panel>
         </Grid>
       </TabItem>
-      <TabItem Header="Repair report" IsEnabled="{Binding HasRepairReport}">
+      <TabItem Header="{loc:Tr Repair_Report}" IsEnabled="{Binding HasRepairReport}">
         <Grid RowDefinitions="*,Auto" Container.Name="report" Container.Sizing="Height">
           <Grid.Styles>
             <!-- Low: the table keeps the space; status and summary are in its rows. -->
@@ -233,15 +234,15 @@
           </Grid.Styles>
           <DataGrid x:Name="RepairGrid" MinHeight="90" ItemsSource="{Binding RepairRows}" SelectedItem="{Binding SelectedRepairRow}">
             <DataGrid.Columns>
-              <DataGridTemplateColumn Header="Status" Width="155">
+              <DataGridTemplateColumn Header="{loc:Tr Repair_ColumnStatus}" Width="Auto" MinWidth="135">
                 <DataGridTemplateColumn.CellTemplate>
                   <DataTemplate x:DataType="vm:RepairRow">
                     <controls:StatusBadge Status="{Binding Status}" Text="{Binding StatusText}" Margin="8,0" />
                   </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
               </DataGridTemplateColumn>
-              <DataGridTextColumn x:DataType="vm:RepairRow" Header="Part" Binding="{Binding Part.DisplayName}" Width="2*" MinWidth="140" />
-              <DataGridTextColumn x:DataType="vm:RepairRow" Header="Changes" Binding="{Binding Changes}" Width="3*" MinWidth="180" />
+              <DataGridTextColumn x:DataType="vm:RepairRow" Header="{loc:Tr Repair_ColumnPart}" Binding="{Binding Part.DisplayName}" Width="2*" MinWidth="140" />
+              <DataGridTextColumn x:DataType="vm:RepairRow" Header="{loc:Tr Repair_ColumnChanges}" Binding="{Binding Changes}" Width="3*" MinWidth="180" />
             </DataGrid.Columns>
           </DataGrid>
           <!-- Own IsVisible binding inside: a local value would override the height query. -->
@@ -249,7 +250,7 @@
             <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="0,8,0,0" Margin="0,6,0,0"
                     IsVisible="{Binding SelectedRepairRow, Converter={x:Static ObjectConverters.IsNotNull}}">
               <StackPanel Spacing="4">
-                <TextBlock Classes="header" Text="{Binding SelectedRepairRow.Part.DisplayName, StringFormat='Details: {0}'}" />
+                <TextBlock Classes="header"><Run Text="{loc:Tr Common_DetailsFor}" /><Run Text=" " /><Run Text="{Binding SelectedRepairRow.Part.DisplayName}" /></TextBlock>
                 <ItemsControl ItemsSource="{Binding SelectedRepairRow.Details}">
                   <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>

@@ -77,7 +77,7 @@ internal sealed partial class RepairViewModel : ObservableObject
 
     /// <summary>Gets or sets the one-line result of the last action, shown under the table.</summary>
     [ObservableProperty]
-    public partial string Summary { get; set; } = "Check the model to see what a repair would change.";
+    public partial string Summary { get; set; } = Strings.Repair_SummaryStart;
 
     /// <summary>Gets a value indicating whether the summary of the check is shown (check tab, after a check).</summary>
     public bool ShowsCheckSummary => HasCheckResults && !ShowsRepairReport;

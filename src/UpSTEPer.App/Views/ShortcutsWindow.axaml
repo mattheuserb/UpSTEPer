@@ -1,14 +1,16 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="using:UpSTEPer.App.Localization"
         x:Class="UpSTEPer.App.Views.ShortcutsWindow"
         x:ClassModifier="internal"
-        Title="Keyboard shortcuts"
-        Width="460" SizeToContent="Height" CanResize="False"
+        Title="{loc:Tr Shortcuts_Title}"
+        Width="560" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource PanelBrush}">
   <Window.Styles>
     <Style Selector="Grid.shortcuts > TextBlock">
       <Setter Property="Margin" Value="0,3" />
+      <Setter Property="TextWrapping" Value="Wrap" />
       <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
     </Style>
     <Style Selector="Grid.shortcuts > TextBlock.key">
@@ -21,31 +23,31 @@
   </Window.Styles>
   <!-- Keep in sync with Window.KeyBindings in MainWindow.axaml and ModelView's mouse handling. -->
   <DockPanel Margin="16">
-    <Button DockPanel.Dock="Bottom" Content="Close" HorizontalAlignment="Right" Margin="0,12,0,0" IsDefault="True" IsCancel="True" Click="OnCloseClick" />
+    <Button DockPanel.Dock="Bottom" Content="{loc:Tr Common_Close}" HorizontalAlignment="Right" Margin="0,12,0,0" IsDefault="True" IsCancel="True" Click="OnCloseClick" />
     <Grid Classes="shortcuts" ColumnDefinitions="Auto,*"
           RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
-      <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Classes="header" Text="Mouse (3D view)" Margin="0,0,0,2" />
-      <TextBlock Grid.Row="1" Classes="key" Text="Click" /><TextBlock Grid.Row="1" Grid.Column="1" Text="Select the face under the pointer (background: clear)" />
-      <TextBlock Grid.Row="2" Classes="key" Text="Left drag" /><TextBlock Grid.Row="2" Grid.Column="1" Text="Rotate" />
-      <TextBlock Grid.Row="3" Classes="key" Text="Right / middle drag" /><TextBlock Grid.Row="3" Grid.Column="1" Text="Pan" />
-      <TextBlock Grid.Row="4" Classes="key" Text="Right-click" /><TextBlock Grid.Row="4" Grid.Column="1" Text="Select the face and open its menu" />
-      <TextBlock Grid.Row="5" Classes="key" Text="Wheel" /><TextBlock Grid.Row="5" Grid.Column="1" Text="Zoom" />
-      <TextBlock Grid.Row="6" Classes="key" Text="Double-click" /><TextBlock Grid.Row="6" Grid.Column="1" Text="Fit the model into the view" />
+      <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Classes="header" Text="{loc:Tr Shortcuts_Mouse}" Margin="0,0,0,2" />
+      <TextBlock Grid.Row="1" Classes="key" Text="{loc:Tr Shortcuts_Click}" /><TextBlock Grid.Row="1" Grid.Column="1" Text="{loc:Tr Shortcuts_ClickAction}" />
+      <TextBlock Grid.Row="2" Classes="key" Text="{loc:Tr Shortcuts_LeftDrag}" /><TextBlock Grid.Row="2" Grid.Column="1" Text="{loc:Tr Shortcuts_Rotate}" />
+      <TextBlock Grid.Row="3" Classes="key" Text="{loc:Tr Shortcuts_RightDrag}" /><TextBlock Grid.Row="3" Grid.Column="1" Text="{loc:Tr Shortcuts_Pan}" />
+      <TextBlock Grid.Row="4" Classes="key" Text="{loc:Tr Shortcuts_RightClick}" /><TextBlock Grid.Row="4" Grid.Column="1" Text="{loc:Tr Shortcuts_RightClickAction}" />
+      <TextBlock Grid.Row="5" Classes="key" Text="{loc:Tr Shortcuts_Wheel}" /><TextBlock Grid.Row="5" Grid.Column="1" Text="{loc:Tr Shortcuts_Zoom}" />
+      <TextBlock Grid.Row="6" Classes="key" Text="{loc:Tr Shortcuts_DoubleClick}" /><TextBlock Grid.Row="6" Grid.Column="1" Text="{loc:Tr Shortcuts_Fit}" />
 
-      <TextBlock Grid.Row="7" Grid.ColumnSpan="2" Classes="header" Text="Views (numeric keypad)" />
-      <TextBlock Grid.Row="8" Classes="key" Text="Num 1 / Ctrl+Num 1" /><TextBlock Grid.Row="8" Grid.Column="1" Text="Front / back" />
-      <TextBlock Grid.Row="9" Classes="key" Text="Num 3 / Ctrl+Num 3" /><TextBlock Grid.Row="9" Grid.Column="1" Text="Right / left" />
-      <TextBlock Grid.Row="10" Classes="key" Text="Num 7 / Ctrl+Num 7" /><TextBlock Grid.Row="10" Grid.Column="1" Text="Top / bottom" />
-      <TextBlock Grid.Row="11" Classes="key" Text="Num 0" /><TextBlock Grid.Row="11" Grid.Column="1" Text="Isometric" />
-      <TextBlock Grid.Row="12" Classes="key" Text="Num 5" /><TextBlock Grid.Row="12" Grid.Column="1" Text="Orthographic on / off" />
+      <TextBlock Grid.Row="7" Grid.ColumnSpan="2" Classes="header" Text="{loc:Tr Shortcuts_Views}" />
+      <TextBlock Grid.Row="8" Classes="key" Text="{loc:Tr Keys_Num1}" /><TextBlock Grid.Row="8" Grid.Column="1" Text="{loc:Tr Shortcuts_FrontBack}" />
+      <TextBlock Grid.Row="9" Classes="key" Text="{loc:Tr Keys_Num3}" /><TextBlock Grid.Row="9" Grid.Column="1" Text="{loc:Tr Shortcuts_RightLeft}" />
+      <TextBlock Grid.Row="10" Classes="key" Text="{loc:Tr Keys_Num7}" /><TextBlock Grid.Row="10" Grid.Column="1" Text="{loc:Tr Shortcuts_TopBottom}" />
+      <TextBlock Grid.Row="11" Classes="key" Text="{loc:Tr Keys_Num0}" /><TextBlock Grid.Row="11" Grid.Column="1" Text="{loc:Tr View_Isometric}" />
+      <TextBlock Grid.Row="12" Classes="key" Text="{loc:Tr Keys_Num5}" /><TextBlock Grid.Row="12" Grid.Column="1" Text="{loc:Tr Shortcuts_Orthographic}" />
 
-      <TextBlock Grid.Row="13" Grid.ColumnSpan="2" Classes="header" Text="Commands" />
-      <TextBlock Grid.Row="14" Classes="key" Text="Ctrl+O" /><TextBlock Grid.Row="14" Grid.Column="1" Text="Open STEP" />
-      <TextBlock Grid.Row="15" Classes="key" Text="Ctrl+S" /><TextBlock Grid.Row="15" Grid.Column="1" Text="Save as" />
-      <TextBlock Grid.Row="16" Classes="key" Text="Ctrl+Z" /><TextBlock Grid.Row="16" Grid.Column="1" Text="Undo colour change" />
-      <TextBlock Grid.Row="17" Classes="key" Text="Ctrl+Y / Ctrl+Shift+Z" /><TextBlock Grid.Row="17" Grid.Column="1" Text="Redo" />
-      <TextBlock Grid.Row="18" Classes="key" Text="Esc" /><TextBlock Grid.Row="18" Grid.Column="1" Text="Cancel loading or meshing" />
-      <TextBlock Grid.Row="19" Classes="key" Text="F1" /><TextBlock Grid.Row="19" Grid.Column="1" Text="This list" />
+      <TextBlock Grid.Row="13" Grid.ColumnSpan="2" Classes="header" Text="{loc:Tr Shortcuts_Commands}" />
+      <TextBlock Grid.Row="14" Classes="key" Text="{loc:Tr Keys_Open}" /><TextBlock Grid.Row="14" Grid.Column="1" Text="{loc:Tr Shortcuts_Open}" />
+      <TextBlock Grid.Row="15" Classes="key" Text="{loc:Tr Keys_Save}" /><TextBlock Grid.Row="15" Grid.Column="1" Text="{loc:Tr Shortcuts_SaveAs}" />
+      <TextBlock Grid.Row="16" Classes="key" Text="{loc:Tr Keys_Undo}" /><TextBlock Grid.Row="16" Grid.Column="1" Text="{loc:Tr Shortcuts_Undo}" />
+      <TextBlock Grid.Row="17" Classes="key" Text="{loc:Tr Keys_Redo}" /><TextBlock Grid.Row="17" Grid.Column="1" Text="{loc:Tr Command_Redo}" />
+      <TextBlock Grid.Row="18" Classes="key" Text="{loc:Tr Tip_Esc}" /><TextBlock Grid.Row="18" Grid.Column="1" Text="{loc:Tr Shortcuts_Cancel}" />
+      <TextBlock Grid.Row="19" Classes="key" Text="{loc:Tr Keys_F1}" /><TextBlock Grid.Row="19" Grid.Column="1" Text="{loc:Tr Shortcuts_ThisList}" />
     </Grid>
   </DockPanel>
 </Window>

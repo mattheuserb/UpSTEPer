@@ -100,7 +100,11 @@ Never reference OCCT or native types from Core. UI projects (planned) depend on 
 - Windows native build: `Enter-VsDevShell` overwrites `VCPKG_ROOT` with the VS-bundled vcpkg;
   `scripts/build-native.ps1` re-sets it afterwards. OCCT object paths exceed MAX_PATH unless
   vcpkg buildtrees live on a short path (`VCPKG_INSTALL_OPTIONS` in `CMakePresets.json`).
-- The app keeps user settings (recent files, later language and favourites) in `settings.json` next
+- App texts are localised (English, German): `src/UpSTEPer.App/Localization/Strings.resx` and
+  `Strings.de.resx`, every key in both (`LocalizationTests`). XAML uses `{loc:Tr Key}`, C# the generated
+  `Strings.Key` and `Localizer.Format`; never a literal UI text. Logs, exceptions and the CLI stay
+  English. Tests run in English; tests that switch the language belong to the `LanguageSwitching` collection.
+- The app keeps user settings (recent files, language, later favourites) in `settings.json` next
   to the log folder (`SettingsStore`); add members with defaults so older files still load. Tests and
   `--screenshot` runs must use their own settings path, never the user's file.
 - Parse numbers in the CLI with `Options.InvariantDouble`, never culture-dependent: on a German

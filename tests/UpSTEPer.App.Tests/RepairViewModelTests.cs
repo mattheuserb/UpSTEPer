@@ -128,6 +128,54 @@ public class RepairViewModelTests
     }
 
     [Fact]
+    public async Task Check_SummarisesResultsAndSelectsTheMostSevereFirst()
+    {
+        var reader = new FakeReader();
+        using var main = await LoadedAsync(reader);
+        reader.Documents[0].CheckResult =
+        [
+            new PartCheck("Clean", 1, 6, 0, 0, 0, 0, 0, 0),
+            new PartCheck("Gaps", 0, 6, 24, 0, 0, 0, 0, 0),
+            new PartCheck("Broken", 1, 9, 0, 0, 0, 0, 0, 0, FailedChecks: 1),
+            new PartCheck("Also clean", 1, 6, 0, 0, 0, 0, 0, 0),
+        ];
+        var dialog = new RepairViewModel(main);
+        Assert.False(dialog.HasCheckResults);
+
+        await dialog.CheckCommand.ExecuteAsync(null);
+
+        Assert.True(dialog.HasCheckResults);
+        Assert.Equal((4, 2, 1, 1), (dialog.PartsChecked, dialog.PartsOk, dialog.PartsWithProblems, dialog.PartsWithCheckErrors));
+        Assert.Equal("Broken", dialog.SelectedCheckRow!.Part.Name);
+        Assert.False(dialog.HasRepairReport); // no repair statistics before a repair
+    }
+
+    [Fact]
+    public async Task Repair_SummarisesOutcomesAndSwitchesToTheReport()
+    {
+        var reader = new FakeReader();
+        using var main = await LoadedAsync(reader);
+        reader.Documents[0].RepairResult =
+        [
+            new PartRepair("Fine", false, false, 6, 6, 1, 1, 0, 0, 0, 0, 0),
+            new PartRepair("Sewn", true, false, 6, 6, 0, 1, 24, 0, 0, 0, 0),
+            new PartRepair("Merged", true, false, 6, 3, 1, 1, 0, 0, 0, 0, 1),
+            new PartRepair("Hopeless", false, true, 9, 9, 1, 1, 0, 0, 3, 3, 0),
+        ];
+        var dialog = new RepairViewModel(main);
+
+        await dialog.RepairCommand.ExecuteAsync(null);
+
+        Assert.Equal(RepairViewModel.RepairReport, dialog.SelectedReportIndex);
+        Assert.True(dialog.ShowsRepairReport);
+        Assert.Equal((1, 1, 1, 1), (dialog.PartsRepaired, dialog.PartsUnchanged, dialog.PartsNeedingAttention, dialog.PartsFailed));
+        Assert.Equal("Hopeless", dialog.SelectedRepairRow!.Part.Name);
+
+        dialog.SelectedReportIndex = RepairViewModel.CheckReport; // the user switches back to the check tab
+        Assert.False(dialog.ShowsRepairReport);
+    }
+
+    [Fact]
     public async Task RepairWindow_ShowsCheckRowsInTheGrid()
     {
         var rows = await HeadlessTestApp.Session.Dispatch(

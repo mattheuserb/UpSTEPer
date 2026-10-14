@@ -47,10 +47,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # macOS minutes are billed 10x on private repositories: run it only for pushes to main
-        # and manual runs. (Built as an expression because matrix "include" would re-add a
-        # combination removed by "exclude".)
-        preset: ${{ fromJSON((github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && '["win-x64","linux-x64","osx-arm64"]' || '["win-x64","linux-x64"]') }}
+        # All platforms on every run: Actions minutes are free for public repositories.
+        preset: [win-x64, linux-x64, osx-arm64]
 
     env:
       # Our pinned vcpkg checkout. VCPKG_ROOT itself is exported in the setup step, because

@@ -143,10 +143,44 @@ Benefits beyond macOS: one shader dialect on all platforms, and independence fro
 undocumented GL behaviour. Alternatives: a native Metal renderer (more work), or verification on a
 rented Mac / by community testers once the repository is public.
 
+## Public release (plan of 2026-10-14)
+
+Goal: publish the repository on GitHub as a presentable open source project with a first
+downloadable release (v0.1.0-alpha).
+
+**Phase 0 — blockers**
+
+- [x] `THIRD-PARTY-NOTICES.md` complete for all shipped NuGet packages and native libraries;
+  `ThirdPartyNoticesTests` fails when a package of the app or the CLI is missing (2026-10-14)
+- [ ] Clean Git history: `examples/G_I202_XX_64331V.stp` (Siemens, licence unclear) is still in it,
+  and most commits carry a private e-mail address. Rewrite locally (`git filter-repo`: drop the
+  file, map the address to the GitHub `noreply` one) and push to a **new** public repository;
+  a force push is not enough, GitHub keeps the commits of the old PRs under `refs/pull/*`
+- [ ] Check that the name "UpSTEPer" is free (GitHub, NuGet, trademarks)
+
+**Phase 1 — first impression**
+
+- [ ] README: current status and features, screenshots (generated with `--screenshot`), download and
+  install, CLI examples, known limitations (macOS 3D view, no tier 3 repair yet)
+- [ ] `CHANGELOG.md` (Keep a Changelog), issue templates (bug, feature), PR template, labels
+- [ ] Repository settings: description, topics, social preview, branch protection with required CI,
+  Dependabot (NuGet, Actions), CodeQL and secret scanning
+- [ ] Open roadmap items as GitHub issues and milestones
+
+**Phase 2 — CI**
+
+- [ ] Full CI matrix green on the public repository (Linux and macOS have not run since
+  2026-10-13, when the private repository ran out of Actions minutes)
+
+**Phase 3 — first release**
+
+- [ ] Release workflow on tags `v*`: self-contained `dotnet publish` per platform with the native
+  library, OCCT and its dependencies, the vcpkg `copyright` files and this notices file
+- [ ] Windows: ZIP (C++ runtime shipped or documented as prerequisite); Linux: tar.gz; macOS: CLI
+  only at first (the app is unsigned and its 3D view unverified)
+- [ ] Smoke test of the packages on a clean machine (Windows Sandbox, fresh Linux container)
+- [ ] Later: installer (Velopack), AppImage, code signing (Windows SmartScreen, macOS notarisation)
+
 ## Later
 
-- **Before the repository goes public:** remove `examples/G_I202_XX_64331V.stp` (Siemens, licence
-  unclear) from the Git history (`git filter-repo`, force push, everyone re-clones) or publish with
-  a fresh history. The file left the working tree on 2026-10-09 (`docs/test-data.md`).
-- Packaging: VC++ Redistributable prerequisite on Windows, Velopack/self-contained publish, AppImage, signed/notarised macOS build (needs Apple developer account)
 - API docs with DocFX

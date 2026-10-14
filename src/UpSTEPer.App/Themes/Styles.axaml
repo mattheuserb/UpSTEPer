@@ -8,6 +8,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="using:UpSTEPer.App.Controls">
 
+  <!-- Every window (main window and dialogs) shows the app icon (scripts/update-app-icon.py). -->
+  <Style Selector=":is(Window)">
+    <Setter Property="Icon" Value="/Assets/upsteper.png" />
+  </Style>
+
   <Style Selector=":is(Button).tool">
     <Setter Property="Padding" Value="8,5" />
     <Setter Property="Background" Value="Transparent" />

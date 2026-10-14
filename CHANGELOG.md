@@ -24,6 +24,7 @@ First public version (planned as 0.1.0-alpha).
   lines, arcs, circles and ellipses stay analytic, straight splines become lines; 1:1 in mm.
 - **CLI** `upsteper`: `runtime`, `info`, `paint`, `check`, `repair`, `export-dxf`.
 - English and German user interface, switchable at run time; settings file with recent files.
+- Application icon: an isometric cube with one orange face (window and Windows executable).
 - App option `--screenshot <png> --window` renders the whole window for documentation pictures.
 
 [Unreleased]: https://github.com/mattheuserb/UpSTEPer/commits/main

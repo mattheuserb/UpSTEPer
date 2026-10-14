@@ -67,6 +67,8 @@ the .NET conventions this repository follows.
 - [ ] Docs updated (`docs/`, `CLAUDE.md`, roadmap checkboxes)
 - [ ] New decision that is hard to reverse? → add an ADR
 - [ ] New test files: licence allows redistribution, recorded in `docs/test-data.md`
+- [ ] New NuGet package shipped by the app or CLI: listed in `THIRD-PARTY-NOTICES.md`
+- [ ] User-visible change: entry in `CHANGELOG.md` under "Unreleased"
 
 ## Coding conventions
 

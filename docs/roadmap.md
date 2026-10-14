@@ -148,6 +148,9 @@ rented Mac / by community testers once the repository is public.
 Goal: publish the repository on GitHub as a presentable open source project with a first
 downloadable release (v0.1.0-alpha).
 
+Decisions (2026-10-14): keep the history, cleaned (see below); first release with app and CLI for
+Windows and Linux, CLI only for macOS.
+
 **Phase 0 — blockers**
 
 - [x] `THIRD-PARTY-NOTICES.md` complete for all shipped NuGet packages and native libraries;
@@ -161,10 +164,11 @@ downloadable release (v0.1.0-alpha).
 
 **Phase 1 — first impression**
 
-- [ ] README: current status and features, screenshots (generated with `--screenshot`), download and
-  install, CLI examples, known limitations (macOS 3D view, no tier 3 repair yet)
-- [ ] `CHANGELOG.md` (Keep a Changelog), issue templates (bug, feature), PR template, labels
-- [ ] Repository settings: description, topics, social preview, branch protection with required CI,
+- [x] README: current status and features, screenshots (`scripts/update-screenshots.ps1`, app option
+  `--screenshot <png> --window`), CLI examples, platforms, known limitations (2026-10-14); the
+  download section follows with the first release
+- [x] `CHANGELOG.md` (Keep a Changelog), issue templates (bug, feature), PR template (2026-10-14)
+- [ ] Repository settings: description, topics, labels, social preview, branch protection with required CI,
   Dependabot (NuGet, Actions), CodeQL and secret scanning
 - [ ] Open roadmap items as GitHub issues and milestones
 

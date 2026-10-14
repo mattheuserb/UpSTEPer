@@ -1,0 +1,49 @@
+name: Bug report
+description: Something does not work as expected.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open model.stp
+        2. Select face 12, click "Colour face"
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: file
+    attributes:
+      label: STEP file
+      description: >
+        Many problems depend on the file. Attach it if its licence allows publishing it (zip it
+        first), or name where it can be downloaded. Never attach files you may not share.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Help → About in the app, or the commit you built from.
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Windows, Linux, macOS]
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: >
+        App: the log folder is shown in Help → About. CLI: run the command again with --verbose.
+      render: text

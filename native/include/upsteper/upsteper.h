@@ -66,6 +66,7 @@ UPS_API const char* ups_occt_version(void);
  * Calls are serialised but may come from any thread (OCCT meshes in parallel), and are
  * throttled to roughly 20 per second. Cancellation is not immediate: OCCT checks it between
  * work items, and not at all while a STEP file is parsed (only before transfer starts).
+ * Once the callback has returned non-zero it is not called again for that operation.
  * The callback must not call back into this library and must not throw or longjmp.
  */
 typedef int32_t (*ups_progress_callback)(void* user_data, double fraction, const char* phase);

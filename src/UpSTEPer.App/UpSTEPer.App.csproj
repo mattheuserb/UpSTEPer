@@ -9,6 +9,8 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <!-- English texts are in the main assembly (Localization/Strings.resx); others in satellites. -->
     <NeutralLanguage>en</NeutralLanguage>
+    <!-- Icon of the executable on Windows; generated with the window icon by scripts/update-app-icon.py. -->
+    <ApplicationIcon>Assets\upsteper.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,6 +31,10 @@
     <ProjectReference Include="..\UpSTEPer.Occt\UpSTEPer.Occt.csproj" />
     <ProjectReference Include="..\UpSTEPer.Rendering\UpSTEPer.Rendering.csproj" />
     <ProjectReference Include="..\UpSTEPer.Export.Dxf\UpSTEPer.Export.Dxf.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\upsteper.png" />
   </ItemGroup>
 
   <ItemGroup>

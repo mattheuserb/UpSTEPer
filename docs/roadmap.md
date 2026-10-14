@@ -168,6 +168,8 @@ Windows and Linux, CLI only for macOS.
   `--screenshot <png> --window`), CLI examples, platforms, known limitations (2026-10-14); the
   download section follows with the first release
 - [x] `CHANGELOG.md` (Keep a Changelog), issue templates (bug, feature), PR template (2026-10-14)
+- [x] App icon (isometric cube in the app colours, `scripts/update-app-icon.py`): windows and the
+  Windows executable (2026-10-15); `.icns` and Linux desktop entry follow with packaging
 - [ ] Repository settings: description, topics, labels, social preview, branch protection with required CI,
   Dependabot (NuGet, Actions), CodeQL and secret scanning
 - [ ] Open roadmap items as GitHub issues and milestones

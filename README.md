@@ -1,4 +1,4 @@
-# UpSTEPer
+# <img src="src/UpSTEPer.App/Assets/upsteper.svg" width="40" alt="" align="top"> UpSTEPer
 
 **View, colour, repair and convert STEP models — cross-platform, open source, built on Open CASCADE.**
 

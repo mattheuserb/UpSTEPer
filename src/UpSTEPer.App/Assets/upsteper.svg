@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>UpSTEPer</title>
+  <path d="M512.0 72.0 L893.1 292.0 L512.0 512.0 L130.9 292.0 Z" fill="#DCEEFF" stroke="#DCEEFF" stroke-width="1" stroke-linejoin="round"/>
+  <path d="M130.9 732.0 L512.0 952.0 L512.0 512.0 L130.9 292.0 Z" fill="#1769AA" stroke="#1769AA" stroke-width="1" stroke-linejoin="round"/>
+  <path d="M893.1 732.0 L512.0 952.0 L512.0 512.0 L893.1 292.0 Z" fill="#FF8C1A" stroke="#FF8C1A" stroke-width="1" stroke-linejoin="round"/>
+</svg>

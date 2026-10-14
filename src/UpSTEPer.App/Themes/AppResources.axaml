@@ -2,8 +2,8 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <ResourceDictionary.MergedDictionaries>
-    <ResourceInclude Source="avares://UpSTEPer/Themes/Tokens.axaml" />
-    <ResourceInclude Source="avares://UpSTEPer/Themes/Icons.axaml" />
-    <ResourceInclude Source="avares://UpSTEPer/Themes/Controls.axaml" />
+    <ResourceInclude Source="avares://UpSTEPer.Desktop/Themes/Tokens.axaml" />
+    <ResourceInclude Source="avares://UpSTEPer.Desktop/Themes/Icons.axaml" />
+    <ResourceInclude Source="avares://UpSTEPer.Desktop/Themes/Controls.axaml" />
   </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>

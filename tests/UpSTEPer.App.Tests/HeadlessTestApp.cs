@@ -37,11 +37,11 @@ internal sealed class HeadlessTestApp : Application
         RuntimeHelpers.RunClassConstructor(typeof(UpSTEPer.App.Controls.Icon).TypeHandle);
         Resources.MergedDictionaries.Add(new ResourceInclude(new Uri("avares://UpSTEPer.App.Tests/"))
         {
-            Source = new Uri("avares://UpSTEPer/Themes/AppResources.axaml"),
+            Source = new Uri("avares://UpSTEPer.Desktop/Themes/AppResources.axaml"),
         });
         Styles.Add(new StyleInclude(new Uri("avares://UpSTEPer.App.Tests/"))
         {
-            Source = new Uri("avares://UpSTEPer/Themes/Styles.axaml"),
+            Source = new Uri("avares://UpSTEPer.Desktop/Themes/Styles.axaml"),
         });
     }
 }

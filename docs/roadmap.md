@@ -155,10 +155,11 @@ Windows and Linux, CLI only for macOS.
 
 - [x] `THIRD-PARTY-NOTICES.md` complete for all shipped NuGet packages and native libraries;
   `ThirdPartyNoticesTests` fails when a package of the app or the CLI is missing (2026-10-14)
-- [ ] Clean Git history: `examples/G_I202_XX_64331V.stp` (Siemens, licence unclear) is still in it,
-  and most commits carry a private e-mail address. Rewrite locally (`git filter-repo`: drop the
-  file, map the address to the GitHub `noreply` one) and push to a **new** public repository;
-  a force push is not enough, GitHub keeps the commits of the old PRs under `refs/pull/*`
+- [x] Clean Git history (2026-10-15): `examples/G_I202_XX_64331V.stp` (Siemens, licence unclear)
+  removed and author addresses mapped to the GitHub `noreply` one with `git filter-repo`, pushed
+  to a **new** repository (a force push is not enough: GitHub keeps the commits of old PRs under
+  `refs/pull/*`). The old repository is private as `UpSTEPer-private`; PRs #1–#31 live there.
+  Public since 2026-10-15
 - [ ] Check that the name "UpSTEPer" is free: GitHub, NuGet and a web search found nothing
   (2026-10-14); trademark registers (DPMA, EUIPO) not checked yet
 
@@ -170,14 +171,18 @@ Windows and Linux, CLI only for macOS.
 - [x] `CHANGELOG.md` (Keep a Changelog), issue templates (bug, feature), PR template (2026-10-14)
 - [x] App icon (isometric cube in the app colours, `scripts/update-app-icon.py`): windows and the
   Windows executable (2026-10-15); `.icns` and Linux desktop entry follow with packaging
-- [ ] Repository settings: description, topics, labels, social preview, branch protection with required CI,
-  Dependabot (NuGet, Actions), CodeQL and secret scanning
+- [x] Repository settings (2026-10-15): description, topics, area/platform labels, private
+  vulnerability reporting, Dependabot alerts, security updates and weekly grouped version updates
+  (NuGet, Actions), CodeQL default setup; `main` protected: changes only through pull requests,
+  the four CI jobs required, no force pushes (admins may bypass)
+- [ ] Social preview image
 - [ ] Open roadmap items as GitHub issues and milestones
 
 **Phase 2 — CI**
 
-- [ ] Full CI matrix green on the public repository (Linux and macOS have not run since
-  2026-10-13, when the private repository ran out of Actions minutes)
+- [x] Full CI matrix green on the public repository (2026-10-15), macOS on every run. The first
+  runs found three flaky tests: a UI language switch off the UI thread (macOS), a progress report
+  of 100 % after a cancel (a real bug, Linux) and a BVH timing test without warm-up (Windows)
 
 **Phase 3 — first release**
 

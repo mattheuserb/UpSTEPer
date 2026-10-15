@@ -166,8 +166,8 @@ Windows and Linux, CLI only for macOS.
 **Phase 1 — first impression**
 
 - [x] README: current status and features, screenshots (`scripts/update-screenshots.ps1`, app option
-  `--screenshot <png> --window`), CLI examples, platforms, known limitations (2026-10-14); the
-  download section follows with the first release
+  `--screenshot <png> --window`), CLI examples, platforms, known limitations (2026-10-14); download section
+  (2026-10-15)
 - [x] `CHANGELOG.md` (Keep a Changelog), issue templates (bug, feature), PR template (2026-10-14)
 - [x] App icon (isometric cube in the app colours, `scripts/update-app-icon.py`): windows and the
   Windows executable (2026-10-15); `.icns` and Linux desktop entry follow with packaging

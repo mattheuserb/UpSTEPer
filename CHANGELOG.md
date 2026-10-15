@@ -7,7 +7,9 @@ formats.
 
 ## [Unreleased]
 
-First public version (planned as 0.1.0-alpha).
+## [0.1.0-alpha] - 2026-10-15
+
+First public version.
 
 ### Added
 
@@ -31,4 +33,5 @@ First public version (planned as 0.1.0-alpha).
 - Application icon: an isometric cube with one orange face (window and Windows executable).
 - App option `--screenshot <png> --window` renders the whole window for documentation pictures.
 
-[Unreleased]: https://github.com/mattheuserb/UpSTEPer/commits/main
+[Unreleased]: https://github.com/mattheuserb/UpSTEPer/compare/v0.1.0-alpha...HEAD
+[0.1.0-alpha]: https://github.com/mattheuserb/UpSTEPer/releases/tag/v0.1.0-alpha

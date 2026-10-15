@@ -118,25 +118,34 @@ public class TriangleBvhTests
             .Select(origin => new Ray(origin, Vector3.Normalize(RandomPoint(random, 5f) - origin)))
             .ToArray();
 
-        var bruteForce = Stopwatch.StartNew();
-        foreach (var ray in rays)
+        // Warm up (JIT) first and take the best of three rounds: busy CI runners, which also run
+        // other test assemblies in parallel, otherwise distort a single measurement.
+        MeshPicker.Pick(mesh, rays[0]);
+        bvh.Pick(rays[0]);
+        var bruteForce = TimeSpan.MaxValue;
+        var hierarchy = TimeSpan.MaxValue;
+        for (var round = 0; round < 3; round++)
         {
-            MeshPicker.Pick(mesh, ray);
-        }
+            var watch = Stopwatch.StartNew();
+            foreach (var ray in rays)
+            {
+                MeshPicker.Pick(mesh, ray);
+            }
 
-        bruteForce.Stop();
-        var hierarchy = Stopwatch.StartNew();
-        foreach (var ray in rays)
-        {
-            bvh.Pick(ray);
-        }
+            bruteForce = TimeSpan.FromTicks(Math.Min(bruteForce.Ticks, watch.Elapsed.Ticks));
+            watch.Restart();
+            foreach (var ray in rays)
+            {
+                bvh.Pick(ray);
+            }
 
-        hierarchy.Stop();
+            hierarchy = TimeSpan.FromTicks(Math.Min(hierarchy.Ticks, watch.Elapsed.Ticks));
+        }
 
         // Typically a factor of several hundred; 10 keeps the test stable on slow CI machines.
         Assert.True(
-            hierarchy.Elapsed * 10 < bruteForce.Elapsed,
-            $"BVH {hierarchy.Elapsed.TotalMilliseconds:F1} ms, brute force {bruteForce.Elapsed.TotalMilliseconds:F1} ms for {rays.Length} rays");
+            hierarchy * 10 < bruteForce,
+            $"BVH {hierarchy.TotalMilliseconds:F1} ms, brute force {bruteForce.TotalMilliseconds:F1} ms for {rays.Length} rays");
     }
 
     private static MeshData RandomTriangles(Lcg random, int count, int faceCount)

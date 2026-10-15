@@ -110,19 +110,22 @@ public static partial class LocalizationTests
     private static partial Regex LiteralText();
 }
 
+// The language is global: Localizer notifies every bound control, also those other UI tests left
+// on the headless UI thread. Switching it from the test thread fails ("a different thread owns
+// it") as soon as such a control is still alive, so every switch runs on the UI thread.
 [Collection(nameof(LanguageSwitching))]
-public sealed class LanguageSwitchTests : IDisposable
+public sealed class LanguageSwitchTests : IAsyncDisposable
 {
     private readonly string _settingsPath = Path.Combine(Path.GetTempPath(), $"upsteper-language-{Guid.NewGuid():N}.json");
 
     [Fact]
-    public void SetLanguageCommand_SwitchesTextsAndRemembersTheChoice()
+    public async Task SetLanguageCommand_SwitchesTextsAndRemembersTheChoice()
     {
         using var viewModel = new MainViewModel(new FakeReader(), settings: new SettingsStore(_settingsPath));
         var changed = new List<string?>();
         Localizer.Instance.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
 
-        viewModel.SetLanguageCommand.Execute("de");
+        await HeadlessTestApp.Session.Dispatch(() => viewModel.SetLanguageCommand.Execute("de"), TestContext.Current.CancellationToken);
 
         Assert.Equal("de", Localizer.Instance.Culture.Name);
         Assert.Equal("Prüfen", Localizer.Instance["Repair_Check"]);
@@ -162,9 +165,9 @@ public sealed class LanguageSwitchTests : IDisposable
         Assert.Equal(("_File", "_Datei"), headers);
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        Localizer.Instance.SetCulture(CultureInfo.GetCultureInfo("en"));
+        await HeadlessTestApp.Session.Dispatch(() => Localizer.Instance.SetCulture(CultureInfo.GetCultureInfo("en")), CancellationToken.None);
         File.Delete(_settingsPath);
     }
 }

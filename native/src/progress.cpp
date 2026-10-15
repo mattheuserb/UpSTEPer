@@ -59,6 +59,12 @@ void CallbackProgress::Report(bool force, bool done)
     }
 
     const std::lock_guard<std::mutex> lock(myMutex);
+    // After a cancel request nothing is reported any more: on the way out, closing the progress
+    // scopes would otherwise report them as complete (fraction 1) to a caller that cancelled.
+    if (myCancelled)
+    {
+        return;
+    }
     const auto now = std::chrono::steady_clock::now();
     if (!force && now - myLastReport < ReportInterval)
     {

@@ -36,8 +36,10 @@ modules:
       - mkdir -p /app/lib/upsteper /app/bin
       - cp -a dist/. /app/lib/upsteper/
       # .NET finds its files next to the real executable, so symbolic links in /app/bin work.
-      - ln -s /app/lib/upsteper/UpSTEPer.Desktop /app/bin/UpSTEPer.Desktop
-      - ln -s /app/lib/upsteper/upsteper /app/bin/upsteper
+      # Relative, so they also resolve while the build folder is not mounted at /app
+      # (appstream compose checks the <provides><binary> of the metainfo).
+      - ln -s ../lib/upsteper/UpSTEPer.Desktop /app/bin/UpSTEPer.Desktop
+      - ln -s ../lib/upsteper/upsteper /app/bin/upsteper
       - install -Dm644 io.github.mattheuserb.UpSTEPer.desktop /app/share/applications/io.github.mattheuserb.UpSTEPer.desktop
       - install -Dm644 io.github.mattheuserb.UpSTEPer.metainfo.xml /app/share/metainfo/io.github.mattheuserb.UpSTEPer.metainfo.xml
       - install -Dm644 upsteper.png /app/share/icons/hicolor/256x256/apps/io.github.mattheuserb.UpSTEPer.png

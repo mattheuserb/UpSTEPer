@@ -12,8 +12,21 @@ look at a model, give bodies and faces the right colours, fix what a poor export
 hand 2D views to someone who works with DXF. It reads and writes STEP with
 [Open CASCADE Technology](https://dev.opencascade.org/) and needs no CAD licence.
 
-> **Status: alpha.** Used and tested on Windows; Linux and macOS are covered by CI. There are no
-> binary releases yet; build from source (below). See the [roadmap](docs/roadmap.md).
+> **Status: alpha.** Used and tested on Windows; Linux and macOS are covered by CI. See the
+> [roadmap](docs/roadmap.md).
+
+## Download
+
+Get the latest version from [Releases](https://github.com/mattheuserb/UpSTEPer/releases):
+
+| Platform | File | |
+|---|---|---|
+| Windows 10/11 | `UpSTEPer-<version>-win-x64-setup.exe` | Installer; no admin rights needed. Portable: `…-win-x64.zip` |
+| Linux | `UpSTEPer-<version>-linux-x64.flatpak` | `flatpak install --user <file>`; CLI: `flatpak run --command=upsteper io.github.mattheuserb.UpSTEPer`. Portable: `…-linux-x64.tar.gz` |
+| macOS (Apple silicon) | `UpSTEPer-<version>-osx-arm64-cli.tar.gz` | Command-line tool only |
+
+The files are not signed yet, so Windows SmartScreen may warn about an unknown publisher
+("More info" → "Run anyway"). Compare downloads with `SHA256SUMS.txt` from the same release.
 
 ## Features
 

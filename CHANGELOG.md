@@ -29,7 +29,7 @@ First public version.
 - Linux Flatpak (`io.github.mattheuserb.UpSTEPer`), portable archives for Windows and Linux,
   CLI archive for macOS; a release workflow builds them all from a tag (`docs/releasing.md`).
 - Windows installer (per user or all users, "Open with" for STEP files, optional PATH entry for
-  the CLI); the app executable is now `UpSTEPer.Desktop.exe`.
+  the CLI). The app is `UpSTEPer.Desktop.exe`, the command-line tool `upsteper.exe`.
 - Application icon: an isometric cube with one orange face (window and Windows executable).
 - App option `--screenshot <png> --window` renders the whole window for documentation pictures.
 

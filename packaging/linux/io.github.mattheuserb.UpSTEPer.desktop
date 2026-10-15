@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=UpSTEPer
+GenericName=STEP viewer
+GenericName[de]=STEP-Betrachter
+Comment=View, colour, repair and convert STEP CAD models
+Comment[de]=STEP-CAD-Modelle ansehen, einfärben, reparieren und umwandeln
+Exec=UpSTEPer.Desktop %f
+Icon=io.github.mattheuserb.UpSTEPer
+Terminal=false
+Categories=Graphics;Engineering;3DGraphics;Viewer;
+MimeType=model/step;
+Keywords=STEP;STP;CAD;3D;DXF;OpenCASCADE;

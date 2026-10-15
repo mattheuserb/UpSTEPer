@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.mattheuserb.UpSTEPer</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>UpSTEPer</name>
+  <summary>View, colour, repair and convert STEP CAD models</summary>
+  <summary xml:lang="de">STEP-CAD-Modelle ansehen, einfärben, reparieren und umwandeln</summary>
+  <developer id="io.github.mattheuserb">
+    <name>Mattheus Erb</name>
+  </developer>
+  <description>
+    <p>
+      UpSTEPer opens 3D CAD models in the STEP format (AP203, AP214, AP242) and takes care of the
+      everyday chores around them, without a CAD licence:
+    </p>
+    <ul>
+      <li>View models with their assembly tree, standard views and edges</li>
+      <li>Colour faces and bodies, with the RAL Classic colours, and save as STEP</li>
+      <li>Check and repair badly exported models, keeping their colours</li>
+      <li>Export 2D views with hidden lines as DXF</li>
+    </ul>
+    <p>The command-line tool is included: flatpak run --command=upsteper io.github.mattheuserb.UpSTEPer</p>
+  </description>
+  <launchable type="desktop-id">io.github.mattheuserb.UpSTEPer.desktop</launchable>
+  <url type="homepage">https://github.com/mattheuserb/UpSTEPer</url>
+  <url type="bugtracker">https://github.com/mattheuserb/UpSTEPer/issues</url>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/mattheuserb/UpSTEPer/main/docs/images/main-window.png</image>
+      <caption>Main window with a cable gland model</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/mattheuserb/UpSTEPer/main/docs/images/colouring.png</image>
+      <caption>Assembly coloured per body</caption>
+    </screenshot>
+  </screenshots>
+  <provides>
+    <binary>upsteper</binary>
+    <mediatype>model/step</mediatype>
+  </provides>
+  <categories>
+    <category>Graphics</category>
+    <category>Engineering</category>
+  </categories>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.1.0-alpha" date="2026-10-15" type="development"/>
+  </releases>
+</component>

@@ -7,7 +7,7 @@
     into one folder, together with the native library, OCCT and its dependencies. On Windows the
     MSVC runtime DLLs the native code needs are copied next to them (app-local deployment, no
     VC++ Redistributable or admin rights needed). The licence texts of the native libraries
-    (vcpkg `share/<port>/copyright`) go to licenses/.
+    (installed by CMake to artifacts/native/<Rid>/licenses) go to licenses/.
 
     The result is the input of the installer (packaging/windows) and of the archives of a release.
     Needs the native library (scripts/build-native.ps1) for the same platform.
@@ -21,6 +21,9 @@
 .PARAMETER Output
     Target folder. Default: artifacts/publish/<Rid>. It is emptied first.
 
+.PARAMETER CliOnly
+    Publish the CLI only (macOS releases: the app's 3D view is not supported there yet).
+
 .EXAMPLE
     ./scripts/publish.ps1
 .EXAMPLE
@@ -30,7 +33,8 @@
 param(
     [string] $Rid = 'win-x64',
     [string] $Version,
-    [string] $Output
+    [string] $Output,
+    [switch] $CliOnly
 )
 
 $ErrorActionPreference = 'Stop'
@@ -57,7 +61,8 @@ New-Item -ItemType Directory -Force $Output | Out-Null
 $properties = @("-p:UpsNativeRid=$Rid", '-p:SatelliteResourceLanguages=en%3Bde')
 if ($Version) { $properties += "-p:Version=$Version" }
 
-foreach ($project in 'src/UpSTEPer.App', 'src/UpSTEPer.Cli') {
+$projects = if ($CliOnly) { @('src/UpSTEPer.Cli') } else { @('src/UpSTEPer.App', 'src/UpSTEPer.Cli') }
+foreach ($project in $projects) {
     Invoke-Step "Publish $project" {
         dotnet publish (Join-Path $root $project) -c Release -r $Rid --self-contained -o $Output --nologo @properties
     }
@@ -89,16 +94,19 @@ if ($Rid -like 'win-*') {
 Write-Host '==> Licences' -ForegroundColor Cyan
 $licenses = Join-Path $Output 'licenses'
 New-Item -ItemType Directory -Force $licenses | Out-Null
-$share = Get-ChildItem (Join-Path $root "native/build/$Rid/vcpkg_installed") -Directory -ErrorAction SilentlyContinue |
-    ForEach-Object { Join-Path $_.FullName 'share' } |
-    Where-Object { Test-Path $_ } |
-    Select-Object -First 1
-if (-not $share) { throw "vcpkg licence files not found below native/build/$Rid/vcpkg_installed." }
-foreach ($port in Get-ChildItem $share -Directory) {
+$nativeLicenses = Join-Path $native 'licenses'
+if (-not (Test-Path $nativeLicenses)) {
+    throw "Licence texts not found in $nativeLicenses; rebuild the native library (cmake --install installs them)."
+}
+foreach ($port in Get-ChildItem $nativeLicenses -Directory) {
     $copyright = Join-Path $port.FullName 'copyright'
     if (Test-Path $copyright) { Copy-Item $copyright (Join-Path $licenses "$($port.Name).txt") }
 }
-Copy-Item (Join-Path $root 'src/UpSTEPer.App/Themes/Lucide-LICENSE.txt') (Join-Path $licenses 'lucide.txt')
+if (-not $CliOnly) {
+    Copy-Item (Join-Path $root 'src/UpSTEPer.App/Themes/Lucide-LICENSE.txt') (Join-Path $licenses 'lucide.txt')
+}
+# The app build copies these too; the CLI alone does not.
+Copy-Item (Join-Path $root 'LICENSE'), (Join-Path $root 'THIRD-PARTY-NOTICES.md') $Output -Force
 
 $size = (Get-ChildItem $Output -Recurse -File | Measure-Object Length -Sum).Sum / 1MB
 Write-Host ("Published to {0} ({1:N0} MB)" -f $Output, $size) -ForegroundColor Green

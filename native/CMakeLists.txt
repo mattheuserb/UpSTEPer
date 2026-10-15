@@ -80,8 +80,8 @@ if(POLICY CMP0207)
     cmake_policy(SET CMP0207 NEW)
 endif()
 
-# The MSVC runtime (vcruntime/msvcp) is not bundled: it comes from the VC++ Redistributable,
-# which the installer will require (see docs/roadmap.md, packaging).
+# The MSVC runtime (vcruntime/msvcp) is not bundled here: scripts/publish.ps1 adds it to the
+# distribution next to the executables (docs/packaging.md).
 install(TARGETS upsteper_native
     RUNTIME_DEPENDENCIES
         PRE_EXCLUDE_REGEXES "api-ms-.*" "ext-ms-.*"
@@ -95,3 +95,11 @@ install(TARGETS upsteper_native
     LIBRARY DESTINATION .
     FRAMEWORK DESTINATION .   # required on macOS when RUNTIME_DEPENDENCIES is used
     ARCHIVE DESTINATION lib)
+
+# Licence texts of the dependencies (vcpkg share/<port>/copyright), which binary distributions
+# must ship; scripts/publish.ps1 copies them to the distribution's licenses folder.
+if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
+    install(DIRECTORY "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/"
+        DESTINATION licenses
+        FILES_MATCHING PATTERN "copyright")
+endif()

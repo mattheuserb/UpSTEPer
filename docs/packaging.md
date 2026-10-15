@@ -1,7 +1,8 @@
 # Packaging
 
-How UpSTEPer is turned into something users can install. Status: Windows installer done locally;
-release workflow, Linux and macOS packages follow (roadmap, "Public release", phase 3).
+How UpSTEPer is turned into something users can install: a distribution folder per platform, from
+it the Windows installer, the Linux Flatpak and portable archives. Every CI run builds and
+smoke-tests them; a tag turns them into a draft release (`docs/releasing.md`).
 
 ## Distribution folder (`scripts/publish.ps1`)
 
@@ -19,8 +20,10 @@ release workflow, Linux and macOS packages follow (roadmap, "Public release", ph
   redist folder next to the executables, so no VC++ Redistributable and no admin rights are
   needed. The Universal CRT (`api-ms-win-crt-*`) is part of Windows 10 and later. When the native
   code starts importing another runtime DLL, add it to the list in the script.
-- Licence texts of the native libraries (vcpkg `share/<port>/copyright`) go to `licenses/`;
-  `LICENSE` and `THIRD-PARTY-NOTICES.md` come with the app build.
+- Licence texts of the native libraries: `cmake --install` puts the vcpkg `share/<port>/copyright`
+  files into `artifacts/native/<rid>/licenses` (so they are cached with the native build in CI);
+  the script copies them to `licenses/<port>.txt`, plus `LICENSE` and `THIRD-PARTY-NOTICES.md`.
+- `-CliOnly` publishes the CLI alone (macOS, whose 3D view is not supported yet).
 - Trimmed: only English and German satellite assemblies (`SatelliteResourceLanguages`), no debug
   symbols of native NuGet libraries (SkiaSharp, HarfBuzzSharp: about 100 MB). Result: about
   150 MB on disk.
@@ -54,6 +57,29 @@ Silent installation, e.g. for tests or company roll-outs:
 UpSTEPer-0.1.0-alpha-win-x64-setup.exe /VERYSILENT /CURRENTUSER /TASKS="openwith,addtopath"
 "%LOCALAPPDATA%\Programs\UpSTEPer\unins000.exe" /VERYSILENT
 ```
+
+## Linux Flatpak (`scripts/build-flatpak.sh`)
+
+```bash
+sudo apt install flatpak flatpak-builder librsvg2-common   # once
+pwsh scripts/publish.ps1 -Rid linux-x64 -Version 0.1.0-alpha
+scripts/build-flatpak.sh 0.1.0-alpha               # → artifacts/release/UpSTEPer-<v>-linux-x64.flatpak
+flatpak install --user artifacts/release/UpSTEPer-0.1.0-alpha-linux-x64.flatpak
+flatpak run io.github.mattheuserb.UpSTEPer                      # app
+flatpak run --command=upsteper io.github.mattheuserb.UpSTEPer info model.stp   # CLI
+```
+
+Manifest and desktop integration in `packaging/linux/` (app id `io.github.mattheuserb.UpSTEPer`).
+
+| Behaviour | Decision (2026-10-15) |
+|---|---|
+| Build | The prebuilt self-contained distribution is copied into the Flatpak (runtime `org.freedesktop.Platform` 24.08). Flathub would need a source build of OCCT and all NuGet packages inside flatpak-builder; that is a later step |
+| Delivery | Single-file bundle in the GitHub release; the runtime comes from Flathub on install |
+| Sandbox | X11 (XWayland on Wayland), GPU (`--device=dri`), IPC; **home folder** read/write, because STEP files are opened from anywhere and results are saved next to them |
+| Desktop | Start menu entry, icon, `model/step` (`.stp`, `.step`) for "Open with"; AppStream metainfo with screenshots |
+| Data | Settings and logs in `~/.var/app/io.github.mattheuserb.UpSTEPer/data/UpSTEPer` (the sandbox's XDG data folder) |
+
+The portable `linux-x64.tar.gz` stays as an alternative without Flatpak.
 
 ## Manual test before a release
 

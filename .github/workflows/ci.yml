@@ -6,6 +6,13 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # The release workflow runs the same checks and keeps the release files.
+  workflow_call:
+    inputs:
+      version:
+        description: Version of the release files (default from Directory.Build.props)
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -233,3 +240,84 @@ jobs:
           name: native-${{ matrix.preset }}
           path: artifacts/native/${{ matrix.preset }}
           if-no-files-found: error
+
+      # ---- Release files: built on every run, so a release never meets broken packaging --------
+
+      - name: Release version
+        id: version
+        shell: pwsh
+        run: |
+          $version = '${{ inputs.version }}'
+          if (-not $version) {
+            [xml] $props = Get-Content Directory.Build.props
+            $group = $props.Project.PropertyGroup | Where-Object { $_.VersionPrefix } | Select-Object -First 1
+            $version = "$($group.VersionPrefix)-$($group.VersionSuffix)".TrimEnd('-')
+          }
+          "value=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Install Inno Setup (Windows)
+        if: runner.os == 'Windows'
+        run: choco install innosetup --no-progress -y
+
+      - name: Package
+        shell: pwsh
+        run: ./scripts/package.ps1 -Rid ${{ matrix.preset }} -Version ${{ steps.version.outputs.value }}
+
+      # Silent install for the current user, CLI and app from the installed folder, silent uninstall.
+      - name: Installer smoke test (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem artifacts/release -Filter '*-setup.exe' | Select-Object -First 1
+          $dir = Join-Path $env:RUNNER_TEMP 'UpSTEPer'
+          $model = Join-Path $PWD 'examples/ESKV 12 RAL 7035 10066410.stp'
+          $p = Start-Process $setup.FullName -Wait -PassThru -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CURRENTUSER /DIR=`"$dir`" /TASKS=`"openwith,addtopath`""
+          if ($p.ExitCode -ne 0) { throw "Setup failed with exit code $($p.ExitCode)." }
+          & "$dir/upsteper.exe" runtime
+          if ($LASTEXITCODE -ne 0) { throw 'upsteper runtime failed.' }
+          & "$dir/upsteper.exe" info $model
+          if ($LASTEXITCODE -ne 0) { throw 'upsteper info failed.' }
+          $app = Start-Process "$dir/UpSTEPer.Desktop.exe" -Wait -PassThru -ArgumentList "`"$model`" --screenshot `"$env:RUNNER_TEMP/installed.png`""
+          if ($app.ExitCode -ne 0) { throw "The installed app failed with exit code $($app.ExitCode)." }
+          $u = Start-Process "$dir/unins000.exe" -Wait -PassThru -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART'
+          Start-Sleep -Seconds 5
+          if ($u.ExitCode -ne 0 -or (Test-Path "$dir/upsteper.exe")) { throw 'Uninstall failed or left files behind.' }
+
+      - name: Archive smoke test (Linux, macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/unpacked"
+          tar -xzf artifacts/release/*.tar.gz -C "$RUNNER_TEMP/unpacked"
+          "$RUNNER_TEMP"/unpacked/UpSTEPer-*/upsteper runtime
+          "$RUNNER_TEMP"/unpacked/UpSTEPer-*/upsteper info "examples/ESKV 12 RAL 7035 10066410.stp"
+
+      # The Flatpak downloads the Freedesktop runtime and SDK (several minutes): only for main,
+      # releases, manual runs and pull requests labelled "area: packaging".
+      - name: Flatpak (Linux)
+        id: flatpak
+        if: "runner.os == 'Linux' && (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'area: packaging'))"
+        run: |
+          # librsvg2-common: SVG loader, AppStream compose reads the scalable icon with it.
+          sudo apt-get install -y --no-install-recommends flatpak flatpak-builder librsvg2-common
+          scripts/build-flatpak.sh "${{ steps.version.outputs.value }}"
+
+      - name: Flatpak smoke test (Linux)
+        if: steps.flatpak.outcome == 'success'
+        run: |
+          app=io.github.mattheuserb.UpSTEPer
+          model="$PWD/examples/ESKV 12 RAL 7035 10066410.stp"
+          flatpak install --user -y --noninteractive artifacts/release/*.flatpak
+          flatpak install --user -y --noninteractive flathub org.freedesktop.Platform.GL.default//24.08
+          flatpak run --command=upsteper $app runtime
+          flatpak run --command=upsteper $app info "$model"
+          xvfb-run -a -s "-screen 0 1600x1000x24" flatpak run $app "$model" --screenshot "$PWD/artifacts/flatpak.png"
+          test -s artifacts/flatpak.png
+
+      - name: Upload release files
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ matrix.preset }}
+          path: artifacts/release
+          if-no-files-found: error
+          retention-days: 7

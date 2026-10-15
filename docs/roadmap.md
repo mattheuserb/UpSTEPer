@@ -186,13 +186,16 @@ Windows and Linux, CLI only for macOS.
 
 **Phase 3 — first release**
 
-- [ ] Release workflow on tags `v*`: self-contained `dotnet publish` per platform with the native
-  library, OCCT and its dependencies, the vcpkg `copyright` files and this notices file
+- [x] Release workflow on tags `v*` (`docs/releasing.md`, 2026-10-15): checks that tag,
+  `Directory.Build.props`, CHANGELOG and Flatpak metainfo agree, runs the full CI with packaging and
+  smoke tests, and creates a draft release with checksums and the CHANGELOG section as notes.
+  Every CI run builds and tests the release files
 - [x] Windows installer (Inno Setup, `scripts/build-installer.ps1`, `docs/packaging.md`): per user
   without admin rights or for all users, "Open with" for .stp/.step, optional PATH entry for the
   CLI, MSVC runtime app-local; 45 MB. Silent install/uninstall tested locally (2026-10-15)
-- [ ] Windows ZIP; Linux: tar.gz; macOS: CLI only at first (the app is unsigned and its 3D view
-  unverified)
+- [x] Windows ZIP; Linux: Flatpak (prebuilt binaries, runtime from Flathub) and tar.gz; macOS: CLI
+  only (the app is unsigned and its 3D view unverified) (2026-10-15)
+- [ ] Flathub: needs a source build of OCCT and the NuGet packages inside flatpak-builder
 - [ ] Manual installer test in Windows Sandbox and as all-users installation
 - [ ] Smoke test of the packages on a clean machine (Windows Sandbox, fresh Linux container)
 - [ ] Later: installer (Velopack), AppImage, code signing (Windows SmartScreen, macOS notarisation)

@@ -1,0 +1,95 @@
+name: Release
+
+# Pushing a tag v<version> (e.g. v0.1.0-alpha) runs the full CI with packaging and creates a
+# draft GitHub release with the installer, archives, Flatpak and checksums. The draft is
+# published by hand after a look at it. Steps: docs/releasing.md.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: check version
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # The tag, Directory.Build.props, CHANGELOG.md and the Flatpak metainfo must agree.
+      - name: Check version
+        id: version
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}'.Substring(1)
+          if ($version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') { throw "Tag ${{ github.ref_name }} is not v<SemVer>." }
+          [xml] $props = Get-Content Directory.Build.props
+          $group = $props.Project.PropertyGroup | Where-Object { $_.VersionPrefix } | Select-Object -First 1
+          $declared = "$($group.VersionPrefix)-$($group.VersionSuffix)".TrimEnd('-')
+          if ($declared -ne $version) { throw "Directory.Build.props says $declared, the tag $version." }
+          if (-not (Select-String -Path CHANGELOG.md -SimpleMatch "## [$version]" -Quiet)) { throw "CHANGELOG.md has no section '## [$version]'." }
+          if (-not (Select-String -Path packaging/linux/io.github.mattheuserb.UpSTEPer.metainfo.xml -SimpleMatch "version=`"$version`"" -Quiet)) {
+            throw "The Flatpak metainfo has no <release version=`"$version`">."
+          }
+          "value=$version" >> $env:GITHUB_OUTPUT
+
+  ci:
+    needs: prepare
+    uses: ./.github/workflows/ci.yml
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+
+  release:
+    name: draft release
+    needs: [prepare, ci]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: release-*
+          path: release
+          merge-multiple: true
+
+      - name: Checksums and release notes
+        shell: bash
+        run: |
+          version='${{ needs.prepare.outputs.version }}'
+          (cd release && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt)
+          # The CHANGELOG section of this version, without its heading and link definitions.
+          awk -v head="## [$version]" 'index($0, head) == 1 { found = 1; next } found && /^## \[/ { exit } found && !/^\[[^]]*\]: /' CHANGELOG.md > notes.md
+          cat >> notes.md <<'EOF'
+
+          ### Downloads
+
+          | File | For |
+          |---|---|
+          | `*-win-x64-setup.exe` | Windows 10/11 installer (per user without admin rights, or for all users) |
+          | `*-win-x64.zip` | Windows, portable (unpack and run `UpSTEPer.Desktop.exe`) |
+          | `*-linux-x64.flatpak` | Linux: `flatpak install --user <file>` (needs Flathub for the runtime) |
+          | `*-linux-x64.tar.gz` | Linux, portable |
+          | `*-osx-arm64-cli.tar.gz` | macOS (Apple silicon), command-line tool only |
+
+          The files are not signed yet: Windows SmartScreen may warn about an unknown publisher.
+          Check downloads against `SHA256SUMS.txt`.
+          EOF
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          version='${{ needs.prepare.outputs.version }}'
+          prerelease=$([[ "$version" == *-* ]] && echo --prerelease || true)
+          gh release create '${{ github.ref_name }}' release/* --draft $prerelease \
+            --title "UpSTEPer $version" --notes-file notes.md --verify-tag

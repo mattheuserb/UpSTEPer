@@ -298,7 +298,8 @@ jobs:
         id: flatpak
         if: "runner.os == 'Linux' && (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'area: packaging'))"
         run: |
-          sudo apt-get install -y --no-install-recommends flatpak flatpak-builder
+          # librsvg2-common: SVG loader, AppStream compose reads the scalable icon with it.
+          sudo apt-get install -y --no-install-recommends flatpak flatpak-builder librsvg2-common
           scripts/build-flatpak.sh "${{ steps.version.outputs.value }}"
 
       - name: Flatpak smoke test (Linux)

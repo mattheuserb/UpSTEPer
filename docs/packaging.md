@@ -61,7 +61,7 @@ UpSTEPer-0.1.0-alpha-win-x64-setup.exe /VERYSILENT /CURRENTUSER /TASKS="openwith
 ## Linux Flatpak (`scripts/build-flatpak.sh`)
 
 ```bash
-sudo apt install flatpak flatpak-builder           # once
+sudo apt install flatpak flatpak-builder librsvg2-common   # once
 pwsh scripts/publish.ps1 -Rid linux-x64 -Version 0.1.0-alpha
 scripts/build-flatpak.sh 0.1.0-alpha               # → artifacts/release/UpSTEPer-<v>-linux-x64.flatpak
 flatpak install --user artifacts/release/UpSTEPer-0.1.0-alpha-linux-x64.flatpak

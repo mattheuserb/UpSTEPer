@@ -3,7 +3,8 @@
 #
 # Usage: scripts/build-flatpak.sh <version>
 #   → artifacts/release/UpSTEPer-<version>-linux-x64.flatpak
-# Needs flatpak and flatpak-builder (apt install flatpak flatpak-builder); installs the
+# Needs flatpak, flatpak-builder and an SVG loader for the icon (apt install flatpak flatpak-builder
+# librsvg2-common); installs the
 # Freedesktop runtime and SDK from Flathub for the current user. Design: docs/packaging.md.
 # Users install the bundle with: flatpak install --user UpSTEPer-<version>-linux-x64.flatpak
 set -euo pipefail
